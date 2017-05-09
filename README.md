@@ -1,5 +1,8 @@
 # youtube-auto-processor
 
+## Install
+Download ffmpeg : http://ffmpeg.zeranoe.com/builds/
+
 ## State machine
 job move from state :
 - READY : le service watch-folder a détecté une vidéo et initialisé un nouveau job, la vidéo est passée en orange sur l'agenda
@@ -14,6 +17,7 @@ job move from state :
 - THUMBNAIL : le job-runner va upload la miniature de la vidéo
 - PLAYLIST : le job-runner va insérer la vidéo dans la playlist, après l'avoir créée si elle n'existe pas
 - ALL_DONE : la vidéo est prête à être diffusée, elle est passée en vert sur l'agenda
-- ERROR : la vidéo est publique (la date du jour est > à la date de publication) et elle est marquée comme public sur l'agenda
+- PUBLIC : la vidéo est publique (la date du jour est > à la date de publication) et elle est marquée comme public sur l'agenda
+- ERROR : Le job runner a rencontré une erreur et a passé le job en arrêt
 
 ## Configuration

@@ -1,13 +1,13 @@
 /**
  * Created by Jérémy on 06/05/2017.
  */
-var mongoose = require('mongoose');
-var Schema = mongoose.Schema;
-var fs = require('fs');
-var path = require('path');
-var config = require('../config/youtube.json');
+let mongoose = require('mongoose');
+let Schema = mongoose.Schema;
+let fs = require('fs');
+let path = require('path');
+let config = require('../config/youtube.json');
 
-var EpisodeSchema = new Schema({
+let EpisodeSchema = new Schema({
     path: String,
     video_name: String,
     youtube_id: String,
@@ -31,7 +31,7 @@ EpisodeSchema.methods.initialize = function (job, serie, episode_number) {
     this.date_created = job.date_created;
     this.keywords = serie.video_keywords;
     this.video_name = serie.video_title_template.replace('${episode_number}', this.episode_number);
-    var description_template = serie.description_template || config.default_description_template;
+    let description_template = serie.description_template || config.default_description_template;
     this.description = description_template.replace('${game_title}', serie.game_title)
         .replace('${description}', serie.description)
         .replace('${steam_url}', serie.steam_url)

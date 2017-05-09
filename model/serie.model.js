@@ -1,12 +1,12 @@
 /**
  * Created by Jérémy on 06/05/2017.
  */
-var mongoose = require('mongoose');
-var Schema = mongoose.Schema;
-var path = require('path');
-var Episode = require('./episode.model');
+let mongoose = require('mongoose');
+let Schema = mongoose.Schema;
+let path = require('path');
+let Episode = require('./episode.model');
 
-var SerieSchema = new Schema({
+let SerieSchema = new Schema({
     path: String,
     planning_name: String,
     playlist_id: String,
@@ -27,9 +27,9 @@ SerieSchema.methods.addEpisode = function (job, done) {
             console.error(err);
             return done(err, null);
         }
-        var episode_number = lastEpisode ? lastEpisode.episode_number++ : this.last_episode++;
+        let episode_number = lastEpisode ? lastEpisode.episode_number++ : this.last_episode++;
         console.log('new episode number is', episode_number);
-        var episode = new Episode({
+        let episode = new Episode({
             serie: this
         });
         episode.initialize(job, this, episode_number);
@@ -65,8 +65,8 @@ SerieSchema.methods.addEpisode = function (job, done) {
 };
 
 SerieSchema.statics.findOrCreate = function (directory, done) {
-    var query = this.model('Serie').findOne({path: directory});
-    var self = this;
+    let query = this.model('Serie').findOne({path: directory});
+    let self = this;
     query.exec(function (err, serie) {
         if (err) {
             return done(err, null);
@@ -78,10 +78,10 @@ SerieSchema.statics.findOrCreate = function (directory, done) {
         } else {
             // Create serie based on path
             console.log('serie not found for path', directory);
-            var serie = new self({
+            let serie = new self({
                 path: directory
             });
-            var config = require(path.join(directory, 'serie.json'));
+            let config = require(path.join(directory, 'serie.json'));
             if (!config) {
                 console.error('Cannot find serie.json in', directory);
                 done('Cannot find serie.json in' + directory);

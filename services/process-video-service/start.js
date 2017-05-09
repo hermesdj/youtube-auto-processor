@@ -1,20 +1,21 @@
 /**
  * Created by Jérémy on 08/05/2017.
  */
-var config = require('./service-config.json');
-var EventLogger = require('node-windows').EventLogger;
-var log = new EventLogger(config.service_name);
-var service = require('./service');
 
-var videoProcessor = require('../../processors/video-processor');
+let mongoose = require('mongoose');
+let config = require('./service-config.json');
+let EventLogger = require('node-windows').EventLogger;
+let log = new EventLogger(config.service_name);
+let service = require('./service');
 
-var Job = require('../../model/job.model');
-var states = require('../../config/states');
-var mongoose = require('mongoose');
-var db_config = require('../../config/database-config');
+let videoProcessor = require('../../processors/video-processor');
+
+let Job = require('../../model/job.model');
+let states = require('../../config/states');
+let db_config = require('../../config/database-config');
 mongoose.connect(db_config.mongo.uri, db_config.mongo.options);
 
-console.log('starting video processor service with HOME ' + process.env.HOME);
+console.log('starting video processor service with env', process.env);
 Job.findOne({state: states.VIDEO_READY.label}).sort('-date_created').populate({
     path: 'episode',
     populate: {

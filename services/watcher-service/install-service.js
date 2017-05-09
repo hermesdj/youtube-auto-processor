@@ -1,7 +1,7 @@
 /**
  * Created by Jérémy on 07/05/2017.
  */
-var service = require('./service');
+let service = require('./service');
 
 module.exports = function () {
     console.log('installing ' + service.name + ' service');

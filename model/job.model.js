@@ -1,13 +1,13 @@
 /**
  * Created by Jérémy on 06/05/2017.
  */
-var mongoose = require('mongoose');
-var Schema = mongoose.Schema;
-var Serie = require('./serie.model');
-var states = require('../config/states');
-var sheetProcessor = require('../processors/sheet-processor');
+let mongoose = require('mongoose');
+let Schema = mongoose.Schema;
+let Serie = require('./serie.model');
+let states = require('../config/states');
+let sheetProcessor = require('../processors/sheet-processor');
 
-var JobSchema = new Schema({
+let JobSchema = new Schema({
     path: String,
     date_created: {type: Date, default: null, unique: true, required: true, dropDubs: true},
     state: {type: String, default: states.READY.label},
@@ -48,7 +48,7 @@ JobSchema.methods.markOnPlanning = function (done) {
 };
 
 JobSchema.methods.next = function (done) {
-    var next = states[this.state].next();
+    let next = states[this.state].next();
     if (next) {
         console.log('moving job', this._id, 'from state', this.state, 'to', next.label);
         this.state = next.label;

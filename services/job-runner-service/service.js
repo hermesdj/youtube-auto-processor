@@ -1,17 +1,17 @@
 /**
  * Created by Jérémy on 07/05/2017.
  */
-var Service = require('node-windows').Service;
-var config = require('./service-config.json');
-var path = require('path');
+let Service = require('node-windows').Service;
+let config = require('./service-config.json');
+let path = require('path');
 
-var service = new Service({
+let service = new Service({
     name: config.service_name,
     description: config.service_description,
     script: path.join(__dirname, config.main),
     env: {
         name: "HOME",
-        value: process.env['HOME'] || process.env['USERPROFILE']// service is now able to access the user who created its' home directory
+        value: process.env['HOME'] || process.env['USERPROFILE']
     }
 });
 
