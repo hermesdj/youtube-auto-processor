@@ -1,11 +1,11 @@
 /**
  * Created by Jérémy on 07/05/2017.
  */
-let Service = require('node-windows').Service;
-let config = require('./service-config.json');
-let path = require('path');
+var Service = require('node-windows').Service;
+var config = require('./service-config.json');
+var path = require('path');
 
-let service = new Service({
+var service = new Service({
     name: config.service_name,
     description: config.service_description,
     script: path.join(__dirname, config.main),

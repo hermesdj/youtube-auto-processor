@@ -1,10 +1,10 @@
 /**
  * Created by jdallard on 09/05/2017.
  */
-let EventEmitter = require('events').EventEmitter;
-let util = require('util');
-let path = require('path');
-let Service = require('../model/service.model');
+var EventEmitter = require('events').EventEmitter;
+var util = require('util');
+var path = require('path');
+var Service = require('../model/service.model');
 
 function ServiceManager() {
     this.serviceRoot = path.resolve(__dirname);

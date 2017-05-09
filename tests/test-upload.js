@@ -2,15 +2,15 @@
  * Created by Jérémy on 07/05/2017.
  */
 
-let mongoose = require('mongoose');
-let upload_processor = require('./processors/upload-processor');
-let thumbnail_processor = require('./processors/thumbnail-processor');
-let sheet_processor = require('./processors/sheet-processor');
-let path = require('path');
-let moment = require('moment');
+var mongoose = require('mongoose');
+var upload_processor = require('./processors/upload-processor');
+var thumbnail_processor = require('./processors/thumbnail-processor');
+var sheet_processor = require('./processors/sheet-processor');
+var path = require('path');
+var moment = require('moment');
 
-let Job = require('./model/job.model');
-let db_config = require('./config/database-config');
+var Job = require('./model/job.model');
+var db_config = require('./config/database-config');
 mongoose.connect(db_config.mongo.uri, db_config.mongo.options);
 
 

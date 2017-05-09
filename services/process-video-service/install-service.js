@@ -1,7 +1,7 @@
 /**
  * Created by Jérémy on 07/05/2017.
  */
-let service = require('./service');
+var service = require('./service');
 
 module.exports = function(){
     console.log('starting ' + service.name + ' service');

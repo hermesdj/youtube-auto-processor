@@ -6,12 +6,22 @@
  * @returns {{loadAll: Function}}
  * @constructor
  */
+'use strict';
+let Job = require('../model/job.model');
+
 function JobsDataService($q) {
     // Promise-based API
     return {
-        loadAllJobs: function() {
+        list: function (opts) {
             // Simulate async nature of real remote calls
-            return $q.when(users);
+            opts = opts || {};
+            return Job.find(opts).populate({
+                path: 'episode',
+                populate: {
+                    path: 'serie',
+                    model: 'Serie'
+                }
+            });
         }
     };
 }

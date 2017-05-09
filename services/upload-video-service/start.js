@@ -2,17 +2,17 @@
  * Created by Jérémy on 08/05/2017.
  */
 
-let mongoose = require('mongoose');
-let config = require('./service-config.json');
-let EventLogger = require('node-windows').EventLogger;
-let log = new EventLogger(config.service_name);
-let service = require('./service');
-let states = require('../../config/states');
+var mongoose = require('mongoose');
+var config = require('./service-config.json');
+var EventLogger = require('node-windows').EventLogger;
+var log = new EventLogger(config.service_name);
+var service = require('./service');
+var states = require('../../config/states');
 
-let uploadProcessor = require('../../processors/upload-processor');
+var uploadProcessor = require('../../processors/upload-processor');
 
-let Job = require('../../model/job.model');
-let db_config = require('../../config/database-config');
+var Job = require('../../model/job.model');
+var db_config = require('../../config/database-config');
 mongoose.connect(db_config.mongo.uri, db_config.mongo.options);
 
 console.log('starting upload processor service with HOME ' + process.env.HOME);

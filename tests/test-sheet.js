@@ -2,10 +2,10 @@
  * Created by Jérémy on 08/05/2017.
  */
 
-let mongoose = require('mongoose');
-let sheet_processor = require('./processors/sheet-processor');
-let Job = require('./model/job.model');
-let db_config = require('./config/database-config');
+var mongoose = require('mongoose');
+var sheet_processor = require('./processors/sheet-processor');
+var Job = require('./model/job.model');
+var db_config = require('./config/database-config');
 mongoose.connect(db_config.mongo.uri, db_config.mongo.options);
 
 Job.findOne({state: 'SCHEDULE'}).sort('-date_created').populate({

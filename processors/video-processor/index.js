@@ -1,7 +1,7 @@
 /**
  * Created by Jérémy on 07/05/2017.
  */
-let ffmpeg = require('fluent-ffmpeg');
+var ffmpeg = require('fluent-ffmpeg');
 
 exports.process = function (job, done) {
     // TODO PROCESS VIDEO

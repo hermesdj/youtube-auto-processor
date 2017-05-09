@@ -1,11 +1,11 @@
 /**
  * Created by Jérémy on 08/05/2017.
  */
-let client = require('../../config/google-client');
-let google = require('googleapis');
-let config = require('../../config/youtube.json');
-let moment = require('moment');
-let COLORS = require('../../config/colors');
+var client = require('../../config/google-client');
+var google = require('googleapis');
+var config = require('../../config/youtube.json');
+var moment = require('moment');
+var COLORS = require('../../config/colors');
 
 function process(auth, job, done) {
     if (!config.agenda_spreadsheet_id) {
@@ -14,12 +14,12 @@ function process(auth, job, done) {
     }
 
     moment.locale('fr');
-    let month = moment().format('MMMM');
+    var month = moment().format('MMMM');
     month = month.charAt(0).toUpperCase() + month.slice(1);
-    let year = moment().format('YYYY');
-    let start = 'A1';
-    let end = 'H28';
-    let range = month.concat(' ').concat(year).concat('!').concat(start).concat(':').concat(end);
+    var year = moment().format('YYYY');
+    var start = 'A1';
+    var end = 'H28';
+    var range = month.concat(' ').concat(year).concat('!').concat(start).concat(':').concat(end);
 
     processRange(auth, job, range, function (err, haystack, i, j) {
         if (err) {
@@ -32,7 +32,7 @@ function process(auth, job, done) {
 
         month = moment().add(1, 'M').format('MMMM');
         month = month.charAt(0).toUpperCase() + month.slice(1);
-        let range = month.concat(' ').concat(year).concat('!').concat(start).concat(':').concat(end);
+        var range = month.concat(' ').concat(year).concat('!').concat(start).concat(':').concat(end);
         processRange(auth, job, range, function (err, haystack, i, j) {
             done(err, haystack, i, j, month.concat(' ').concat(year));
         });
@@ -41,7 +41,7 @@ function process(auth, job, done) {
 
 function processRange(auth, job, range, done) {
     console.log('processing with range', range);
-    let sheets = google.sheets({
+    var sheets = google.sheets({
         version: 'v4',
         auth: auth.oauth2client
     });
@@ -58,8 +58,8 @@ function processRange(auth, job, range, done) {
 }
 
 function find(haystack, needle, done) {
-    for (let i = 0; i < haystack.length; i++) {
-        for (let j = 0; j < haystack[i].length; j++) {
+    for (var i = 0; i < haystack.length; i++) {
+        for (var j = 0; j < haystack[i].length; j++) {
             if (haystack[i][j] === needle) {
                 return done(null, haystack, i, j);
             }
@@ -69,12 +69,12 @@ function find(haystack, needle, done) {
 }
 
 function parseDate(haystack, i, j, done) {
-    let result = null;
-    let hour = haystack[i][0];
-    let day = null;
+    var result = null;
+    var hour = haystack[i][0];
+    var day = null;
 
-    for (let k = i - 1; k >= 0; k--) {
-        let test_date = moment(haystack[k][j], 'DD/MM/YYYY');
+    for (var k = i - 1; k >= 0; k--) {
+        var test_date = moment(haystack[k][j], 'DD/MM/YYYY');
         if (test_date !== null && test_date.isValid()) {
             day = haystack[k][j];
             break;
@@ -110,7 +110,7 @@ exports.getScheduledDate = function (job, done) {
 };
 
 function getSpreadsheetId(auth, sheetName, done) {
-    let sheets = google.sheets({
+    var sheets = google.sheets({
         version: 'v4',
         auth: auth.oauth2client
     });
@@ -121,9 +121,9 @@ function getSpreadsheetId(auth, sheetName, done) {
         if (err) {
             done(err, null);
         }
-        let result = null;
-        for (let i = 0; i < res.sheets.length; i++) {
-            let sheet = res.sheets[i];
+        var result = null;
+        for (var i = 0; i < res.sheets.length; i++) {
+            var sheet = res.sheets[i];
             if (sheet.properties.title === sheetName) {
                 result = sheet.properties.sheetId;
                 break;
@@ -158,7 +158,7 @@ function mark(job, format, done) {
                     done(err, null);
                     return;
                 }
-                let requests = [];
+                var requests = [];
                 requests.push({
                     updateCells: {
                         start: {sheetId: sheetId, rowIndex: i, columnIndex: j},
@@ -178,7 +178,7 @@ function mark(job, format, done) {
 }
 
 function updateCells(auth, requests, done) {
-    let sheets = google.sheets({
+    var sheets = google.sheets({
         version: 'v4',
         auth: auth.oauth2client
     });

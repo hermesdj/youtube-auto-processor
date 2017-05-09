@@ -1,15 +1,15 @@
 /**
  * Created by Jérémy on 06/05/2017.
  */
-let chokidar = require('chokidar');
-let EventLogger = require('node-windows').EventLogger;
-let config = require('./service-config.json');
-let log = new EventLogger(config.service_name);
+var chokidar = require('chokidar');
+var EventLogger = require('node-windows').EventLogger;
+var config = require('./service-config.json');
+var log = new EventLogger(config.service_name);
 
-let watcher = null;
+var watcher = null;
 
 exports.start = function (dir, onFile) {
-    let watch_directory =  dir + '/**/*.mp4';
+    var watch_directory =  dir + '/**/*.mp4';
     log.info('directory watcher-service started on ' + watch_directory);
 
     watcher = chokidar.watch(watch_directory, {persistent: true, ignoreInitial: true});

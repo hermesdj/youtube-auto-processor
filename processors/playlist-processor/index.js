@@ -1,21 +1,21 @@
 /**
  * Created by Jérémy on 09/05/2017.
  */
-let google = require('googleapis');
-let client = require('../../config/google-client');
+var google = require('googleapis');
+var client = require('../../config/google-client');
 
 function process(auth, job, done) {
-    let youtube = google.youtube({
+    var youtube = google.youtube({
         version: 'v3',
         auth: auth.oauth2client
     });
 
-    let playlistId = job.episode.serie.playlist_id;
+    var playlistId = job.episode.serie.playlist_id;
     if (!playlistId) {
         return done('no playlist id in serie', null);
     }
 
-    let videoId = job.episode.youtube_id;
+    var videoId = job.episode.youtube_id;
     if (!videoId) {
         return done('no video id in episode', null);
     }
@@ -51,12 +51,12 @@ exports.addToPlaylist = function (job, done) {
 };
 
 function create(auth, job, done) {
-    let youtube = google.youtube({
+    var youtube = google.youtube({
         version: 'v3',
         auth: auth.oauth2client
     });
 
-    let metadata = {
+    var metadata = {
         part: 'snippet, status',
         resource: {
             snippet: {

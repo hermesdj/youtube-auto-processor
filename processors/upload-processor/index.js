@@ -1,15 +1,15 @@
 /**
  * Created by Jérémy on 07/05/2017.
  */
-let ResumableUpload = require('node-youtube-resumable-upload');
-let fs = require('fs');
-let client = require('../../config/google-client');
-let moment = require('moment');
+var ResumableUpload = require('node-youtube-resumable-upload');
+var fs = require('fs');
+var client = require('../../config/google-client');
+var moment = require('moment');
 
 function process(auth, job, done) {
-    let episode = job.episode;
-    let resumable = new ResumableUpload();
-    let metadata = {
+    var episode = job.episode;
+    var resumable = new ResumableUpload();
+    var metadata = {
         snippet: {
             title: episode.video_name,
             description: episode.description,
@@ -27,7 +27,7 @@ function process(auth, job, done) {
     resumable.retry = 3;
 
     resumable.upload();
-    let total = fs.statSync(episode.path).size;
+    var total = fs.statSync(episode.path).size;
     job.state = 'UPLOAD_PROGRESS';
     job.upload_data = {
         progress: 0,

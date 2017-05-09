@@ -1,21 +1,21 @@
 /**
  * Created by Jérémy on 07/05/2017.
  */
-let path = require('path');
-let Job = require('../../model/job.model');
-let Serie = require('../../model/serie.model');
-let EventEmitter = require('events').EventEmitter;
-let util = require('util');
-let moment = require('moment');
-let flow = require('flow');
-let states = require('../../config/states');
-let serieProcessor = require('../../processors/serie-processor');
-let sheetProcessor = require('../../processors/sheet-processor');
-let thumbnailProcessor = require('../../processors/thumbnail-processor');
-let playlistProcessor = require('../../processors/playlist-processor');
+var path = require('path');
+var Job = require('../../model/job.model');
+var Serie = require('../../model/serie.model');
+var EventEmitter = require('events').EventEmitter;
+var util = require('util');
+var moment = require('moment');
+var flow = require('flow');
+var states = require('../../config/states');
+var serieProcessor = require('../../processors/serie-processor');
+var sheetProcessor = require('../../processors/sheet-processor');
+var thumbnailProcessor = require('../../processors/thumbnail-processor');
+var playlistProcessor = require('../../processors/playlist-processor');
 
-let processVideoService = require('../../services/process-video-service/install-service');
-let processUploadService = require('../../services/upload-video-service/install-service');
+var processVideoService = require('../../services/process-video-service/install-service');
+var processUploadService = require('../../services/upload-video-service/install-service');
 
 function jobRunner(done) {
     flow.exec(
@@ -45,7 +45,7 @@ util.inherits(jobRunner, EventEmitter);
 
 exports.run = jobRunner;
 
-let find_jobs = function (state, done) {
+var find_jobs = function (state, done) {
     Job.find({state: state.label}).sort('-date_created').populate({
         path: 'episode',
         populate: {
@@ -55,7 +55,7 @@ let find_jobs = function (state, done) {
     }).exec(done);
 };
 
-let process_jobs = function (jobs, process, done) {
+var process_jobs = function (jobs, process, done) {
     flow.serialForEach(jobs, function (job) {
         process(job, this);
     }, function () {
@@ -63,7 +63,7 @@ let process_jobs = function (jobs, process, done) {
     });
 };
 
-let process_ready_jobs = function (done) {
+var process_ready_jobs = function (done) {
     find_jobs(states.READY, function (err, jobs) {
         if (err) {
             console.error(err);
@@ -85,7 +85,7 @@ let process_ready_jobs = function (done) {
     });
 };
 
-let process_initialized_jobs = function (done) {
+var process_initialized_jobs = function (done) {
     find_jobs(states.INITIALIZED, function (err, jobs) {
         if (err) {
             console.error(err);
@@ -107,11 +107,11 @@ let process_initialized_jobs = function (done) {
     });
 };
 
-let process_initialized_job = function (job, done) {
+var process_initialized_job = function (job, done) {
     job.next(done);
 };
 
-let process_video_ready_jobs = function (done) {
+var process_video_ready_jobs = function (done) {
     find_jobs(states.VIDEO_READY, function (err, jobs) {
         if (err) {
             console.error(err);
@@ -126,7 +126,7 @@ let process_video_ready_jobs = function (done) {
     });
 };
 
-let process_schedule_jobs = function (done) {
+var process_schedule_jobs = function (done) {
     find_jobs(states.SCHEDULE, function (err, jobs) {
         if (err) {
             console.error(err);
@@ -148,7 +148,7 @@ let process_schedule_jobs = function (done) {
     });
 };
 
-let process_schedule_job = function (job, done) {
+var process_schedule_job = function (job, done) {
     sheetProcessor.getScheduledDate(job, function (err, result) {
         if (err) {
             console.error(err);
@@ -163,7 +163,7 @@ let process_schedule_job = function (job, done) {
     });
 };
 
-let process_upload_ready_jobs = function (done) {
+var process_upload_ready_jobs = function (done) {
     find_jobs(states.UPLOAD_READY, function (err, jobs) {
         if (err) {
             console.error(err);
@@ -178,7 +178,7 @@ let process_upload_ready_jobs = function (done) {
     })
 };
 
-let process_upload_done_jobs = function (done) {
+var process_upload_done_jobs = function (done) {
     find_jobs(states.UPLOAD_DONE, function (err, jobs) {
         if (err) {
             console.error(err);
@@ -202,7 +202,7 @@ let process_upload_done_jobs = function (done) {
     });
 };
 
-let process_upload_done_job = function (job, done) {
+var process_upload_done_job = function (job, done) {
     job.next(function (err, job) {
         if (err) {
             console.error(err);
@@ -221,7 +221,7 @@ let process_upload_done_job = function (job, done) {
     });
 };
 
-let process_playlists_jobs = function (done) {
+var process_playlists_jobs = function (done) {
     find_jobs(states.PLAYLIST, function (err, jobs) {
         if (err) {
             console.error(err);
@@ -245,7 +245,7 @@ let process_playlists_jobs = function (done) {
     });
 };
 
-let process_playlist_job = function (job, done) {
+var process_playlist_job = function (job, done) {
     if (job.episode.serie.playlist_id) {
         insertVideoToPlaylist(job, done);
     } else {
@@ -258,7 +258,7 @@ let process_playlist_job = function (job, done) {
     }
 };
 
-let insertVideoToPlaylist = function (job, done) {
+var insertVideoToPlaylist = function (job, done) {
     playlistProcessor.addToPlaylist(job, function (err) {
         if (err) {
             console.error(err);
@@ -268,7 +268,7 @@ let insertVideoToPlaylist = function (job, done) {
     });
 };
 
-let createPlaylist = function (job, done) {
+var createPlaylist = function (job, done) {
     playlistProcessor.createPlaylist(job, function (err) {
         if (err) {
             console.error(err);
@@ -279,7 +279,7 @@ let createPlaylist = function (job, done) {
     });
 };
 
-let process_all_done_jobs = function (done) {
+var process_all_done_jobs = function (done) {
     find_jobs(states.ALL_DONE, function (err, jobs) {
         if (err) {
             console.error(err);
@@ -301,9 +301,9 @@ let process_all_done_jobs = function (done) {
     });
 };
 
-let process_all_done_job = function (job, done) {
-    let publicDate = moment(job.episode.publishAt);
-    let now = moment();
+var process_all_done_job = function (job, done) {
+    var publicDate = moment(job.episode.publishAt);
+    var now = moment();
 
     if (publicDate < now) {
         // Episode is public

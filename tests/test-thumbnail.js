@@ -2,10 +2,10 @@
  * Created by Jérémy on 08/05/2017.
  */
 
-let mongoose = require('mongoose');
-let thumbnail_processor = require('./processors/thumbnail-processor');
-let Job = require('./model/job.model');
-let db_config = require('./config/database-config');
+var mongoose = require('mongoose');
+var thumbnail_processor = require('./processors/thumbnail-processor');
+var Job = require('./model/job.model');
+var db_config = require('./config/database-config');
 mongoose.connect(db_config.mongo.uri, db_config.mongo.options);
 
 Job.findOne({state: 'UPLOAD_DONE'}).sort('-date_created').populate('episode').exec(function (err, job) {

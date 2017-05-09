@@ -2,21 +2,21 @@
  * Created by Jérémy on 07/05/2017.
  */
 
-let mongoose = require('mongoose');
-let config = require('./service-config.json');
-let EventLogger = require('node-windows').EventLogger;
-let log = new EventLogger(config.service_name);
-let Task = require('./job-runner-task');
-let db_config = require('../../config/database-config');
-let service = require('./service');
+var mongoose = require('mongoose');
+var config = require('./service-config.json');
+var EventLogger = require('node-windows').EventLogger;
+var log = new EventLogger(config.service_name);
+var Task = require('./job-runner-task');
+var db_config = require('../../config/database-config');
+var service = require('./service');
 mongoose.connect(db_config.mongo.uri, db_config.mongo.options);
 
-let interval = parseInt(config.scheduled_interval);
+var interval = parseInt(config.scheduled_interval);
 if (interval === 0) {
     interval = 30;
 }
 
-let i = null;
+var i = null;
 console.log('starting interval watcher-service for jobs with ' + interval + ' seconds interval');
 log.info('starting interval watcher-service for jobs with ' + interval + ' seconds interval');
 i = setInterval(function () {

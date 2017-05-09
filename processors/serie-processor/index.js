@@ -1,8 +1,8 @@
 /**
  * Created by Jérémy on 08/05/2017.
  */
-let path = require('path');
-let Serie = require('../../model/serie.model');
+var path = require('path');
+var Serie = require('../../model/serie.model');
 
 exports.process = function (job, done) {
     console.log('called serie processor on job', job._id);

@@ -30,11 +30,12 @@
     <md-sidenav class="md-whiteframe-4dp" md-is-locked-open="$mdMedia('gt-sm')"
                 md-component-id="left" ng-click="app.toggleList()">
       <!-- Custom UsersList component -->
-      <jobs-list
-          users="app.jobs"
-          selected="app.selected"
-          on-selected="app.selectJob(user)">
-      </jobs-list>
+      <md-list>
+        <md-item ui-sref="jobs">Jobs</md-item>
+        <md-item ui-sref="series">Series</md-item>
+        <md-item ui-sref="services">Services</md-item>
+        <md-item ui-sref="settings">Settings</md-item>
+      </md-list>
     </md-sidenav>
 
     <!-- Container #4 -->
