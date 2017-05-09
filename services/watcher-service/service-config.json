@@ -1,0 +1,5 @@
+{
+  "service_name": "Youtube Processor File Watcher Service",
+  "service_description": "This service watch a folder for new .mp4 files and create new jobs in the mongodb database",
+  "main": "start.js"
+}

@@ -1,0 +1,6 @@
+{
+  "service_name": "Youtube Processor Job Runner Service",
+  "service_description": "This service run every minute, parse jobs in the database and manage them",
+  "main": "job-runner.js",
+  "scheduled_interval": "10"
+}

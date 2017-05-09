@@ -1,0 +1,5 @@
+{
+  "service_name": "Youtube Processor Video Uploader Service",
+  "service_description": "This service handle the upload of the oldest job in the database in state UPLOAD_READY, handle upload until UPLOAD_DONE is reached, then uninstall",
+  "main": "start.js"
+}

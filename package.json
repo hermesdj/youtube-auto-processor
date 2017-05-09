@@ -1,0 +1,38 @@
+{
+  "name": "youtube-auto-processor",
+  "version": "1.0.0",
+  "description": "A youtube processor used to modify videos and upload them to a Youtube channel",
+  "main": "youtube-auto-processor.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hermesdj/youtube-auto-processor.git"
+  },
+  "keywords": [
+    "youtube",
+    "api",
+    "ffmpeg",
+    "autoupload",
+    "autowatch"
+  ],
+  "author": "Jay's Gaming <jays.gaming.contact@gmail.com>",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/hermesdj/youtube-auto-processor/issues"
+  },
+  "homepage": "https://github.com/hermesdj/youtube-auto-processor#readme",
+  "dependencies": {
+    "chokidar": "^1.6.1",
+    "flow": "^0.2.3",
+    "fluent-ffmpeg": "^2.1.2",
+    "google-auth-library": "^0.10.0",
+    "google-cli-auth": "0.0.1",
+    "googleapis": "^19.0.0",
+    "moment": "^2.18.1",
+    "mongoose": "^4.9.7",
+    "node-windows": "^0.1.14",
+    "node-youtube-resumable-upload": "^0.2.1"
+  }
+}

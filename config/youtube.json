@@ -1,0 +1,4 @@
+{
+  "agenda_spreadsheet_id": "1iPzz7pbhHmg_fsyaqI4c1bNkpcn5dzMnCcEcjWZQoaI",
+  "default_description_template": "${game_title} Gameplay FR 1080p HD\r\n\r\n${description}\r\n\r\nVous pouvez retrouver le jeu en suivant le lien suivant : \r\n${steam_url}\r\n\r\nVous pouvez suivre la série grâce à la playlist suivante :\r\n${playlist_url}\r\n\r\n${default_description}"
+}
