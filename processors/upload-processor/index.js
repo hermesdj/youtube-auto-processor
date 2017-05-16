@@ -31,13 +31,14 @@ function process(auth, job, done) {
     job.state = 'UPLOAD_PROGRESS';
     job.upload_data = {
         progress: 0,
-        total: total
+        total: total,
+        startDate: new Date()
     };
     job.save();
 
     resumable.on('progress', function (progress) {
-        console.log(progress, '/', total);
         job.upload_data.progress = progress;
+        job.markModified('upload_data');
         job.save();
     });
 
@@ -54,6 +55,7 @@ function process(auth, job, done) {
         job.episode.status = success.status;
         job.state = 'UPLOAD_DONE';
         job.upload_data.progress = total;
+        job.markModified('upload_data');
         job.episode.save();
         job.save(function (err, job) {
             if (err) {

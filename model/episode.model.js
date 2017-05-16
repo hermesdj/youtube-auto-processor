@@ -15,6 +15,7 @@ var EpisodeSchema = new Schema({
     episode_number: Number,
     description: String,
     keywords: [String],
+    episode_name: String,
     serie: {type: Schema.Types.ObjectId, ref: 'Serie'},
     date_created: {type: Date, default: null, unique: true, required: true, dropDubs: true},
     thumbnails: Schema.Types.Mixed,
@@ -34,7 +35,7 @@ EpisodeSchema.methods.initialize = function (job, serie, episode_number) {
     var description_template = serie.description_template || config.default_description_template;
     this.description = description_template.replace('${game_title}', serie.game_title)
         .replace('${description}', serie.description)
-        .replace('${steam_url}', serie.steam_url)
+        .replace('${store_url}', serie.store_url)
         .replace('${playlist_url}', 'https://www.youtube.com/playlist?list=' + serie.playlist_id)
         .replace('${default_description}', fs.readFileSync(path.join(__dirname, '../config/default_description.txt'), 'utf-8'));
 };

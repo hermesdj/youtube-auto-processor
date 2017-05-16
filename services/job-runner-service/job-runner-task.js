@@ -8,6 +8,7 @@ var EventEmitter = require('events').EventEmitter;
 var util = require('util');
 var moment = require('moment');
 var flow = require('flow');
+var fs = require('fs');
 var states = require('../../config/states');
 var serieProcessor = require('../../processors/serie-processor');
 var sheetProcessor = require('../../processors/sheet-processor');
@@ -36,6 +37,8 @@ function jobRunner(done) {
         }, function () {
             process_all_done_jobs(this);
         }, function () {
+            process_public_jobs(this);
+        }, function () {
             done();
         }
     )
@@ -46,7 +49,17 @@ util.inherits(jobRunner, EventEmitter);
 exports.run = jobRunner;
 
 var find_jobs = function (state, done) {
-    Job.find({state: state.label}).sort('-date_created').populate({
+    Job.find({state: state.label}).sort('+date_created').populate({
+        path: 'episode',
+        populate: {
+            path: 'serie',
+            model: 'Serie'
+        }
+    }).exec(done);
+};
+
+var find_job = function (state, done) {
+    Job.findOne({state: state.label}).sort('+date_created').populate({
         path: 'episode',
         populate: {
             path: 'serie',
@@ -58,25 +71,27 @@ var find_jobs = function (state, done) {
 var process_jobs = function (jobs, process, done) {
     flow.serialForEach(jobs, function (job) {
         process(job, this);
+    }, function (err, job) {
+        console.log('done processing element');
     }, function () {
         done();
     });
 };
 
 var process_ready_jobs = function (done) {
-    find_jobs(states.READY, function (err, jobs) {
+    find_job(states.READY, function (err, job) {
         if (err) {
             console.error(err);
             return;
         }
-        if (jobs.length > 0) {
-            console.log('ready jobs found to process:' + jobs.length);
-            process_jobs(jobs, serieProcessor.process, function (err, job) {
+        if (job) {
+            console.log('ready jobs found to process:' + job._id);
+            serieProcessor.process(job, function (err, job) {
                 if (err) {
                     console.error(err);
                     job.error(err);
                 }
-                console.log('done processing ready jobs');
+                console.log('done processing ready job');
                 done();
             });
         } else {
@@ -93,7 +108,7 @@ var process_initialized_jobs = function (done) {
         }
         if (jobs.length > 0) {
             console.log('initialized jobs found to process:' + jobs.length);
-            process_jobs(jobs, process_initialized_job, function (err, result) {
+            process_jobs(jobs, process_initialized_job, function (err, job) {
                 if (err) {
                     console.error(err);
                     job.error(err);
@@ -108,7 +123,17 @@ var process_initialized_jobs = function (done) {
 };
 
 var process_initialized_job = function (job, done) {
-    job.next(done);
+    if ((job.episode.serie && job.episode.serie.named_episode) || job.episode.video_name.indexOf('${episode_name}') > 0) {
+        if (job.episode.episode_name) {
+            job.episode.video_name = job.episode.video_name.replace('${episode_name}', job.episode.episode_name);
+            job.episode.save(function () {
+                job.next(done);
+            });
+        }
+    } else {
+        // Not a named serie
+        job.next(done);
+    }
 };
 
 var process_video_ready_jobs = function (done) {
@@ -135,7 +160,7 @@ var process_schedule_jobs = function (done) {
         }
         if (jobs.length > 0) {
             console.log('schedule jobs found to process:' + jobs.length);
-            process_jobs(jobs, process_schedule_job, function (err) {
+            process_jobs(jobs, process_schedule_job, function (err, job) {
                 if (err) {
                     console.error(err);
                     job.error(err);
@@ -188,7 +213,7 @@ var process_upload_done_jobs = function (done) {
 
         if (jobs.length > 0) {
             console.log('upload done jobs found to process:' + jobs.length);
-            process_jobs(jobs, process_upload_done_job, function (err) {
+            process_jobs(jobs, process_upload_done_job, function (err, job) {
                 if (err) {
                     console.error(err);
                     job.error(err);
@@ -231,7 +256,7 @@ var process_playlists_jobs = function (done) {
 
         if (jobs.length > 0) {
             console.log('playlist jobs found to process:' + jobs.length);
-            process_jobs(jobs, process_playlist_job, function (err) {
+            process_jobs(jobs, process_playlist_job, function (err, job) {
                 if (err) {
                     console.error(err);
                     job.error(err);
@@ -288,7 +313,8 @@ var process_all_done_jobs = function (done) {
         }
 
         if (jobs.length > 0) {
-            process_jobs(jobs, process_all_done_job, function (err) {
+            console.log('all done job found to process:', jobs.length);
+            process_jobs(jobs, process_all_done_job, function (err, job) {
                 if (err) {
                     console.error(err);
                     job.error(err);
@@ -305,7 +331,7 @@ var process_all_done_job = function (job, done) {
     var publicDate = moment(job.episode.publishAt);
     var now = moment();
 
-    if (publicDate < now) {
+    if (now.diff(publicDate) > 0) {
         // Episode is public
         console.log('job found to mark as public');
         job.next(function (err, job) {
@@ -317,6 +343,43 @@ var process_all_done_job = function (job, done) {
         });
     } else {
         done();
+    }
+};
+
+var process_public_jobs = function (done) {
+    find_jobs(states.PUBLIC, function (err, jobs) {
+        if (err) {
+            console.error(err);
+            done(err, null);
+            return;
+        }
+
+        if (jobs.length > 0) {
+            console.log('public job found to process:', jobs.length);
+            process_jobs(jobs, process_public_job, function (err) {
+                if (err) {
+                    console.error(err);
+                }
+                done();
+            })
+        } else {
+            done();
+        }
+    });
+};
+
+var process_public_job = function (job, done) {
+    // clear all public videos from file system
+    if (fs.existsSync(job.path)) {
+        console.log('found file to delete as the video is now public', job.path);
+        fs.unlink(job.path, function (err) {
+            if (err) {
+                return done(err);
+            }
+            return done(null, job);
+        });
+    } else {
+        done(null, job);
     }
 };
 

@@ -1,0 +1,31 @@
+<div layout="column" ng-cloack class="md-inline-form">
+    <md-content md-theme="dark" layout-padding>
+        <div layout-gt-xs="row">
+            <md-input-container>
+                <label>Game</label>
+                <input ng-model="$ctrl.serie.game_title"/>
+            </md-input-container>
+            <md-input-container class="md-block" flex-gt-xs>
+                <label>Playlist Title</label>
+                <input ng-model="$ctrl.serie.playlist_title"/>
+            </md-input-container>
+            <md-input-container>
+                <label>Last Episode</label>
+                <input type="number" ng-model="$ctrl.serie.last_episode"/>
+            </md-input-container>
+        </div>
+    </md-content>
+    <md-content layout-padding>
+        <div>
+            <md-input-container class="md-block">
+                <label>Description</label>
+                <textarea ng-model="$ctrl.serie.description" rows="5" md-select-on-focus></textarea>
+            </md-input-container>
+            <md-chips ng-model="$ctrl.serie.video_keywords" placeholder="Enter a Keyword">
+                <md-chip-template>
+                    {{$chip}}
+                </md-chip-template>
+            </md-chips>
+        </div>
+    </md-content>
+</div>

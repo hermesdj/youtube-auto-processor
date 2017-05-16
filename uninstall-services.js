@@ -5,4 +5,3 @@ require('./services/watcher-service/uninstall-service')();
 require('./services/job-runner-service/uninstall-service')();
 require('./services/upload-video-service/uninstall-service')();
 require('./services/process-video-service/uninstall-service')();
-require('./services/database-service/uninstall-service')();

@@ -11,7 +11,9 @@ var JobSchema = new Schema({
     path: String,
     date_created: {type: Date, default: null, unique: true, required: true, dropDubs: true},
     state: {type: String, default: states.READY.label},
+    last_state: String,
     upload_data: Schema.Types.Mixed,
+    process_data: Schema.Types.Mixed,
     episode: {type: Schema.Types.ObjectId, ref: 'Episode'},
     err: Schema.Types.Mixed
 });
@@ -21,13 +23,6 @@ JobSchema.static.states = states;
 JobSchema.methods.error = function (err) {
     console.error('job error : ', err);
     this.state = states.ERROR.label;
-    this.markOnPlanning(function (err, res) {
-        if (err) {
-            console.error(err);
-            return;
-        }
-        console.log('done marking on planning');
-    });
     this.err = err;
     this.save();
 };
@@ -51,8 +46,9 @@ JobSchema.methods.next = function (done) {
     var next = states[this.state].next();
     if (next) {
         console.log('moving job', this._id, 'from state', this.state, 'to', next.label);
+        this.last_state = this.state;
         this.state = next.label;
-        if (this.state === states.READY.label) {
+        if (this.state === states.INITIALIZED.label) {
             this.markOnPlanning(function (err, res) {
                 if (err) {
                     console.error(err);

@@ -139,11 +139,13 @@ function getSpreadsheetId(auth, sheetName, done) {
 
 function mark(job, format, done) {
     if (!job.episode) {
+        console.error('no episode for this job, cannot mark as processing');
         job.error('no episode for this job, cannot mark as processing');
         return done(job.err, null);
     }
 
     if (!job.episode.serie) {
+        console.error('no serie for this job, cannot mark as processing');
         job.error('no serie for this job, cannot mark as processing');
         return done(job.err, null);
     }
@@ -212,5 +214,8 @@ exports.markAsPublic = function (job, done) {
 
 exports.markAsError = function (job, done) {
     console.log('marking as error on agenda');
-    mark(job, COLORS.error, done);
+    mark(job, COLORS.error, function(err, res){
+        console.error(err);
+        done(err, res);
+    });
 };

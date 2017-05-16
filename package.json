@@ -6,7 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "postinstall": "jspm install",
-    "run": "nw app"
+    "start": "nw ."
   },
   "repository": {
     "type": "git",
@@ -25,6 +25,13 @@
     "url": "https://github.com/hermesdj/youtube-auto-processor/issues"
   },
   "homepage": "https://github.com/hermesdj/youtube-auto-processor#readme",
+  "window": {
+    "icon": "YouTube.ico",
+    "title": "Youtube Processor Application",
+    "width": 1280,
+    "height": 720
+  },
+  "node-main": "init-services.js",
   "jspm": {
     "directories": {
       "baseURL": "app",
@@ -36,9 +43,11 @@
       "angular-aria": "github:angular/bower-angular-aria@1.5.8",
       "angular-material": "github:angular/bower-material@master",
       "angular-messages": "github:angular/bower-angular-messages@1.5.8",
+      "angular-moment": "npm:angular-moment@^1.0.1",
       "angular-ui-router": "npm:angular-ui-router@^1.0.3",
       "css": "github:systemjs/plugin-css@^0.1.20",
       "json": "github:systemjs/plugin-json@^0.1.0",
+      "lodash": "npm:lodash@^4.17.4",
       "text": "github:systemjs/plugin-text@^0.0.4"
     },
     "devDependencies": {
@@ -51,15 +60,21 @@
   },
   "dependencies": {
     "chokidar": "^1.6.1",
+    "cookie": "^0.3.1",
+    "countdown": "^2.6.0",
     "flow": "^0.2.3",
     "fluent-ffmpeg": "^2.1.2",
     "google-auth-library": "^0.10.0",
     "google-cli-auth": "0.0.1",
     "googleapis": "^19.0.0",
     "moment": "^2.18.1",
+    "moment-countdown": "0.0.3",
     "mongoose": "^4.9.7",
     "node-windows": "^0.1.14",
-    "node-youtube-resumable-upload": "^0.2.1"
+    "node-youtube-resumable-upload": "^0.2.1",
+    "nw": "^0.22.2",
+    "q": "^1.5.0",
+    "set-cookie-parser": "^2.0.0"
   },
   "devDependencies": {
     "jspm": "^0.16.46",

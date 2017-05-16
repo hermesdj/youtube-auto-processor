@@ -17,6 +17,8 @@ var SerieSchema = new Schema({
     game_title: String,
     description_template: String,
     playlist_title: String,
+    store_url: String,
+    named_episode: {type: Boolean, default: false},
     episodes: [{type: Schema.Types.ObjectId, ref: 'Episode'}]
 });
 
@@ -27,7 +29,9 @@ SerieSchema.methods.addEpisode = function (job, done) {
             console.error(err);
             return done(err, null);
         }
-        var episode_number = lastEpisode ? lastEpisode.episode_number++ : this.last_episode++;
+        console.log('last episode is', lastEpisode);
+        var last_episode_number = lastEpisode ? lastEpisode.episode_number++ : this.last_episode++;
+        var episode_number = last_episode_number + 1;
         console.log('new episode number is', episode_number);
         var episode = new Episode({
             serie: this
@@ -37,7 +41,7 @@ SerieSchema.methods.addEpisode = function (job, done) {
         episode.save(function (err, episode) {
             if (err) {
                 if (err.code === 11000) {
-                    console.log('episode already stored in database');
+                    console.log('episode already stored in database', err);
                     Episode.findOne({date_created: job.date_created}, function (err, episode) {
                         if (err) {
                             console.error(err);
@@ -92,9 +96,11 @@ SerieSchema.statics.findOrCreate = function (directory, done) {
                 serie.video_keywords = config.video_keywords;
                 serie.description = config.description;
                 serie.last_episode = parseInt(config.last_episode) || 0;
+                serie.named_episode = config.named_episode;
                 serie.game_title = config.game_title;
                 serie.description_template = config.description_template || null;
                 serie.playlist_title = config.playlist_title || serie.video_title_template.replace('- Episode ${episode_number}', '');
+                serie.store_url = config.store_url;
 
                 serie.video_keywords = config.video_keywords.split(',');
 

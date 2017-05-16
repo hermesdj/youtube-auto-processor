@@ -21,3 +21,12 @@ job move from state :
 - ERROR : Le job runner a rencontré une erreur et a passé le job en arrêt
 
 ## Configuration
+
+
+## TODO
+- [ ] Suppression de la vidéo locale une fois que tout le traitement a été terminé et la vidéo publique. Idem pour le thumbnail
+- [ ] Ajout d'un state MONETIZE pour gérer la monétisation automatique de la vidéo
+- [ ] Terminer le client nw.js pour consulter le status des jobs et manager le système
+- [ ] Ajout d'un state PAUSE pour mettre en pause le traitement en cours si possible
+- [x] En state INITIALIZED, si la vidéo a besoin d'un titre custom, il faut mettre le traitement en pause et ne pas passer à l'étape suivante
+- [ ] Associer une icône à chaque state

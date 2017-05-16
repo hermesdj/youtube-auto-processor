@@ -1,15 +1,59 @@
-<md-card ng-repeat="job in $ctrl.jobs" md-theme="{{ showDarkTheme ? 'dark-grey' : 'default' }}" md-theme-watch>
-    <md-card-title>
-        <md-card-title-text>
-            <span class="md-headline">Card with image</span>
-            <span class="md-subhead">Large</span>
-        </md-card-title-text>
-        <md-card-title-media>
-            <div class="md-media-lg card-media"></div>
-        </md-card-title-media>
-    </md-card-title>
-    <md-card-actions layout="row" layout-align="end center">
-        <md-button>Action 1</md-button>
-        <md-button>Action 2</md-button>
-    </md-card-actions>
-</md-card>
+<div layout="row" layout-align="start center" layout-padding>
+    <h3>
+        Youtube Processor Jobs List
+    </h3>
+    <span flex></span>
+    <md-select ng-model="$ctrl.selectedFilter" placeholder="State" class="md-no-underline">
+        <md-option value="">NOT PUBLIC OR DONE</md-option>
+        <md-option ng-repeat="state in $ctrl.states" ng-value="state.label">{{state.label}}</md-option>
+    </md-select>
+</div>
+<md-content>
+    <md-card ng-repeat="job in $ctrl.jobs | orderBy:'+date_created'"
+             md-theme="{{ showDarkTheme ? 'dark-grey' : 'default' }}" md-theme-watch
+             layout-margin layout-padding>
+        <md-card-title>
+            <md-card-title-text>
+                <span class="md-headline">{{job.episode.video_name}}</span>
+                <span class="md-subhead">{{job.state}} <span am-time-ago="job.episode.publishAt"></span></span>
+            </md-card-title-text>
+            <md-card-title-media>
+                <div class="md-media-sm card-media">
+                    <img ng-src="{{job.episode.serie.path}}/thumbnails/{{job.episode.episode_number}}.png"/>
+                </div>
+            </md-card-title-media>
+        </md-card-title>
+        <md-card-content>
+            <div ng-if="job.state === 'INITIALIZED'">
+                <md-input-container>
+                    <label>Episode Name</label>
+                    <input type="text" ng-model="episode_name"/>
+                </md-input-container>
+                <md-button ng-click="$ctrl.setEpisodeName(job, episode_name)">Set</md-button>
+            </div>
+            <div ng-if="job.state === 'UPLOAD_PROGRESS'" layout="row" layout-align="start center">
+                <div flex="20">Uploading Episode...</div>
+                <div flex="5"><em>{{(job.upload_data.progress / job.upload_data.total) * 100 | number:0}}%</em></div>
+                <div flex="40">
+                    <md-progress-linear md-mode="determinate"
+                                        value="{{(job.upload_data.progress / job.upload_data.total) * 100}}"></md-progress-linear>
+                </div>
+                <div flex="35" style="margin-left: 5px;">{{$ctrl.getRemainingTime(job.upload_data)}} remaining</div>
+            </div>
+            <div ng-if="job.state === 'VIDEO_PROGRESS'">
+                Processing Video... {{$ctrl.getRemainingTime(job.process_data)}}
+                <em>{{(job.process_data.progress / job.process_data.total) * 100 | number:0}}%</em>
+                <md-progress-linear md-mode="determinate"
+                                    value="{{(job.process_data.progress / job.process_data.total) * 100}}"></md-progress-linear>
+            </div>
+        </md-card-content>
+        <md-card-actions layout="row" layout-align="end center">
+            <md-button class="md-icon-button" ng-click="$ctrl.next(job)">
+                <md-icon md-svg-icon="next"></md-icon>
+            </md-button>
+            <md-button class="md-icon-button" ng-click="$ctrl.remove(job)">
+                <md-icon md-svg-icon="delete"></md-icon>
+            </md-button>
+        </md-card-actions>
+    </md-card>
+</md-content>

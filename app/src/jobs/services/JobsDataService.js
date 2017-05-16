@@ -7,23 +7,30 @@
  * @constructor
  */
 'use strict';
-let Job = require('../model/job.model');
+let Job = require('./model/job.model');
+let States = require('./config/states');
 
 function JobsDataService($q) {
-    // Promise-based API
-    return {
-        list: function (opts) {
-            // Simulate async nature of real remote calls
-            opts = opts || {};
-            return Job.find(opts).populate({
-                path: 'episode',
-                populate: {
-                    path: 'serie',
-                    model: 'Serie'
-                }
-            });
-        }
+    function Factory() {
+    }
+
+    Factory.prototype.list = function (opts) {
+        // Simulate async nature of real remote calls
+        opts = opts || {};
+        return Job.find(opts).populate({
+            path: 'episode',
+            populate: {
+                path: 'serie',
+                model: 'Serie'
+            }
+        }).exec();
     };
+
+    Factory.prototype.getStates = function () {
+        return States;
+    };
+
+    return new Factory();
 }
 
 export default ['$q', JobsDataService];

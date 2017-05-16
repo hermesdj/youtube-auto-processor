@@ -16,7 +16,7 @@ var db_config = require('../../config/database-config');
 mongoose.connect(db_config.mongo.uri, db_config.mongo.options);
 
 console.log('starting video processor service with env', process.env);
-Job.findOne({state: states.VIDEO_READY.label}).sort('-date_created').populate({
+Job.findOne({state: states.VIDEO_READY.label}).sort('+date_created').populate({
     path: 'episode',
     populate: {
         path: 'serie',
@@ -42,6 +42,7 @@ Job.findOne({state: states.VIDEO_READY.label}).sort('-date_created').populate({
 
         console.log('done processing episode ' + job.episode.video_name);
         job.next(function () {
+            mongoose.connection.close();
             service.stop();
         });
     });

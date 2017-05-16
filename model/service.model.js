@@ -7,8 +7,8 @@ var Schema = mongoose.Schema;
 var ServiceSchema = new Schema({
     service_name: String,
     service_description: String,
-    exists: Boolean,
-    state: String,
+    installed: {type: Boolean, default: false},
+    started: {type: Boolean, default: false},
     path: String
 });
 

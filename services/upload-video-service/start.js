@@ -3,9 +3,6 @@
  */
 
 var mongoose = require('mongoose');
-var config = require('./service-config.json');
-var EventLogger = require('node-windows').EventLogger;
-var log = new EventLogger(config.service_name);
 var service = require('./service');
 var states = require('../../config/states');
 
@@ -16,7 +13,7 @@ var db_config = require('../../config/database-config');
 mongoose.connect(db_config.mongo.uri, db_config.mongo.options);
 
 console.log('starting upload processor service with HOME ' + process.env.HOME);
-Job.findOne({state: states.UPLOAD_READY.label}).sort('-date_created').populate({
+Job.findOne({state: states.UPLOAD_READY.label}).sort('+date_created').populate({
     path: 'episode',
     populate: {
         path: 'serie',
@@ -42,6 +39,8 @@ Job.findOne({state: states.UPLOAD_READY.label}).sort('-date_created').populate({
             return;
         }
         console.log('done uploading episode ' + job.episode.video_name);
+
+        mongoose.connection.close();
         service.stop();
     });
 });

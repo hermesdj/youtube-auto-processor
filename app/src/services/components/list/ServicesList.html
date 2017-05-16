@@ -1,0 +1,40 @@
+<md-subheader layout="row" layout-align="start center">
+    <h3>
+        Youtube Processor Windows Services
+        <span flex></span>
+    </h3>
+</md-subheader>
+<md-content layout="row" layout-wrap="true" layout-padding layout-margin>
+    <md-card ng-repeat="service in $ctrl.services" md-theme="{{ showDarkTheme ? 'dark-grey' : 'default' }}"
+             md-theme-watch flex="45">
+        <md-card-title>
+            <md-card-title-text>
+                <span class="md-headline">{{::service.service_name}}</span>
+                <!--<span class="md-subhead">{{::service.service_description}}</span>-->
+            </md-card-title-text>
+        </md-card-title>
+        <md-card-actions layout="row" layout-align="end center">
+            <md-button class="md-icon-button" ng-if="!service.started && service.installed"
+                       ng-click="$ctrl.start(service)">
+                <md-icon md-svg-icon="start">start</md-icon>
+                <md-tooltip>Start service</md-tooltip>
+            </md-button>
+            <md-button class="md-icon-button" ng-if="service.started" ng-click="$ctrl.restart(service)">
+                <md-icon md-svg-icon="restart">restart</md-icon>
+                <md-tooltip>Restart service</md-tooltip>
+            </md-button>
+            <md-button class="md-icon-button" ng-if="service.started" ng-click="$ctrl.stop(service)">
+                <md-icon md-svg-icon="stop">stop</md-icon>
+                <md-tooltip>Stop service</md-tooltip>
+            </md-button>
+            <md-button class="md-icon-button" ng-if="service.installed" ng-click="$ctrl.uninstall(service)">
+                <md-icon md-svg-icon="delete">uninstall</md-icon>
+                <md-tooltip>Uninstall service</md-tooltip>
+            </md-button>
+            <md-button class="md-icon-button" ng-if="!service.installed" ng-click="$ctrl.install(service)">
+                <md-icon md-svg-icon="install">install</md-icon>
+                <md-tooltip>Install service</md-tooltip>
+            </md-button>
+        </md-card-actions>
+    </md-card>
+</md-content>

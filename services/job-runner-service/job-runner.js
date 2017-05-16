@@ -38,4 +38,5 @@ service.on('stop', function () {
 
 process.on('exit', function () {
     clearInterval(i);
+    mongoose.connection.close();
 });

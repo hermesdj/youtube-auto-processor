@@ -33,6 +33,7 @@ watcher.start(config.watch_directory, function (file) {
 
 service.on('stop', function () {
     console.log('Service is being stopped');
+    mongoose.connection.close();
     watcher.stop(function () {
         console.log('Watcher has been stopped');
     });
