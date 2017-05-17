@@ -30,3 +30,4 @@ job move from state :
 - [ ] Ajout d'un state PAUSE pour mettre en pause le traitement en cours si possible
 - [x] En state INITIALIZED, si la vidéo a besoin d'un titre custom, il faut mettre le traitement en pause et ne pas passer à l'étape suivante
 - [ ] Associer une icône à chaque state
+- [ ] Intégrer une publication Twitter/Facebook/Discord/Mention
