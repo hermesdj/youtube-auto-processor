@@ -3,14 +3,14 @@
  */
 
 var mongoose = require('mongoose');
-var upload_processor = require('./processors/upload-processor');
-var thumbnail_processor = require('./processors/thumbnail-processor');
-var sheet_processor = require('./processors/sheet-processor');
+var upload_processor = require('../processors/upload-processor');
+var thumbnail_processor = require('../processors/thumbnail-processor');
+var sheet_processor = require('../processors/sheet-processor');
 var path = require('path');
 var moment = require('moment');
 
-var Job = require('./model/job.model');
-var db_config = require('./config/database-config');
+var Job = require('../model/job.model');
+var db_config = require('../config/database-config');
 mongoose.connect(db_config.mongo.uri, db_config.mongo.options);
 
 

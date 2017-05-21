@@ -35,10 +35,8 @@ function JobsListController(JobsDataService, $interval) {
             let initialized = _.filter(this.jobs, function (job) {
                 return job.state === 'INITIALIZED'
             });
-            console.log('initialized', initialized);
             if (initialized.length === 0) {
                 this.jobs = jobs;
-                console.log(jobs);
             }
         }.bind(this), function (err) {
             console.error(err);
@@ -52,7 +50,9 @@ function JobsListController(JobsDataService, $interval) {
     };
 
     Factory.prototype.remove = function (job) {
-        job.episode.remove();
+        if (job.episode) {
+            job.episode.remove();
+        }
         job.remove();
     };
 
@@ -77,6 +77,22 @@ function JobsListController(JobsDataService, $interval) {
         job.episode.video_name = job.episode.video_name.replace('${episode_name}', name);
         job.episode.save(function () {
             job.next();
+        });
+    };
+
+    Factory.prototype.monetize = function (job) {
+        nw.Window.open('https://www.youtube.com/edit?o=U&ns=1&video_id=' + job.episode.youtube_id, {
+            inject_js_start: 'load_window.js',
+            inject_js_end: 'unload_window.js'
+        }, function (new_win) {
+            // And listen to new window's focus event
+            new_win.on('focus', function () {
+                console.log('New window is focused');
+            });
+            new_win.on('loaded', function () {
+                console.log('loaded !');
+                require("nw.gui").Window.get().cookies.getAll({}, console.table.bind(console));
+            });
         });
     };
 
