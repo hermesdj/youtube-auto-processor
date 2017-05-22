@@ -33,38 +33,52 @@ SerieSchema.methods.addEpisode = function (job, done) {
         var last_episode_number = lastEpisode ? lastEpisode.episode_number++ : this.last_episode++;
         var episode_number = last_episode_number + 1;
         console.log('new episode number is', episode_number);
-        var episode = new Episode({
-            serie: this
-        });
-        episode.initialize(job, this, episode_number);
-        console.log('episode initialized');
-        episode.save(function (err, episode) {
+
+        // Check if episode already exists in DB
+        Episode.findOne({date_created: job.date_created}).exec(function (err, episode) {
             if (err) {
-                if (err.code === 11000) {
-                    console.log('episode already stored in database', err);
-                    Episode.findOne({date_created: job.date_created}, function (err, episode) {
-                        if (err) {
+                return done(err);
+            }
+
+            console.log('does an episode exists ?', episode);
+
+            if (episode) {
+                done(null, episode);
+            } else {
+                episode = new Episode({
+                    serie: this
+                });
+                episode.initialize(job, this, episode_number);
+                console.log('episode initialized');
+                episode.save(function (err, episode) {
+                    if (err) {
+                        if (err.code === 11000) {
+                            console.log('episode already stored in database', err);
+                            Episode.findOne({date_created: job.date_created}, function (err, episode) {
+                                if (err) {
+                                    console.error(err);
+                                    return done(err, null);
+                                }
+                                done(null, episode);
+                            })
+                        } else {
                             console.error(err);
                             return done(err, null);
                         }
-                        done(null, episode);
-                    })
-                } else {
-                    console.error(err);
-                    return done(err, null);
-                }
-            } else {
-                this.episodes.push(episode);
-                this.save(function (err, serie) {
-                    if (err) {
-                        console.error('error saving serie', err);
-                        return done(err, null);
-                    }
+                    } else {
+                        this.episodes.push(episode);
+                        this.save(function (err, serie) {
+                            if (err) {
+                                console.error('error saving serie', err);
+                                return done(err, null);
+                            }
 
-                    done(null, episode);
-                });
+                            done(null, episode);
+                        });
+                    }
+                }.bind(this))
             }
-        }.bind(this))
+        }.bind(this));
     }.bind(this));
 };
 

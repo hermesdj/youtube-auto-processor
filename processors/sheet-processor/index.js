@@ -69,23 +69,32 @@ function find(haystack, needle, done) {
 }
 
 function parseDate(haystack, i, j, done) {
+    console.log('parsing value at', i, j);
     var result = null;
     var hour = haystack[i][0];
     var day = null;
 
     for (var k = i - 1; k >= 0; k--) {
-        var test_date = moment(haystack[k][j], 'DD/MM/YYYY');
-        if (test_date !== null && test_date.isValid()) {
-            day = haystack[k][j];
-            break;
+        if(haystack[k][j]) {
+            var m = haystack[k][j].match(/(\d+)(-|\/)(\d+)(?:-|\/)(?:(\d+)\s+(\d+):(\d+)(?::(\d+))?(?:\.(\d+))?)?/);
+            console.log(m);
+            if (m !== null) {
+                day = haystack[k][j];
+                break;
+            }
         }
     }
 
     if (day && hour) {
+        console.log('day && hour found', day, hour);
         result = moment(day + hour, 'DD/MM/YYYY HH:mm:ss').format('YYYY-MM-DDTHH:mm:ss.sZ');
     }
 
-    done(null, result);
+    if (moment(result).isValid()) {
+        done(null, result);
+    } else {
+        done('invalid date parsed: ' + day + ':' + hour, null);
+    }
 }
 
 exports.getScheduledDate = function (job, done) {
@@ -214,7 +223,7 @@ exports.markAsPublic = function (job, done) {
 
 exports.markAsError = function (job, done) {
     console.log('marking as error on agenda');
-    mark(job, COLORS.error, function(err, res){
+    mark(job, COLORS.error, function (err, res) {
         console.error(err);
         done(err, res);
     });

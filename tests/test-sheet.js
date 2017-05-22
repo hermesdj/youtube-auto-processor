@@ -3,9 +3,9 @@
  */
 
 var mongoose = require('mongoose');
-var sheet_processor = require('./processors/sheet-processor');
-var Job = require('./model/job.model');
-var db_config = require('./config/database-config');
+var sheet_processor = require('../processors/sheet-processor');
+var Job = require('../model/job.model');
+var db_config = require('../config/database-config');
 mongoose.connect(db_config.mongo.uri, db_config.mongo.options);
 
 Job.findOne({state: 'SCHEDULE'}).sort('-date_created').populate({
@@ -30,13 +30,13 @@ Job.findOne({state: 'SCHEDULE'}).sort('-date_created').populate({
             return;
         }
         console.log('scheduled date for', job.episode.video_name, 'is', result);
-        sheet_processor.markAsPublic(job, function (err, result) {
-            if (err) {
-                console.error(err);
-                return;
-            }
-
-            console.log('marked as ready', result);
-        })
+        // sheet_processor.markAsPublic(job, function (err, result) {
+        //     if (err) {
+        //         console.error(err);
+        //         return;
+        //     }
+        //
+        //     console.log('marked as ready', result);
+        // })
     });
 });

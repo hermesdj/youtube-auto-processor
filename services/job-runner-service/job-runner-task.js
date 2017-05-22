@@ -33,6 +33,8 @@ function jobRunner(done) {
         }, function () {
             process_upload_done_jobs(this);
         }, function () {
+            process_thumbnail_jobs(this);
+        }, function () {
             process_playlists_jobs(this);
         }, function () {
             process_all_done_jobs(this);
@@ -72,7 +74,10 @@ var process_jobs = function (jobs, process, done) {
     flow.serialForEach(jobs, function (job) {
         process(job, this);
     }, function (err, job) {
-        console.log('done processing element');
+        if (err) {
+            console.error(err);
+            job.error(err);
+        }
     }, function () {
         done();
     });
@@ -124,6 +129,7 @@ var process_initialized_jobs = function (done) {
 
 var process_initialized_job = function (job, done) {
     if ((job.episode.serie && job.episode.serie.named_episode) || job.episode.video_name.indexOf('${episode_name}') > 0) {
+        console.log('this needs a name, waiting for user input...');
         if (job.episode.episode_name) {
             job.episode.video_name = job.episode.video_name.replace('${episode_name}', job.episode.episode_name);
             job.episode.save(function () {
@@ -244,6 +250,34 @@ var process_upload_done_job = function (job, done) {
             job.next(done);
         });
     });
+};
+
+var process_thumbnail_jobs = function (done) {
+    find_jobs(states.THUMBNAIL, function (err, jobs) {
+        if (err) {
+            console.error(err);
+            done(err, null);
+            return;
+        }
+
+        if (jobs.length > 0) {
+            console.log('thumbnail jobs found to process:' + jobs.length);
+            process_jobs(jobs, process_thumbnail_job, function (err, job) {
+                if (err) {
+                    console.error(err);
+                    job.error(err);
+                }
+
+                done();
+            })
+        } else {
+            done();
+        }
+    });
+};
+
+var process_thumbnail_job = function (job, done) {
+    job.next(done);
 };
 
 var process_playlists_jobs = function (done) {
