@@ -15,7 +15,7 @@
         <md-card-title>
             <md-card-title-text>
                 <span class="md-headline">{{job.episode.video_name}}</span>
-                <span class="md-subhead">{{job.state}} <span am-time-ago="job.episode.publishAt"></span></span>
+                <span class="md-subhead">{{job.state}} Public <span am-time-ago="job.episode.publishAt"></span></span>
             </md-card-title-text>
             <md-card-title-media>
                 <div class="md-media-sm card-media">
@@ -51,6 +51,9 @@
             </div>
             <div ng-if="job.state === 'MONETIZE'">
                 <md-button ng-click="$ctrl.monetize(job)">Monetize</md-button>
+            </div>
+            <div ng-if="job.state === 'WAIT_YOUTUBE_PROCESSING'">
+                status is {{job.processing.processingStatus}} <span ng-if="job.processing.processingStatus === 'processing'">{{job.processing.processingProgress.partsProcessed / job.processing.processingProgress.partsTotal * 100}}% - {{job.processing.processingProgress.timeLeftMs / 1000}} seconds left</span>
             </div>
         </md-card-content>
         <md-card-actions layout="row" layout-align="end center">

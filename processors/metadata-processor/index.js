@@ -159,7 +159,7 @@ function updateAsBrowser(episode, auth, session_token, cookies, next) {
         headers: headers
     }, function (res) {
         console.log(`STATUS: ${res.statusCode}`);
-        console.log(`HEADERS: ${JSON.stringify(res.headers)}`);
+        console.log(`HEADERS: ${headersJSON.stringify(res)}`);
         res.setEncoding('utf8');
         res.on('data', (chunk) => {
             console.log(`BODY: ${chunk}`);
@@ -184,9 +184,6 @@ MetadataProcessor.prototype.update = function (job, next) {
             getVideo(auth, function (err, res, data) {
                 console.log(data);
             });
-            // loadCookie(auth, job.episode.youtube_id, function (err, token, cookies) {
-            //     updateAsBrowser(job.episode, auth, token, cookies, next);
-            // });
         }
     });
 };

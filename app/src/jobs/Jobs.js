@@ -3,6 +3,7 @@
  */
 
 import JobsDataService from 'src/jobs/services/JobsDataService';
+import YoutubeMetadataService from 'src/jobs/services/YoutubeMetadataService';
 
 import JobsList from 'src/jobs/components/list/JobsList';
 
@@ -13,4 +14,5 @@ export default angular
 
     .component(JobsList.name, JobsList.config)
 
-    .service('JobsDataService', JobsDataService);
+    .service('JobsDataService', JobsDataService)
+    .service('YoutubeMetadataService', YoutubeMetadataService);

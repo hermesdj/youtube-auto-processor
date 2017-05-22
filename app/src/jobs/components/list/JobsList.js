@@ -15,7 +15,7 @@ export default {
     }
 };
 
-function JobsListController(JobsDataService, $interval) {
+function JobsListController(JobsDataService, YoutubeMetadataService, $interval, $http) {
     var self = this;
 
     function Factory() {
@@ -80,6 +80,40 @@ function JobsListController(JobsDataService, $interval) {
         });
     };
 
+    function postMetadata(job, session) {
+        var metadata = {
+            video_monetization_style: 'ads',
+            //ad_breaks: {has_preroll: true, has_midroll: false, has_postroll: true, midrolls_are_manual: true},
+            syndication: 'everywhere',
+            modified_fields: 'video_monetization_style,syndication',
+            video_id: job.episode.youtube_id,
+            session_token: session
+        };
+        return $http({
+            method: 'POST',
+            url: 'https://www.youtube.com/metadata_ajax?action_edit_video=1',
+            data: metadata,
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            transformRequest: function(obj) {
+                var str = [];
+                for(var p in obj) {
+                    if(obj[p].hasOwnProperty('has_preroll')){
+                        str.push(encodeURIComponent(p) + "=" + encodeURIComponent(JSON.stringify(obj[p])));
+                    }else{
+                        str.push(encodeURIComponent(p) + "=" + encodeURIComponent(obj[p]));
+                    }
+                }
+                return str.join("&");
+            }
+        }).then(function (res) {
+            console.log(res);
+        }, function (err) {
+            console.log(err);
+        })
+    }
+
     Factory.prototype.monetize = function (job) {
         nw.Window.open('https://www.youtube.com/edit?o=U&ns=1&video_id=' + job.episode.youtube_id, {
             inject_js_start: 'load_window.js',
@@ -89,11 +123,20 @@ function JobsListController(JobsDataService, $interval) {
             new_win.on('focus', function () {
                 console.log('New window is focused');
             });
-            new_win.on('loaded', function () {
+            new_win.once('loaded', function () {
                 console.log('loaded !');
                 require("nw.gui").Window.get().cookies.getAll({}, console.table.bind(console));
+                $http.get('https://www.youtube.com/edit?o=U&ns=1&video_id=' + job.episode.youtube_id).then(function (res) {
+                    var session = res.data.match(/var session_token = \"(.*?)\";/);
+                    console.log('session_token found', session[1]);
+                    postMetadata(job, session[1]);
+                });
             });
         });
+    };
+
+    Factory.prototype.endscreen = function (job) {
+        YoutubeMetadataService.endscreen(job);
     };
 
     return new Factory();

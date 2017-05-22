@@ -30,7 +30,11 @@ SerieSchema.methods.addEpisode = function (job, done) {
             return done(err, null);
         }
         console.log('last episode is', lastEpisode);
-        var last_episode_number = lastEpisode ? lastEpisode.episode_number++ : this.last_episode++;
+        var last_episode_number = this.last_episode || 0;
+        if (lastEpisode) {
+            last_episode_number = lastEpisode.episode_number;
+        }
+
         var episode_number = last_episode_number + 1;
         console.log('new episode number is', episode_number);
 
@@ -107,10 +111,9 @@ SerieSchema.statics.findOrCreate = function (directory, done) {
                 serie.planning_name = config.planning_name;
                 serie.playlist_id = config.playlist_id;
                 serie.video_title_template = config.video_title_template;
-                serie.video_keywords = config.video_keywords;
                 serie.description = config.description;
                 serie.last_episode = parseInt(config.last_episode) || 0;
-                serie.named_episode = config.named_episode;
+                serie.named_episode = config.named_episode || false;
                 serie.game_title = config.game_title;
                 serie.description_template = config.description_template || null;
                 serie.playlist_title = config.playlist_title || serie.video_title_template.replace('- Episode ${episode_number}', '');

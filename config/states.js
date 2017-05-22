@@ -63,14 +63,28 @@ module.exports = function () {
             id: 9,
             label: 'PLAYLIST',
             next: function () {
+                return states.WAIT_YOUTUBE_PROCESSING;
+            }
+        },
+        WAIT_YOUTUBE_PROCESSING: {
+            id: 10,
+            label: 'WAIT_YOUTUBE_PROCESSING',
+            next: function () {
                 return states.MONETIZE;
             }
         },
         MONETIZE: {
-            id: 10,
+            id: 11,
             label: 'MONETIZE',
             next: function () {
-                return states.ALL_DONE;
+                return states.ENDSCREEN;
+            }
+        },
+        ENDSCREEN: {
+            id: 12,
+            label: 'ENDSCREEN',
+            next: function () {
+                return states.ALL_DONE
             }
         },
         ALL_DONE: {
@@ -83,6 +97,13 @@ module.exports = function () {
         PUBLIC: {
             id: 12,
             label: 'PUBLIC',
+            next: function () {
+                return states.SHARE;
+            }
+        },
+        SHARE: {
+            id: 13,
+            label: 'SHARE',
             next: function () {
                 return null;
             }

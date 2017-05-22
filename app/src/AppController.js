@@ -9,8 +9,6 @@ function AppController($mdSidenav) {
     self.toggleList = function () {
         $mdSidenav('left').toggle();
     };
-
-
 }
 
 export default ['$mdSidenav', AppController];

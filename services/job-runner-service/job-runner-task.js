@@ -14,6 +14,7 @@ var serieProcessor = require('../../processors/serie-processor');
 var sheetProcessor = require('../../processors/sheet-processor');
 var thumbnailProcessor = require('../../processors/thumbnail-processor');
 var playlistProcessor = require('../../processors/playlist-processor');
+var youtubeProcessor = require('../../processors/youtube-processor');
 
 var processVideoService = require('../../services/process-video-service/install-service');
 var processUploadService = require('../../services/upload-video-service/install-service');
@@ -36,6 +37,8 @@ function jobRunner(done) {
             process_thumbnail_jobs(this);
         }, function () {
             process_playlists_jobs(this);
+        }, function () {
+            process_wait_youtube_processing_jobs(this);
         }, function () {
             process_all_done_jobs(this);
         }, function () {
@@ -415,6 +418,44 @@ var process_public_job = function (job, done) {
     } else {
         done(null, job);
     }
+};
+
+var process_wait_youtube_processing_jobs = function (done) {
+    find_jobs(states.WAIT_YOUTUBE_PROCESSING, function (err, jobs) {
+        if (err) {
+            console.error(err);
+            done(err, null);
+            return;
+        }
+
+        if (jobs.length > 0) {
+            console.log('wait processing job found to process:', jobs.length);
+            process_jobs(jobs, process_wait_youtube_processing_job, function (err) {
+                if (err) {
+                    console.error(err);
+                }
+                done();
+            })
+        } else {
+            done();
+        }
+    });
+};
+
+var process_wait_youtube_processing_job = function (job, done) {
+    youtubeProcessor.getVideoProcessorStats(job, function (err, job) {
+        if (err) {
+            console.error(err);
+            return done(err, null);
+        }
+        console.log('processing info is', job.processing);
+        if (job.processing && job.processing.processingStatus === 'succeeded') {
+            // Move to next step as processing is done
+            job.next(done);
+        } else {
+            done(err, job);
+        }
+    })
 };
 
 

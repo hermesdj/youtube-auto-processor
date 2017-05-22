@@ -72,7 +72,7 @@
     "mongoose": "^4.9.7",
     "node-windows": "^0.1.14",
     "node-youtube-resumable-upload": "^0.2.1",
-    "nw": "^0.22.2",
+    "nw": "^0.22.3-sdk",
     "q": "^1.5.0",
     "set-cookie-parser": "^2.0.0"
   },
