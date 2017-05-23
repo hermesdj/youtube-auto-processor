@@ -12,7 +12,6 @@ var EpisodeSchema = new Schema({
     video_name: String,
     youtube_id: String,
     status: Schema.Types.Mixed,
-    details: Schema.Types.Mixed,
     episode_number: Number,
     description: String,
     keywords: [String],

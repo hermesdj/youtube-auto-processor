@@ -77,6 +77,13 @@ module.exports = function () {
             id: 11,
             label: 'MONETIZE',
             next: function () {
+                return states.MONETIZING;
+            }
+        },
+        MONETIZING: {
+            id: 11,
+            label: 'MONETIZING',
+            next: function () {
                 return states.ENDSCREEN;
             }
         },

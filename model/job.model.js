@@ -15,6 +15,7 @@ var JobSchema = new Schema({
     upload_data: Schema.Types.Mixed,
     process_data: Schema.Types.Mixed,
     processing: Schema.Types.Mixed,
+    details: Schema.Types.Mixed,
     episode: {type: Schema.Types.ObjectId, ref: 'Episode'},
     err: Schema.Types.Mixed
 });

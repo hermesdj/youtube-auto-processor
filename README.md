@@ -24,10 +24,12 @@ job move from state :
 
 
 ## TODO
-- [ ] Suppression de la vidéo locale une fois que tout le traitement a été terminé et la vidéo publique. Idem pour le thumbnail
-- [ ] Ajout d'un state MONETIZE pour gérer la monétisation automatique de la vidéo
-- [ ] Terminer le client nw.js pour consulter le status des jobs et manager le système
-- [ ] Ajout d'un state PAUSE pour mettre en pause le traitement en cours si possible
+- [x] Suppression de la vidéo locale une fois que tout le traitement a été terminé et la vidéo publique. Idem pour le thumbnail
+- [x] Ajout d'un state MONETIZE pour gérer la monétisation automatique de la vidéo
 - [x] En state INITIALIZED, si la vidéo a besoin d'un titre custom, il faut mettre le traitement en pause et ne pas passer à l'étape suivante
+- [ ] Ajout d'un state PAUSE pour mettre en pause le traitement en cours si possible
 - [ ] Associer une icône à chaque state
+- [ ] Traitement de la vidéo avec intro et outro
+- [ ] Ajout d'un écran de fin automatique
 - [ ] Intégrer une publication Twitter/Facebook/Discord/Mention
+- [ ] Terminer le client nw.js pour consulter le status des jobs et manager le système

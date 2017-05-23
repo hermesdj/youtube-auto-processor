@@ -22,16 +22,10 @@ function process(auth, job, done) {
         }
         if (data) {
             job.processing = data.items[0].processingDetails;
-            job.episode.details = data.items[0].contentDetails;
-            job.episode.markModified('details');
-            job.episode.save(function (err, episode) {
-                if (err) {
-                    console.error(err);
-                    return done(err, null);
-                }
-                job.markModified('processing');
-                job.save(done);
-            });
+            job.details = data.items[0].contentDetails;
+            job.markModified('processing');
+            job.markModified('details');
+            job.save(done);
         }
     });
 }
