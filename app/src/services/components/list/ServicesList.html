@@ -5,7 +5,7 @@
     </h3>
 </md-subheader>
 <md-content layout="row" layout-wrap="true" layout-padding layout-margin>
-    <md-card ng-repeat="service in $ctrl.services" md-theme="{{ showDarkTheme ? 'dark-grey' : 'default' }}"
+    <md-card ng-repeat="service in $ctrl.services track by service._id" md-theme="{{ showDarkTheme ? 'dark-grey' : 'default' }}"
              md-theme-watch flex="45">
         <md-card-title>
             <md-card-title-text>

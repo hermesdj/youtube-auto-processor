@@ -9,13 +9,13 @@
     </md-select>
 </div>
 <md-content>
-    <md-card ng-repeat="job in $ctrl.jobs | orderBy:'+date_created'"
+    <md-card ng-repeat="job in $ctrl.jobs | orderBy:'+date_created' track by job._id"
              md-theme="{{ showDarkTheme ? 'dark-grey' : 'default' }}" md-theme-watch
              layout-margin layout-padding>
         <md-card-title>
             <md-card-title-text>
                 <span class="md-headline">{{job.episode.video_name}}</span>
-                <span class="md-subhead">{{job.state}} Public <span am-time-ago="job.episode.publishAt"></span></span>
+                <span class="md-subhead">{{job.state}} <span ng-if="job.episode.publishAt">Public <span am-time-ago="job.episode.publishAt"></span></span></span>
             </md-card-title-text>
             <md-card-title-media>
                 <div class="md-media-sm card-media">
@@ -59,6 +59,15 @@
             </div>
         </md-card-content>
         <md-card-actions layout="row" layout-align="end center">
+            <md-select ng-model="$ctrl.selectedState" ng-change="job.goto($ctrl.selectedState)" placeholder="Jump to State..." class="md-no-underline">
+                <md-option ng-repeat="state in $ctrl.states" ng-value="state.label">{{state.label}}</md-option>
+            </md-select>
+            <md-button ng-click="job.pause()" ng-if="job.state !== 'PAUSED' && job.state !== 'UPLOAD_PROCESS'">
+                <md-icon md-svg-icon="pause"></md-icon> Pause
+            </md-button>
+            <md-button ng-click="job.resume()" ng-if="job.state === 'PAUSED'">
+                <md-icon md-svg-icon="start"></md-icon> Resume
+            </md-button>
             <md-button ng-click="$ctrl.next(job)">
                 <md-icon md-svg-icon="next"></md-icon> Next
             </md-button>

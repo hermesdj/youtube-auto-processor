@@ -73,4 +73,25 @@ JobSchema.methods.next = function (done) {
     this.save(done);
 };
 
+JobSchema.methods.pause = function (next) {
+    this.last_state = this.state;
+    this.state = states.PAUSED.label;
+
+    this.save(next);
+};
+
+JobSchema.methods.resume = function (next) {
+    this.state = this.last_state;
+    this.last_state = states.PAUSED.label;
+
+    this.save(next);
+};
+
+JobSchema.methods.goto = function (state, next) {
+    this.last_state = this.state;
+    this.state = state;
+
+    this.save(next);
+};
+
 module.exports = mongoose.model('Job', JobSchema);

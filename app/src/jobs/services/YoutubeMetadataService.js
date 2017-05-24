@@ -5,18 +5,121 @@
 const Job = require('./model/job.model');
 const States = require('./config/states');
 const moment = require('moment');
+const google = require('googleapis');
+const client = require('./config/google-client');
+
+import _ from 'lodash';
 
 function YoutubeMetadataService($q, $http) {
     function Factory() {
     }
 
     Factory.prototype.setEndscreen = function (job) {
-        // Simulate async nature of real remote calls
         let videoId = job.episode.youtube_id;
+        let sourceId = 'uoArPjzsStk';
         let deferred = $q.defer();
+        console.log('setting endscreen for video', videoId);
+
+        job.next(function (err, job) {
+            if (err) {
+                deferred.reject(err);
+                return;
+            }
+            getSession('https://www.youtube.com/endscreen?v=', videoId).then(function (session) {
+                console.log('session retrieved is', session);
+                return retrieveEndscreen(videoId, sourceId, session).then(function (editorData) {
+                    let oldPlaylist = _.find(editorData.elements, function (element) {
+                        return element.type === 'PLAYLIST';
+                    });
+                    if (!oldPlaylist) {
+                        return deferred.reject('no playlist to replace');
+                    }
+                    _.pull(editorData.elements, oldPlaylist);
+                    return getCurrentPlaylist(job).then(function (playlist) {
+                        oldPlaylist.displayImages.thumbnails = [playlist.snippet.thumbnails.high];
+                        oldPlaylist.playlistLength = playlist.contentDetails.itemCount + " vidéos";
+                        oldPlaylist.accessibilityStr = oldPlaylist.playlistLength + ', ' + playlist.snippet.title;
+                        oldPlaylist.title = playlist.snippet.title;
+                        oldPlaylist.playlistId = playlist.id;
+                        oldPlaylist.videoId = videoId;
+                        oldPlaylist.targetUrl = encodeURIComponent('https://www.youtube.com/watch?v=' + videoId + '&list=' + playlist.id);
+
+                        editorData.elements.push(oldPlaylist);
+
+                        return postEndscreen(editorData, videoId, session);
+                    });
+                });
+            }).then(function (result) {
+                console.log(result);
+                deferred.resolve(result);
+            }, function (err) {
+                console.error(err);
+                deferred.reject(err);
+            });
+        });
 
         return deferred.promise;
     };
+
+    function postEndscreen(data, videoId, session) {
+        let metadata = {
+            session_token: session,
+            v: videoId,
+            encrypted_video_id: videoId,
+            action_save: 1
+        };
+        metadata = angular.extend(metadata, data);
+        return $http({
+            method: 'POST',
+            url: 'https://www.youtube.com/endscreen_ajax?v=' + videoId,
+            data: metadata,
+            headers: {
+                'Content-Type': 'application/json'
+            },
+        }).then(function (res) {
+            return res.data;
+        });
+    }
+
+    function getCurrentPlaylist(job) {
+        let deferred = $q.defer();
+        client(function (auth) {
+            let youtube = google.youtube({
+                version: 'v3',
+                auth: auth.oauth2client
+            });
+            let req = youtube.playlists.list({
+                id: job.episode.serie.playlist_id,
+                part: 'snippet,contentDetails'
+            }, function (err, data) {
+                if (err) {
+                    deferred.reject(err);
+                }
+                if (data) {
+                    deferred.resolve(data.items[0]);
+                } else {
+                    deferred.reject('no data in get playlist response');
+                }
+            });
+        });
+        return deferred.promise;
+    }
+
+    function retrieveEndscreen(videoId, sourceId, session) {
+        let metadata = {
+            session_token: session
+        };
+        return $http({
+            method: 'POST',
+            url: 'https://www.youtube.com/endscreen_ajax?v=' + videoId + '&encrypted_video_id=' + videoId + '&from_video_id=' + sourceId + '&action_retrieve_from_video=1',
+            data: metadata,
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+        }).then(function (res) {
+            return res.data.for_editor;
+        });
+    }
 
     function authenticateOnYoutube(videoId) {
         let deferred = $q.defer();
@@ -84,15 +187,42 @@ function YoutubeMetadataService($q, $http) {
         });
     }
 
-    function getSession(videoId) {
-        return $http.get('https://www.youtube.com/edit?o=U&ns=1&video_id=' + videoId).then(function (res) {
-            var session = res.data.match(/var session_token = \"(.*?)\";/);
+    function getSession(url, videoId) {
+        let deferred = $q.defer();
+        $http.get(url + videoId).then(function (res) {
+            let session = res.data.match(/var session_token = \"(.*?)\";/);
             if (session) {
                 return session[1];
             } else {
-                return $q.reject({code: 4000});
+                session = res.data.match(/'XSRF_TOKEN': \"(.*?)\"/);
+                if (session) {
+                    return session[1];
+                } else {
+                    return $q.reject({code: 4000});
+                }
+            }
+        }).then(function (session) {
+            deferred.resolve(session);
+        }, function (err) {
+            if (err.code === 4000) {
+                console.log('no session found, authenticating on youtube');
+                authenticateOnYoutube(videoId).then(function () {
+                    getSession(url, videoId).then(function (session) {
+                        deferred.resolve(session);
+                    }, function (err) {
+                        console.error(err);
+                        deferred.reject(err);
+                    });
+                }, function (err) {
+                    console.error(err);
+                    deferred.reject('error while authenticating on Youtube');
+                });
+            } else {
+                console.error(err);
+                deferred.reject('error on get Session');
             }
         });
+        return deferred.promise;
     }
 
     Factory.prototype.setMonetization = function (job) {
@@ -100,33 +230,15 @@ function YoutubeMetadataService($q, $http) {
 
         // Move to monetizing state
         job.next(function (err, job) {
-            getSession(job.episode.youtube_id).then(function (session) {
-                postMetadata(job, session).then(function (result) {
-                    deferred.resolve(result);
-                }, function (err) {
-                    console.error(err);
-                    deferred.reject('error while posting metadata');
-                });
-            }, function (err) {
-                if (err.code === 4000) {
-                    authenticateOnYoutube(job.episode.youtube_id).then(function (result) {
-                        getSession().then(function (session) {
-                            postMetadata(job, session).then(function (result) {
-                                deferred.resolve(result);
-                            }, function (err) {
-                                console.error(err);
-                                deferred.reject('error while posting metadata');
-                            });
-                        })
+            getSession('https://www.youtube.com/edit?o=U&ns=1&video_id=', job.episode.youtube_id)
+                .then(function (session) {
+                    postMetadata(job, session).then(function (result) {
+                        deferred.resolve(result);
                     }, function (err) {
                         console.error(err);
-                        deferred.reject('error while authenticating on Youtube');
+                        deferred.reject('error while posting metadata');
                     });
-                } else {
-                    console.error(err);
-                    deferred.reject('error on get Session');
-                }
-            });
+                });
         });
 
         return deferred.promise;

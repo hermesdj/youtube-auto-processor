@@ -4,7 +4,7 @@
 Download ffmpeg : http://ffmpeg.zeranoe.com/builds/
 
 ## State machine
-job move from state :
+job move from state : (not accurate)
 - READY : le service watch-folder a détecté une vidéo et initialisé un nouveau job, la vidéo est passée en orange sur l'agenda
 - INITIALIZED : le job-runner a initialisé l'épisode et la série si elle n'existait pas
 - VIDEO_READY : la vidéo est prête à être traitée par ffmpeg
@@ -30,6 +30,7 @@ job move from state :
 - [ ] Ajout d'un state PAUSE pour mettre en pause le traitement en cours si possible
 - [ ] Associer une icône à chaque state
 - [ ] Traitement de la vidéo avec intro et outro
-- [ ] Ajout d'un écran de fin automatique
+- [x] Ajout d'un écran de fin automatique
 - [ ] Intégrer une publication Twitter/Facebook/Discord/Mention
 - [ ] Terminer le client nw.js pour consulter le status des jobs et manager le système
+- [ ] Essayer de superposer sur l'écran de fin la date du prochain épisode

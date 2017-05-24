@@ -81,36 +81,50 @@ module.exports = function () {
             }
         },
         MONETIZING: {
-            id: 11,
+            id: 12,
             label: 'MONETIZING',
             next: function () {
                 return states.ENDSCREEN;
             }
         },
         ENDSCREEN: {
-            id: 12,
+            id: 13,
             label: 'ENDSCREEN',
+            next: function () {
+                return states.SETTING_ENDSCREEN
+            }
+        },
+        SETTING_ENDSCREEN: {
+            id: 14,
+            label: 'SETTING_ENDSCREEN',
             next: function () {
                 return states.ALL_DONE
             }
         },
         ALL_DONE: {
-            id: 11,
+            id: 15,
             label: 'ALL_DONE',
             next: function () {
                 return states.PUBLIC;
             }
         },
         PUBLIC: {
-            id: 12,
+            id: 16,
             label: 'PUBLIC',
             next: function () {
                 return states.SHARE;
             }
         },
         SHARE: {
-            id: 13,
+            id: 17,
             label: 'SHARE',
+            next: function () {
+                return states.FINISHED;
+            }
+        },
+        FINISHED: {
+            id: 18,
+            label: 'FINISHED',
             next: function () {
                 return null;
             }
@@ -118,6 +132,13 @@ module.exports = function () {
         ERROR: {
             id: -1,
             label: 'ERROR',
+            next: function () {
+                return null;
+            }
+        },
+        PAUSED: {
+            id: -2,
+            label: 'PAUSED',
             next: function () {
                 return null;
             }
