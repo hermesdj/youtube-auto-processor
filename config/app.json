@@ -1,5 +1,8 @@
 {
-  "watch_directory": "D:/Processor/Watch",
+  "watch_directory": "Z:/Content Creation/Processor/Watch",
   "working_directory": "Z:/Content Creation/Processor/Work",
-  "output_directory": "Z:/Content Creation/Processor/Output"
+  "output_directory": "Z:/Content Creation/Processor/Output",
+  "ffmpeg_path": "Z:/Dev/workspace/youtube-auto-processor/lib/ffmpeg-3.3.1-win64-static/bin/ffmpeg.exe",
+  "ffprobe_path": "Z:/Dev/workspace/youtube-auto-processor/lib/ffmpeg-3.3.1-win64-static/bin/ffprobe.exe",
+  "pause_before_processing": true
 }

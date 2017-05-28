@@ -14,6 +14,13 @@ module.exports = function () {
             id: 2,
             label: 'INITIALIZED',
             next: function () {
+                return states.SCHEDULE;
+            }
+        },
+        SCHEDULE: {
+            id: 5,
+            label: 'SCHEDULE',
+            next: function () {
                 return states.VIDEO_READY;
             }
         },
@@ -27,13 +34,6 @@ module.exports = function () {
         VIDEO_DONE: {
             id: 4,
             label: 'VIDEO_DONE',
-            next: function () {
-                return states.SCHEDULE;
-            }
-        },
-        SCHEDULE: {
-            id: 5,
-            label: 'SCHEDULE',
             next: function () {
                 return states.UPLOAD_READY;
             }
@@ -111,13 +111,6 @@ module.exports = function () {
         PUBLIC: {
             id: 16,
             label: 'PUBLIC',
-            next: function () {
-                return states.SHARE;
-            }
-        },
-        SHARE: {
-            id: 17,
-            label: 'SHARE',
             next: function () {
                 return states.FINISHED;
             }

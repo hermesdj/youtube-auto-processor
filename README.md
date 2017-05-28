@@ -27,10 +27,13 @@ job move from state : (not accurate)
 - [x] Suppression de la vidéo locale une fois que tout le traitement a été terminé et la vidéo publique. Idem pour le thumbnail
 - [x] Ajout d'un state MONETIZE pour gérer la monétisation automatique de la vidéo
 - [x] En state INITIALIZED, si la vidéo a besoin d'un titre custom, il faut mettre le traitement en pause et ne pas passer à l'étape suivante
-- [ ] Ajout d'un state PAUSE pour mettre en pause le traitement en cours si possible
+- [x] Ajout d'un state PAUSE pour mettre en pause le traitement en cours si possible
 - [ ] Associer une icône à chaque state
 - [ ] Traitement de la vidéo avec intro et outro
 - [x] Ajout d'un écran de fin automatique
-- [ ] Intégrer une publication Twitter/Facebook/Discord/Mention
 - [ ] Terminer le client nw.js pour consulter le status des jobs et manager le système
 - [ ] Essayer de superposer sur l'écran de fin la date du prochain épisode
+- [ ] Setter le nom du jeu sur la vidéo automatiquement
+- [ ] Charger automatiquement la base de données au lancement de l'application si mongo n'est pas lancé (service windows)
+- [ ] Compilation de l'application avec nw-builder
+- [ ] Gérer le cas où on a une ou des cases vides dans l'agenda, et vérifier que cela check bien dans le mois suivant

@@ -3,7 +3,7 @@
   "service_description": "This service will start the processing of the oldest job in state VIDEO_READY, encode the video, pass the job to VIDEO_DONE, and uninstall",
   "main": "start.js",
   "fluent_ffmpeg": {
-    "ffmpeg_path": "../lib/ffmpeg-3.2.4-win64-static/bin",
-    "ffprobe_path": "../lib/ffmpeg-3.2.4-win64-static/bin"
+    "ffmpeg_path": "../../lib/ffmpeg-3.3.1-win64-static/bin/ffmpeg.exe",
+    "ffprobe_path": "../../lib/ffmpeg-3.3.1-win64-static/bin/ffprobe.exe"
   }
 }

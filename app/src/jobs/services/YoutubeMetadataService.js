@@ -124,7 +124,7 @@ function YoutubeMetadataService($q, $http) {
     function authenticateOnYoutube(videoId) {
         let deferred = $q.defer();
         nw.Window.open('https://www.youtube.com/edit?o=U&ns=1&video_id=' + videoId, {}, function (new_win) {
-            // And listen to new window's focus event
+            // TODO revoir l'authentification
             new_win.on('loaded', function () {
                 console.log('loaded !', new_win);
             });
@@ -143,18 +143,22 @@ function YoutubeMetadataService($q, $http) {
 
         let duration = moment.duration(job.details.duration);
         if (duration.asMinutes() > 10) {
-            let parts = Math.floor(duration.asMinutes() / 25);
-            var midrolls = [];
-            for (var i = 1; i <= parts; i++) {
-                midrolls.push("" + 25 * i + ":" + Math.floor(Math.random() * 60));
-            }
             metadata.ad_breaks = {
                 has_preroll: true,
-                has_midroll: true,
                 has_postroll: true,
-                midrolls_are_manual: true,
-                manual_midroll_times: midrolls
             };
+            let parts = Math.floor(duration.asMinutes() / 25);
+            console.log('parts found in video with', duration.asMinutes(), 'duration are', parts);
+            var midrolls = [];
+            for (var i = 1; i <= parts; i++) {
+                midrolls.push("" + Math.floor((duration.asMinutes() / (parts + 1))) * i + ":" + Math.floor(Math.random() * 60));
+            }
+            console.log('midrolls generated are', midrolls);
+            metadata.ad_breaks.has_midroll = midrolls.length > 0;
+            if (midrolls.length > 0) {
+                metadata.ad_breaks.midrolls_are_manual = true;
+                metadata.ad_breaks.manual_midroll_times = midrolls
+            }
             metadata.modified_fields = metadata.modified_fields + ',ad_breaks';
         }
 
@@ -168,8 +172,8 @@ function YoutubeMetadataService($q, $http) {
                 'Content-Type': 'application/x-www-form-urlencoded'
             },
             transformRequest: function (obj) {
-                var str = [];
-                for (var p in obj) {
+                let str = [];
+                for (let p in obj) {
                     if (obj[p].hasOwnProperty('has_preroll')) {
                         str.push(encodeURIComponent(p) + "=" + encodeURIComponent(JSON.stringify(obj[p])));
                     } else {

@@ -2,7 +2,6 @@
  * Created by jdallard on 24/05/2017.
  */
 const mongoose = require('mongoose');
-const sheet_processor = require('../processors/sheet-processor');
 const Job = require('../model/job.model');
 const db_config = require('../config/database-config');
 mongoose.connect(db_config.mongo.uri, db_config.mongo.options);

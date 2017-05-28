@@ -18,24 +18,22 @@ function process(auth, job, done) {
     month = month.charAt(0).toUpperCase() + month.slice(1);
     var year = moment().format('YYYY');
     var start = 'A1';
-    var end = 'H28';
+    var end = 'H33';
     var range = month.concat(' ').concat(year).concat('!').concat(start).concat(':').concat(end);
 
     processRange(auth, job, range, function (err, haystack, i, j) {
         if (err) {
-            return done(err, null);
+            month = moment().add(1, 'M').format('MMMM');
+            month = month.charAt(0).toUpperCase() + month.slice(1);
+            let range = month.concat(' ').concat(year).concat('!').concat(start).concat(':').concat(end);
+            processRange(auth, job, range, function (err, haystack, i, j) {
+                return done(err, haystack, i, j, month.concat(' ').concat(year));
+            });
         }
 
         if (i && j) {
             return done(null, haystack, i, j, month.concat(' ').concat(year));
         }
-
-        month = moment().add(1, 'M').format('MMMM');
-        month = month.charAt(0).toUpperCase() + month.slice(1);
-        var range = month.concat(' ').concat(year).concat('!').concat(start).concat(':').concat(end);
-        processRange(auth, job, range, function (err, haystack, i, j) {
-            done(err, haystack, i, j, month.concat(' ').concat(year));
-        });
     });
 }
 
@@ -51,7 +49,7 @@ function processRange(auth, job, range, done) {
         range: range
     }, function (err, res) {
         if (err) {
-            done(err, null);
+            done(err, job);
         }
         find(res.values, job.episode.serie.planning_name.replace('${episode_number}', job.episode.episode_number), done);
     });
@@ -75,7 +73,7 @@ function parseDate(haystack, i, j, done) {
     var day = null;
 
     for (var k = i - 1; k >= 0; k--) {
-        if(haystack[k][j]) {
+        if (haystack[k][j]) {
             var m = haystack[k][j].match(/(\d+)(-|\/)(\d+)(?:-|\/)(?:(\d+)\s+(\d+):(\d+)(?::(\d+))?(?:\.(\d+))?)?/);
             console.log(m);
             if (m !== null) {
@@ -111,7 +109,7 @@ exports.getScheduledDate = function (job, done) {
     client(function (auth) {
         process(auth, job, function (err, haystack, i, j) {
             if (err) {
-                return done(err, null);
+                return done(err, job);
             }
             parseDate(haystack, i, j, done);
         });
@@ -128,7 +126,7 @@ function getSpreadsheetId(auth, sheetName, done) {
         spreadsheetId: config.agenda_spreadsheet_id
     }, function (err, res) {
         if (err) {
-            done(err, null);
+            done(err, job);
         }
         var result = null;
         for (var i = 0; i < res.sheets.length; i++) {
@@ -162,11 +160,11 @@ function mark(job, format, done) {
     client(function (auth) {
         process(auth, job, function (err, haystack, i, j, sheetName) {
             if (err) {
-                return done(err, null);
+                return done(err, job);
             }
             getSpreadsheetId(auth, sheetName, function (err, sheetId) {
                 if (err) {
-                    done(err, null);
+                    done(err, job);
                     return;
                 }
                 var requests = [];
@@ -199,7 +197,7 @@ function updateCells(auth, requests, done) {
         resource: {requests: requests}
     }, function (err, res) {
         if (err) {
-            done(err, null);
+            done(err, job);
             return;
         }
         done(null, res);

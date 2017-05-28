@@ -8,6 +8,9 @@ var moment = require('moment');
 
 function process(auth, job, done) {
     var episode = job.episode;
+    if (!fs.existsSync(episode.path)) {
+        done('File not found : ' + episode.path);
+    }
     var resumable = new ResumableUpload();
     var metadata = {
         snippet: {

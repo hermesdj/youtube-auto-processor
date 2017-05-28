@@ -1,23 +1,24 @@
 /**
  * Created by Jérémy on 07/05/2017.
  */
-var path = require('path');
-var Job = require('../../model/job.model');
-var Serie = require('../../model/serie.model');
-var EventEmitter = require('events').EventEmitter;
-var util = require('util');
-var moment = require('moment');
-var flow = require('flow');
-var fs = require('fs');
-var states = require('../../config/states');
-var serieProcessor = require('../../processors/serie-processor');
-var sheetProcessor = require('../../processors/sheet-processor');
-var thumbnailProcessor = require('../../processors/thumbnail-processor');
-var playlistProcessor = require('../../processors/playlist-processor');
-var youtubeProcessor = require('../../processors/youtube-processor');
+const path = require('path');
+const Job = require('../../model/job.model');
+const Serie = require('../../model/serie.model');
+const EventEmitter = require('events').EventEmitter;
+const util = require('util');
+const moment = require('moment');
+const flow = require('flow');
+const config = require('../../config/app.json');
+const fs = require('fs');
+const states = require('../../config/states');
+const serieProcessor = require('../../processors/serie-processor');
+const sheetProcessor = require('../../processors/sheet-processor');
+const thumbnailProcessor = require('../../processors/thumbnail-processor');
+const playlistProcessor = require('../../processors/playlist-processor');
+const youtubeProcessor = require('../../processors/youtube-processor');
 
-var processVideoService = require('../../services/process-video-service/install-service');
-var processUploadService = require('../../services/upload-video-service/install-service');
+const processVideoService = require('../../services/process-video-service/install-service');
+const processUploadService = require('../../services/upload-video-service/install-service');
 
 function jobRunner(done) {
     flow.exec(
@@ -186,14 +187,28 @@ var process_schedule_job = function (job, done) {
     sheetProcessor.getScheduledDate(job, function (err, result) {
         if (err) {
             console.error(err);
+            job.error(err);
             done(err, null);
             return;
         }
 
-        console.log(job.episode.video_name + ' scheduled on ' + result);
         job.episode.publishAt = moment(result).toDate();
-        job.episode.save();
-        job.next(done);
+        console.log(job.episode.video_name + ' scheduled on ' + job.episode.publishAt);
+        job.episode.save(function (err, episode) {
+            if (err) {
+                console.error(err);
+                job.error(err);
+                return done(err);
+            }
+
+            if (config.pause_before_processing) {
+                job.state = states.SCHEDULE.next().label;
+                job.pause(done);
+            } else {
+                job.next(done);
+            }
+        });
+
     });
 };
 
@@ -247,8 +262,8 @@ var process_upload_done_job = function (job, done) {
         thumbnailProcessor.setThumbnail(job, function (err, job) {
             if (err) {
                 console.error(err);
-                done(err, null);
-                return;
+                job.error(err);
+                return done(err, null);
             }
             job.next(done);
         });

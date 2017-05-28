@@ -21,9 +21,11 @@ module.exports = function(){
     });
 
     if(!service.exists) {
+        console.log('installing service');
         service.install();
     }else{
         service.start();
     }
+
     return service;
 };
