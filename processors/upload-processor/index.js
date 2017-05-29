@@ -26,7 +26,7 @@ function process(auth, job, done) {
         }
     };
 
-    if (episode.localizations.length > 0) {
+    if (episode.localizations && episode.localizations.length > 0) {
         metadata.localizations = episode.localizations;
     }
 

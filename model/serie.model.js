@@ -25,7 +25,7 @@ let SerieSchema = new Schema({
             key: String,
             title: String,
             description: String,
-            description_template: Mixed
+            description_template: Schema.Types.Mixed
         }
     ]
 });

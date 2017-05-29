@@ -29,11 +29,12 @@ job move from state : (not accurate)
 - [x] En state INITIALIZED, si la vidéo a besoin d'un titre custom, il faut mettre le traitement en pause et ne pas passer à l'étape suivante
 - [x] Ajout d'un state PAUSE pour mettre en pause le traitement en cours si possible
 - [ ] Associer une icône à chaque state
-- [ ] Traitement de la vidéo avec intro et outro
+- [x] Traitement de la vidéo avec intro et outro
 - [x] Ajout d'un écran de fin automatique
 - [ ] Terminer le client nw.js pour consulter le status des jobs et manager le système
 - [ ] Essayer de superposer sur l'écran de fin la date du prochain épisode
 - [ ] Setter le nom du jeu sur la vidéo automatiquement
 - [ ] Charger automatiquement la base de données au lancement de l'application si mongo n'est pas lancé (service windows)
 - [ ] Compilation de l'application avec nw-builder
-- [ ] Gérer le cas où on a une ou des cases vides dans l'agenda, et vérifier que cela check bien dans le mois suivant
+- [ ] Gérer le cas où on a une ou des cases vides dans l'agenda
+- [x] vérifier que cela check bien dans le mois suivant

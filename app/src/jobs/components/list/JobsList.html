@@ -44,7 +44,7 @@
             </div>
             <div ng-if="job.state === 'UPLOAD_PROGRESS'" layout="row" layout-align="start center">
                 <div flex="20">Uploading Episode...</div>
-                <div flex="5"><em>{{(job.upload_data.progress / job.upload_data.total) * 100 | number:2}}%</em></div>
+                <div flex="5"><em>{{(job.upload_data.progress / job.upload_data.total) * 100 | number:0}}%</em></div>
                 <div flex="40">
                     <md-progress-linear md-mode="determinate"
                                         value="{{(job.upload_data.progress / job.upload_data.total) * 100}}"></md-progress-linear>
