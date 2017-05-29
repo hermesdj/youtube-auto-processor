@@ -1,12 +1,12 @@
 /**
  * Created by Jérémy on 06/05/2017.
  */
-var mongoose = require('mongoose');
-var Schema = mongoose.Schema;
-var path = require('path');
-var Episode = require('./episode.model');
+const mongoose = require('mongoose');
+const Schema = mongoose.Schema;
+const path = require('path');
+const Episode = require('./episode.model');
 
-var SerieSchema = new Schema({
+let SerieSchema = new Schema({
     path: String,
     planning_name: String,
     playlist_id: String,
@@ -19,7 +19,15 @@ var SerieSchema = new Schema({
     playlist_title: String,
     store_url: String,
     named_episode: {type: Boolean, default: false},
-    episodes: [{type: Schema.Types.ObjectId, ref: 'Episode'}]
+    episodes: [{type: Schema.Types.ObjectId, ref: 'Episode'}],
+    localizations: [
+        {
+            key: String,
+            title: String,
+            description: String,
+            description_template: Mixed
+        }
+    ]
 });
 
 SerieSchema.methods.addEpisode = function (job, done) {
@@ -30,12 +38,12 @@ SerieSchema.methods.addEpisode = function (job, done) {
             return done(err, null);
         }
         console.log('last episode is', lastEpisode);
-        var last_episode_number = this.last_episode || 0;
+        let last_episode_number = this.last_episode || 0;
         if (lastEpisode) {
             last_episode_number = lastEpisode.episode_number;
         }
 
-        var episode_number = last_episode_number + 1;
+        let episode_number = last_episode_number + 1;
         console.log('new episode number is', episode_number);
 
         // Check if episode already exists in DB
@@ -87,8 +95,8 @@ SerieSchema.methods.addEpisode = function (job, done) {
 };
 
 SerieSchema.statics.findOrCreate = function (directory, done) {
-    var query = this.model('Serie').findOne({path: directory});
-    var self = this;
+    let query = this.model('Serie').findOne({path: directory});
+    let self = this;
     query.exec(function (err, serie) {
         if (err) {
             return done(err, null);
@@ -100,10 +108,10 @@ SerieSchema.statics.findOrCreate = function (directory, done) {
         } else {
             // Create serie based on path
             console.log('serie not found for path', directory);
-            var serie = new self({
+            let serie = new self({
                 path: directory
             });
-            var config = require(path.join(directory, 'serie.json'));
+            let config = require(path.join(directory, 'serie.json'));
             if (!config) {
                 console.error('Cannot find serie.json in', directory);
                 done('Cannot find serie.json in' + directory);
@@ -118,6 +126,9 @@ SerieSchema.statics.findOrCreate = function (directory, done) {
                 serie.description_template = config.description_template || null;
                 serie.playlist_title = config.playlist_title || serie.video_title_template.replace('- Episode ${episode_number}', '');
                 serie.store_url = config.store_url;
+                if (config.localizations) {
+                    serie.localizations = config.localizations;
+                }
 
                 serie.video_keywords = config.video_keywords.split(',');
 

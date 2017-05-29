@@ -1,28 +1,35 @@
 /**
  * Created by Jérémy on 07/05/2017.
  */
-var ResumableUpload = require('node-youtube-resumable-upload');
-var fs = require('fs');
-var client = require('../../config/google-client');
-var moment = require('moment');
+const ResumableUpload = require('node-youtube-resumable-upload');
+const fs = require('fs');
+const client = require('../../config/google-client');
+const moment = require('moment');
 
 function process(auth, job, done) {
-    var episode = job.episode;
+    let episode = job.episode;
     if (!fs.existsSync(episode.path)) {
         done('File not found : ' + episode.path);
     }
-    var resumable = new ResumableUpload();
-    var metadata = {
+    let resumable = new ResumableUpload();
+    let metadata = {
         snippet: {
             title: episode.video_name,
             description: episode.description,
-            tags: episode.keywords
+            tags: episode.keywords,
+            defaultLanguage: 'fr',
+            defaultAudioLanguage: 'fr'
         },
         status: {
             privacyStatus: 'private',
             publishAt: moment(episode.publishAt).format('YYYY-MM-DDTHH:mm:ss.sZ')
         }
     };
+
+    if (episode.localizations.length > 0) {
+        metadata.localizations = episode.localizations;
+    }
+
     resumable.tokens = auth.token;
     resumable.filepath = episode.path;
     resumable.metadata = metadata;
@@ -30,7 +37,7 @@ function process(auth, job, done) {
     resumable.retry = 3;
 
     resumable.upload();
-    var total = fs.statSync(episode.path).size;
+    let total = fs.statSync(episode.path).size;
     job.state = 'UPLOAD_PROGRESS';
     job.upload_data = {
         progress: 0,

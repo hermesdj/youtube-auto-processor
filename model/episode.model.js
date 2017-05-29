@@ -1,13 +1,13 @@
 /**
  * Created by Jérémy on 06/05/2017.
  */
-var mongoose = require('mongoose');
-var Schema = mongoose.Schema;
-var fs = require('fs');
-var path = require('path');
-var config = require('../config/youtube.json');
+const mongoose = require('mongoose');
+const Schema = mongoose.Schema;
+const fs = require('fs');
+const path = require('path');
+const config = require('../config/youtube.json');
 
-var EpisodeSchema = new Schema({
+let EpisodeSchema = new Schema({
     path: String,
     video_name: String,
     youtube_id: String,
@@ -19,7 +19,8 @@ var EpisodeSchema = new Schema({
     serie: {type: Schema.Types.ObjectId, ref: 'Serie'},
     date_created: {type: Date, default: null, unique: true, required: true, dropDubs: true},
     thumbnails: Schema.Types.Mixed,
-    publishAt: Date
+    publishAt: Date,
+    localizations: Schema.Types.Mixed
 });
 
 EpisodeSchema.statics.getLastEpisodeNumber = function (serie_id, done) {
@@ -32,12 +33,27 @@ EpisodeSchema.methods.initialize = function (job, serie, episode_number) {
     this.date_created = job.date_created;
     this.keywords = serie.video_keywords;
     this.video_name = serie.video_title_template.replace('${episode_number}', this.episode_number);
-    var description_template = serie.description_template || config.default_description_template;
+    let description_template = serie.description_template || config.default_description_template;
     this.description = description_template.replace('${game_title}', serie.game_title)
         .replace('${description}', serie.description)
         .replace('${store_url}', serie.store_url)
         .replace('${playlist_url}', 'https://www.youtube.com/playlist?list=' + serie.playlist_id)
         .replace('${default_description}', fs.readFileSync(path.join(__dirname, '../config/default_description.txt'), 'utf-8'));
+
+    if (serie.localizations.length > 0) {
+        for (let i = 0; i < serie.localizations.length; i++) {
+            let localization = serie.localizations[i];
+            let localized_description_template = localization.description_template[localization.key] || config.default_description_template_localized[localization.key];
+            this.localizations[localization.key] = {
+                title: localization.title.replace('${episode_number}', this.episode_number),
+                description: localized_description_template.replace('${game_title}', serie.game_title)
+                    .replace('${description}', localization.description)
+                    .replace('${store_url}', serie.store_url)
+                    .replace('${playlist_url}', 'https://www.youtube.com/playlist?list=' + serie.playlist_id)
+                    .replace('${default_description}', fs.readFileSync(path.join(__dirname, '../config/default_description_' + localization.key + '.txt'), 'utf-8'))
+            }
+        }
+    }
 };
 
 module.exports = mongoose.model('Episode', EpisodeSchema);
