@@ -9,7 +9,7 @@ const fs = require('fs');
 const moment = require('moment');
 const winston = require('winston');
 
-exports.process = function (job, log, done) {
+exports.process = function (job, done) {
     if (!process.env.FFMPEG_PATH) {
         process.env['FFMPEG_PATH'] = config.ffmpeg_path;
     }
@@ -55,8 +55,8 @@ exports.process = function (job, log, done) {
     let airDate = moment(options.intro_outro_air_date, 'YYYY/MM/DD HH:mm:ss');
     let publicDate = moment(job.episode.publishAt);
     winston.log(airDate, publicDate, publicDate.diff(airDate));
-    let allow_intro = publicDate.diff(airDate) > 0 && options.prepend_intro;
-    let allow_outro = publicDate.diff(airDate) > 0 && options.append_outro;
+    let allow_intro = publicDate.diff(airDate) >= 0 && options.prepend_intro;
+    let allow_outro = publicDate.diff(airDate) >= 0 && options.append_outro;
 
     let out = path.resolve(outputDirectory, job.episode.episode_number + '.mp4');
 

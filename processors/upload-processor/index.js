@@ -1,7 +1,7 @@
 /**
  * Created by Jérémy on 07/05/2017.
  */
-const ResumableUpload = require('node-youtube-resumable-upload');
+const ResumableUpload = require('./youtube-resumable-upload');
 const fs = require('fs');
 const client = require('../../config/google-client');
 const moment = require('moment');
@@ -18,8 +18,8 @@ function process(auth, job, done) {
             title: episode.video_name,
             description: episode.description,
             tags: episode.keywords,
-            defaultLanguage: 'fr',
-            defaultAudioLanguage: 'fr'
+            defaultLanguage: episode.serie.default_language || 'fr',
+            defaultAudioLanguage: episode.serie.default_language || 'fr'
         },
         status: {
             privacyStatus: 'private',
@@ -29,6 +29,8 @@ function process(auth, job, done) {
 
     if (episode.localizations && episode.localizations.length > 0) {
         metadata.localizations = episode.localizations;
+        resumable.parts.push('localizations');
+        winston.log('localization added to metadata', metadata);
     }
 
     resumable.tokens = auth.token;

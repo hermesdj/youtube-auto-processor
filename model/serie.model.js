@@ -18,6 +18,7 @@ let SerieSchema = new Schema({
     game_title: String,
     description_template: String,
     playlist_title: String,
+    default_language: String,
     store_url: String,
     named_episode: {type: Boolean, default: false},
     episodes: [{type: Schema.Types.ObjectId, ref: 'Episode'}],
@@ -119,6 +120,7 @@ SerieSchema.statics.findOrCreate = function (directory, done) {
             } else {
                 serie.planning_name = config.planning_name;
                 serie.playlist_id = config.playlist_id;
+                serie.default_language = config.default_language || 'fr';
                 serie.video_title_template = config.video_title_template;
                 serie.description = config.description;
                 serie.last_episode = parseInt(config.last_episode) || 0;

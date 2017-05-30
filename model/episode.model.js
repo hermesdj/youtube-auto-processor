@@ -45,10 +45,10 @@ EpisodeSchema.methods.initialize = function (job, serie, episode_number) {
         this.localizations = {};
         for (let i = 0; i < serie.localizations.length; i++) {
             let localization = serie.localizations[i];
-            winston.debug('new language detected: ' + localization.key);
+            winston.info('new language detected: ' + localization.key, localization);
             let localized_description_template = config.default_description_template_localized[localization.key];
             if (localization.description_template) {
-                localized_description_template = localization.description_template[localization.key];
+                localized_description_template = localization.description_template;
             }
             this.localizations[localization.key] = {
                 title: localization.title.replace('${episode_number}', this.episode_number),

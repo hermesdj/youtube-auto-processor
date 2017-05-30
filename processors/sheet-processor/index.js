@@ -52,7 +52,7 @@ function processRange(auth, job, range, done) {
         if (err) {
             done(err, job);
         }
-        find(res.values, job.episode.serie.planning_name.replace('${episode_number}', job.episode.episode_number), done);
+        find(res.values, job.episode.serie.planning_name.replace('${episode_number}', job.episode.episode_number).replace('${episode_name}', job.episode.episode_name), done);
     });
 }
 

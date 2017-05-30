@@ -25,7 +25,7 @@ Job.findOne({state: states.VIDEO_READY.label}).sort('+date_created').populate({
         model: 'Serie'
     }
 }).exec(function (err, job) {
-    if(err){
+    if (err) {
         winston.error(err);
         return service.stop();
     }
@@ -41,7 +41,7 @@ Job.findOne({state: states.VIDEO_READY.label}).sort('+date_created').populate({
         return service.stop();
     }
 
-    videoProcessor.process(job, log, function (err, result) {
+    videoProcessor.process(job, function (err, result) {
         if (err) {
             winston.error(err);
             winston.error('videoProcessorError: ', err);
@@ -52,7 +52,10 @@ Job.findOne({state: states.VIDEO_READY.label}).sort('+date_created').populate({
 
         winston.log('done processing episode ' + job.episode.video_name, result);
         // Move job to next state
-        job.next(function () {
+        job.next(function (err, job) {
+            if (err) {
+                winston.error(err);
+            }
             mongoose.connection.close();
             service.stop();
         });
