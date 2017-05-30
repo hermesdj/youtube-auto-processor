@@ -1,11 +1,3 @@
-/**
- * Users DataService
- * Uses embedded, hard-coded data model; acts asynchronously to simulate
- * remote data service call(s).
- *
- * @returns {{loadAll: Function}}
- * @constructor
- */
 'use strict';
 let Job = require('./model/job.model');
 let States = require('./config/states');

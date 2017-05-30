@@ -1,21 +1,22 @@
 /**
  * Created by Jérémy on 09/05/2017.
  */
-var google = require('googleapis');
-var client = require('../../config/google-client');
+const google = require('googleapis');
+const client = require('../../config/google-client');
+const winston = require('winston');
 
 function process(auth, job, done) {
-    var youtube = google.youtube({
+    let youtube = google.youtube({
         version: 'v3',
         auth: auth.oauth2client
     });
 
-    var playlistId = job.episode.serie.playlist_id;
+    let playlistId = job.episode.serie.playlist_id;
     if (!playlistId) {
         return done('no playlist id in serie', null);
     }
 
-    var videoId = job.episode.youtube_id;
+    let videoId = job.episode.youtube_id;
     if (!videoId) {
         return done('no video id in episode', null);
     }
@@ -36,12 +37,12 @@ function process(auth, job, done) {
 
 exports.addToPlaylist = function (job, done) {
     if (!job.episode) {
-        console.error('this job has no episode configured to add to a playlist !');
+        winston.error('this job has no episode configured to add to a playlist !');
         return done('playlist job error, no episode', null);
     }
 
     if (!job.episode.serie) {
-        console.error('this job has no serie configured to add configure a playlist !');
+        winston.error('this job has no serie configured to add configure a playlist !');
         return done('playlist job error, no serie', null);
     }
 
@@ -51,12 +52,12 @@ exports.addToPlaylist = function (job, done) {
 };
 
 function create(auth, job, done) {
-    var youtube = google.youtube({
+    let youtube = google.youtube({
         version: 'v3',
         auth: auth.oauth2client
     });
 
-    var metadata = {
+    let metadata = {
         part: 'snippet, status',
         resource: {
             snippet: {
@@ -82,12 +83,12 @@ function create(auth, job, done) {
 
 exports.createPlaylist = function (job, done) {
     if (!job.episode) {
-        console.error('this job has no episode configured to add to a playlist !');
+        winston.error('this job has no episode configured to add to a playlist !');
         return done('playlist job error, no episode', null);
     }
 
     if (!job.episode.serie) {
-        console.error('this job has no serie configured to add configure a playlist !');
+        winston.error('this job has no serie configured to add configure a playlist !');
         return done('playlist job error, no serie', null);
     }
 

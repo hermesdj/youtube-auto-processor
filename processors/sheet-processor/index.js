@@ -1,11 +1,12 @@
 /**
  * Created by Jérémy on 08/05/2017.
  */
-var client = require('../../config/google-client');
-var google = require('googleapis');
-var config = require('../../config/youtube.json');
-var moment = require('moment');
-var COLORS = require('../../config/colors');
+const client = require('../../config/google-client');
+const google = require('googleapis');
+const config = require('../../config/youtube.json');
+const moment = require('moment');
+const COLORS = require('../../config/colors');
+const winston = require('winston');
 
 function process(auth, job, done) {
     if (!config.agenda_spreadsheet_id) {
@@ -14,12 +15,12 @@ function process(auth, job, done) {
     }
 
     moment.locale('fr');
-    var month = moment().format('MMMM');
+    let month = moment().format('MMMM');
     month = month.charAt(0).toUpperCase() + month.slice(1);
-    var year = moment().format('YYYY');
-    var start = 'A1';
-    var end = 'H33';
-    var range = month.concat(' ').concat(year).concat('!').concat(start).concat(':').concat(end);
+    let year = moment().format('YYYY');
+    let start = 'A1';
+    let end = 'H33';
+    let range = month.concat(' ').concat(year).concat('!').concat(start).concat(':').concat(end);
 
     processRange(auth, job, range, function (err, haystack, i, j) {
         if (err) {
@@ -38,8 +39,8 @@ function process(auth, job, done) {
 }
 
 function processRange(auth, job, range, done) {
-    console.log('processing with range', range);
-    var sheets = google.sheets({
+    winston.log('processing with range', range);
+    let sheets = google.sheets({
         version: 'v4',
         auth: auth.oauth2client
     });
@@ -56,8 +57,8 @@ function processRange(auth, job, range, done) {
 }
 
 function find(haystack, needle, done) {
-    for (var i = 0; i < haystack.length; i++) {
-        for (var j = 0; j < haystack[i].length; j++) {
+    for (let i = 0; i < haystack.length; i++) {
+        for (let j = 0; j < haystack[i].length; j++) {
             if (haystack[i][j] === needle) {
                 return done(null, haystack, i, j);
             }
@@ -67,15 +68,15 @@ function find(haystack, needle, done) {
 }
 
 function parseDate(haystack, i, j, done) {
-    console.log('parsing value at', i, j);
-    var result = null;
-    var hour = haystack[i][0];
-    var day = null;
+    winston.log('parsing value at', i, j);
+    let result = null;
+    let hour = haystack[i][0];
+    let day = null;
 
-    for (var k = i - 1; k >= 0; k--) {
+    for (let k = i - 1; k >= 0; k--) {
         if (haystack[k][j]) {
-            var m = haystack[k][j].match(/(\d+)(-|\/)(\d+)(?:-|\/)(?:(\d+)\s+(\d+):(\d+)(?::(\d+))?(?:\.(\d+))?)?/);
-            console.log(m);
+            let m = haystack[k][j].match(/(\d+)(-|\/)(\d+)(?:-|\/)(?:(\d+)\s+(\d+):(\d+)(?::(\d+))?(?:\.(\d+))?)?/);
+            winston.log(m);
             if (m !== null) {
                 day = haystack[k][j];
                 break;
@@ -84,7 +85,7 @@ function parseDate(haystack, i, j, done) {
     }
 
     if (day && hour) {
-        console.log('day && hour found', day, hour);
+        winston.log('day && hour found', day, hour);
         result = moment(day + hour, 'DD/MM/YYYY HH:mm:ss').format('YYYY-MM-DDTHH:mm:ss.sZ');
     }
 
@@ -117,7 +118,7 @@ exports.getScheduledDate = function (job, done) {
 };
 
 function getSpreadsheetId(auth, sheetName, done) {
-    var sheets = google.sheets({
+    let sheets = google.sheets({
         version: 'v4',
         auth: auth.oauth2client
     });
@@ -128,9 +129,9 @@ function getSpreadsheetId(auth, sheetName, done) {
         if (err) {
             done(err, job);
         }
-        var result = null;
-        for (var i = 0; i < res.sheets.length; i++) {
-            var sheet = res.sheets[i];
+        let result = null;
+        for (let i = 0; i < res.sheets.length; i++) {
+            let sheet = res.sheets[i];
             if (sheet.properties.title === sheetName) {
                 result = sheet.properties.sheetId;
                 break;
@@ -146,13 +147,13 @@ function getSpreadsheetId(auth, sheetName, done) {
 
 function mark(job, format, done) {
     if (!job.episode) {
-        console.error('no episode for this job, cannot mark as processing');
+        winston.error('no episode for this job, cannot mark as processing');
         job.error('no episode for this job, cannot mark as processing');
         return done(job.err, null);
     }
 
     if (!job.episode.serie) {
-        console.error('no serie for this job, cannot mark as processing');
+        winston.error('no serie for this job, cannot mark as processing');
         job.error('no serie for this job, cannot mark as processing');
         return done(job.err, null);
     }
@@ -167,7 +168,7 @@ function mark(job, format, done) {
                     done(err, job);
                     return;
                 }
-                var requests = [];
+                let requests = [];
                 requests.push({
                     updateCells: {
                         start: {sheetId: sheetId, rowIndex: i, columnIndex: j},
@@ -187,7 +188,7 @@ function mark(job, format, done) {
 }
 
 function updateCells(auth, requests, done) {
-    var sheets = google.sheets({
+    let sheets = google.sheets({
         version: 'v4',
         auth: auth.oauth2client
     });
@@ -205,24 +206,24 @@ function updateCells(auth, requests, done) {
 }
 
 exports.markAsProcessing = function (job, done) {
-    console.log('mark as processing on agenda');
+    winston.log('mark as processing on agenda');
     mark(job, COLORS.processing, done);
 };
 
 exports.markAsReady = function (job, done) {
-    console.log('marking as ready on agenda');
+    winston.log('marking as ready on agenda');
     mark(job, COLORS.done, done);
 };
 
 exports.markAsPublic = function (job, done) {
-    console.log('marking as public on agenda');
+    winston.log('marking as public on agenda');
     mark(job, COLORS.public, done);
 };
 
 exports.markAsError = function (job, done) {
-    console.log('marking as error on agenda');
+    winston.log('marking as error on agenda');
     mark(job, COLORS.error, function (err, res) {
-        console.error(err);
+        winston.error(err);
         done(err, res);
     });
 };

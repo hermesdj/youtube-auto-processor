@@ -6,13 +6,15 @@ import 'angular-aria';
 import 'angular-material';
 import 'angular-ui-router';
 import 'angular-moment';
+import 'angular-material-data-table'
 
 import AppController from 'src/AppController';
 import Jobs from 'src/jobs/Jobs';
 import Services from 'src/services/Services';
 import Series from 'src/series/Series';
+import Logs from 'src/logs/Logs';
 
-export default angular.module('starter-app', ['ngMaterial', 'ui.router', 'angularMoment', Jobs.name, Services.name, Series.name])
+export default angular.module('starter-app', ['ngMaterial', 'md.data.table', 'ui.router', 'angularMoment', Jobs.name, Services.name, Series.name, Logs.name])
     .config(($mdIconProvider, $mdThemingProvider, $stateProvider, $urlRouterProvider) => {
         // Register the user `avatar` icons
         $mdIconProvider
@@ -183,6 +185,10 @@ export default angular.module('starter-app', ['ngMaterial', 'ui.router', 'angula
             })
             .state('settings', {
                 url: '/settings'
+            })
+            .state('logs', {
+                url: '/logs',
+                component: 'logsList'
             });
 
         $urlRouterProvider.otherwise('/jobs');

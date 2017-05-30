@@ -5,6 +5,7 @@ const ResumableUpload = require('node-youtube-resumable-upload');
 const fs = require('fs');
 const client = require('../../config/google-client');
 const moment = require('moment');
+const winston = require('winston');
 
 function process(auth, job, done) {
     let episode = job.episode;
@@ -53,7 +54,7 @@ function process(auth, job, done) {
     });
 
     resumable.on('error', function (error) {
-        console.error('error processing video: ', error);
+        winston.error('error processing video: ', error);
         job.state = 'UPLOAD_ERROR';
         job.save();
         done(error, null);
@@ -78,7 +79,7 @@ function process(auth, job, done) {
 
 exports.upload = function (job, done) {
     if (!job.episode) {
-        console.error('this job has no episode configured to upload');
+        winston.error('this job has no episode configured to upload');
         return done('upload job error, no episode', null);
     }
 

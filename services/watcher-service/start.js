@@ -2,39 +2,45 @@
  * Created by Jérémy on 07/05/2017.
  */
 
-var mongoose = require('mongoose');
-var watcher = require('./watch-folder');
-var config = require('../../config/app.json');
-var service = require('./service');
-var db_config = require('../../config/database-config');
-var path = require('path');
-var moment = require('moment');
-var Job = require('../../model/job.model');
-
+const mongoose = require('mongoose');
+const watcher = require('./watch-folder');
+const config = require('../../config/app.json');
+const service = require('./service');
+const db_config = require('../../config/database-config');
+const path = require('path');
+const moment = require('moment');
+const Job = require('../../model/job.model');
+const winston = require('winston');
+const wMongoDb = require('winston-mongodb').MongoDB;
+winston.add(winston.transports.MongoDB, {
+    db: db_config.mongo.uri,
+    options: db_config.mongo.options,
+    label: 'watcher-service'
+});
 mongoose.connect(db_config.mongo.uri, db_config.mongo.options);
 
 watcher.start(config.watch_directory, function (file) {
-    console.log('on new file', file);
-    console.log('video date is', path.basename(file, '.mp4'));
-    var date = moment(path.basename(file, '.mp4'), 'YYYY-MM-DD_HH:mm:ss', 'fr');
+    winston.log('on new file', file);
+    winston.log('video date is', path.basename(file, '.mp4'));
+    let date = moment(path.basename(file, '.mp4'), 'YYYY-MM-DD_HH:mm:ss', 'fr');
 
-    var job = new Job({
+    let job = new Job({
         path: file,
         date_created: date.toDate()
     });
     job.save(function (err, job) {
         if (err) {
-            console.error('error creating job', err);
+            winston.error('error creating job', err);
             return err;
         }
-        console.log('new job saved', job);
+        winston.log('new job saved', job);
     });
 });
 
 service.on('stop', function () {
-    console.log('Service is being stopped');
+    winston.log('Service is being stopped');
     mongoose.connection.close();
     watcher.stop(function () {
-        console.log('Watcher has been stopped');
+        winston.log('Watcher has been stopped');
     });
 });

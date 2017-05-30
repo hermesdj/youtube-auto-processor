@@ -6,6 +6,7 @@ const Schema = mongoose.Schema;
 const fs = require('fs');
 const path = require('path');
 const config = require('../config/youtube.json');
+const winston = require('winston');
 
 let EpisodeSchema = new Schema({
     path: String,
@@ -41,9 +42,14 @@ EpisodeSchema.methods.initialize = function (job, serie, episode_number) {
         .replace('${default_description}', fs.readFileSync(path.join(__dirname, '../config/default_description.txt'), 'utf-8'));
 
     if (serie.localizations.length > 0) {
+        this.localizations = {};
         for (let i = 0; i < serie.localizations.length; i++) {
             let localization = serie.localizations[i];
-            let localized_description_template = localization.description_template[localization.key] || config.default_description_template_localized[localization.key];
+            winston.debug('new language detected: ' + localization.key);
+            let localized_description_template = config.default_description_template_localized[localization.key];
+            if (localization.description_template) {
+                localized_description_template = localization.description_template[localization.key];
+            }
             this.localizations[localization.key] = {
                 title: localization.title.replace('${episode_number}', this.episode_number),
                 description: localized_description_template.replace('${game_title}', serie.game_title)

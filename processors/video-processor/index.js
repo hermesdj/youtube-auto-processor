@@ -7,6 +7,7 @@ const options = require('../../config/youtube.json');
 const path = require('path');
 const fs = require('fs');
 const moment = require('moment');
+const winston = require('winston');
 
 exports.process = function (job, log, done) {
     if (!process.env.FFMPEG_PATH) {
@@ -16,7 +17,7 @@ exports.process = function (job, log, done) {
         process.env['FFPROBE_PATH'] = config.ffprobe_path;
     }
 
-    console.log('FFMPEG_PATH=', process.env.FFMPEG_PATH);
+    winston.log('FFMPEG_PATH=', process.env.FFMPEG_PATH);
 
     let intro = null;
     let outro = null;
@@ -53,35 +54,35 @@ exports.process = function (job, log, done) {
 
     let airDate = moment(options.intro_outro_air_date, 'YYYY/MM/DD HH:mm:ss');
     let publicDate = moment(job.episode.publishAt);
-    console.log(airDate, publicDate, publicDate.diff(airDate));
+    winston.log(airDate, publicDate, publicDate.diff(airDate));
     let allow_intro = publicDate.diff(airDate) > 0 && options.prepend_intro;
     let allow_outro = publicDate.diff(airDate) > 0 && options.append_outro;
 
     let out = path.resolve(outputDirectory, job.episode.episode_number + '.mp4');
 
     if (!allow_intro && !allow_outro) {
-        console.log('nothing to process !');
+        winston.log('nothing to process !');
         job.state = 'VIDEO_DONE';
         job.save(done);
     }
 
-    console.log('processing video content', path.resolve(content));
-    console.log('output directory is', out);
+    winston.log('processing video content', path.resolve(content));
+    winston.log('output directory is', out);
 
 
     let command = new Ffmpeg();
     if (intro && allow_intro) {
-        console.log('adding intro to the video', path.resolve(intro));
+        winston.log('adding intro to the video', path.resolve(intro));
         command.input(intro);
     }
     command.input(content);
     if (outro && allow_outro) {
-        console.log('adding outro to the video', path.resolve(outro));
+        winston.log('adding outro to the video', path.resolve(outro));
         command.input(outro);
     }
 
     command.on('start', function (commandLine) {
-        console.log('Spawned ffmpeg with command', commandLine);
+        winston.log('Spawned ffmpeg with command', commandLine);
         job.state = 'VIDEO_PROCESSING';
         job.process_data = {
             totalSize: fs.statSync(content).size,
@@ -97,7 +98,7 @@ exports.process = function (job, log, done) {
     });
 
     command.on('error', function (err) {
-        console.error(err);
+        winston.error(err);
         done(JSON.stringify(err));
     });
 
@@ -115,5 +116,5 @@ exports.process = function (job, log, done) {
 
     command.mergeToFile(out, config.working_directory);
 
-    console.log('started');
+    winston.log('started');
 };

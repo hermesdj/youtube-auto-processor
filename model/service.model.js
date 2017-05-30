@@ -1,10 +1,10 @@
 /**
  * Created by jdallard on 09/05/2017.
  */
-var mongoose = require('mongoose');
-var Schema = mongoose.Schema;
+const mongoose = require('mongoose');
+const Schema = mongoose.Schema;
 
-var ServiceSchema = new Schema({
+let ServiceSchema = new Schema({
     service_name: String,
     service_description: String,
     installed: {type: Boolean, default: false},

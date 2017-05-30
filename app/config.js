@@ -14,6 +14,7 @@ System.config({
     "angular-animate": "github:angular/bower-angular-animate@1.5.8",
     "angular-aria": "github:angular/bower-angular-aria@1.5.8",
     "angular-material": "github:angular/bower-material@master",
+    "angular-material-data-table": "npm:angular-material-data-table@0.10.10",
     "angular-messages": "github:angular/bower-angular-messages@1.5.8",
     "angular-mocks": "github:angular/bower-angular-mocks@1.5.8",
     "angular-moment": "npm:angular-moment@1.0.1",
@@ -21,7 +22,7 @@ System.config({
     "babel": "npm:babel-core@5.8.38",
     "babel-runtime": "npm:babel-runtime@5.8.38",
     "core-js": "npm:core-js@1.2.7",
-    "css": "github:systemjs/plugin-css@0.1.21",
+    "css": "github:systemjs/plugin-css@0.1.35",
     "json": "github:systemjs/plugin-json@0.1.2",
     "lodash": "npm:lodash@4.17.4",
     "moment": "npm:moment@2.18.1",
@@ -29,20 +30,20 @@ System.config({
     "traceur": "github:jmcriffey/bower-traceur@0.0.93",
     "traceur-runtime": "github:jmcriffey/bower-traceur-runtime@0.0.93",
     "github:angular/bower-angular-animate@1.5.8": {
-      "angular": "github:angular/bower-angular@1.5.8"
+      "angular": "github:angular/bower-angular@1.6.4"
     },
     "github:angular/bower-angular-aria@1.5.8": {
-      "angular": "github:angular/bower-angular@1.5.8"
+      "angular": "github:angular/bower-angular@1.6.4"
     },
     "github:angular/bower-angular-messages@1.5.8": {
-      "angular": "github:angular/bower-angular@1.5.8"
+      "angular": "github:angular/bower-angular@1.6.4"
     },
     "github:angular/bower-material@master": {
       "angular": "github:angular/bower-angular@1.5.8",
       "angular-animate": "github:angular/bower-angular-animate@1.5.8",
       "angular-aria": "github:angular/bower-angular-aria@1.5.8",
       "angular-messages": "github:angular/bower-angular-messages@1.5.8",
-      "css": "github:systemjs/plugin-css@0.1.21"
+      "css": "github:systemjs/plugin-css@0.1.35"
     },
     "github:jspm/nodelibs-assert@0.1.0": {
       "assert": "npm:assert@1.4.1"
@@ -65,6 +66,18 @@ System.config({
     "npm:@uirouter/core@5.0.3": {
       "process": "github:jspm/nodelibs-process@0.1.2",
       "systemjs-json": "github:systemjs/plugin-json@0.1.2"
+    },
+    "npm:angular-material-data-table@0.10.10": {
+      "angular": "npm:angular@1.6.4",
+      "angular-material": "npm:angular-material@1.1.4",
+      "process": "github:jspm/nodelibs-process@0.1.2"
+    },
+    "npm:angular-material@1.1.4": {
+      "angular": "github:angular/bower-angular@1.6.4",
+      "angular-animate": "github:angular/bower-angular-animate@1.5.8",
+      "angular-aria": "github:angular/bower-angular-aria@1.5.8",
+      "angular-messages": "github:angular/bower-angular-messages@1.5.8",
+      "css": "github:systemjs/plugin-css@0.1.35"
     },
     "npm:angular-moment@1.0.1": {
       "moment": "npm:moment@2.18.1"

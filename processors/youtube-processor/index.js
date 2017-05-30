@@ -1,18 +1,18 @@
 /**
  * Created by Jérémy on 08/05/2017.
  */
-var google = require('googleapis');
-var client = require('../../config/google-client');
-var fs = require('fs');
-var path = require('path');
-var util = require('util');
+const google = require('googleapis');
+const client = require('../../config/google-client');
+const fs = require('fs');
+const path = require('path');
+const util = require('util');
 
 function process(auth, job, done) {
-    var youtube = google.youtube({
+    let youtube = google.youtube({
         version: 'v3',
         auth: auth.oauth2client
     });
-    var req = youtube.videos.list({
+    let req = youtube.videos.list({
         id: job.episode.youtube_id,
         part: 'processingDetails, contentDetails'
     }, function (err, data) {

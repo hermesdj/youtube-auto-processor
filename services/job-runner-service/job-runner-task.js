@@ -10,13 +10,13 @@ const moment = require('moment');
 const flow = require('flow');
 const config = require('../../config/app.json');
 const fs = require('fs');
+const winston = require('winston');
 const states = require('../../config/states');
 const serieProcessor = require('../../processors/serie-processor');
 const sheetProcessor = require('../../processors/sheet-processor');
 const thumbnailProcessor = require('../../processors/thumbnail-processor');
 const playlistProcessor = require('../../processors/playlist-processor');
 const youtubeProcessor = require('../../processors/youtube-processor');
-
 const processVideoService = require('../../services/process-video-service/install-service');
 const processUploadService = require('../../services/upload-video-service/install-service');
 
@@ -54,7 +54,7 @@ util.inherits(jobRunner, EventEmitter);
 
 exports.run = jobRunner;
 
-var find_jobs = function (state, done) {
+let find_jobs = function (state, done) {
     Job.find({state: state.label}).sort('+date_created').populate({
         path: 'episode',
         populate: {
@@ -64,7 +64,7 @@ var find_jobs = function (state, done) {
     }).exec(done);
 };
 
-var find_job = function (state, done) {
+let find_job = function (state, done) {
     Job.findOne({state: state.label}).sort('+date_created').populate({
         path: 'episode',
         populate: {
@@ -74,33 +74,32 @@ var find_job = function (state, done) {
     }).exec(done);
 };
 
-var process_jobs = function (jobs, process, done) {
+let process_jobs = function (jobs, process, done) {
     flow.serialForEach(jobs, function (job) {
         process(job, this);
     }, function (err, job) {
         if (err) {
-            console.error(err);
-            job.error(err);
+            winston.error(err);
         }
     }, function () {
         done();
     });
 };
 
-var process_ready_jobs = function (done) {
+let process_ready_jobs = function (done) {
     find_job(states.READY, function (err, job) {
         if (err) {
-            console.error(err);
+            winston.error(err);
             return;
         }
         if (job) {
-            console.log('ready jobs found to process:' + job._id);
+            winston.log('ready jobs found to process:' + job._id);
             serieProcessor.process(job, function (err, job) {
                 if (err) {
-                    console.error(err);
+                    winston.error(err);
                     job.error(err);
                 }
-                console.log('done processing ready job');
+                winston.log('done processing ready job');
                 done();
             });
         } else {
@@ -109,20 +108,20 @@ var process_ready_jobs = function (done) {
     });
 };
 
-var process_initialized_jobs = function (done) {
+let process_initialized_jobs = function (done) {
     find_jobs(states.INITIALIZED, function (err, jobs) {
         if (err) {
-            console.error(err);
+            winston.error(err);
             done(err, null);
         }
         if (jobs.length > 0) {
-            console.log('initialized jobs found to process:' + jobs.length);
+            winston.log('initialized jobs found to process:' + jobs.length);
             process_jobs(jobs, process_initialized_job, function (err, job) {
                 if (err) {
-                    console.error(err);
+                    winston.error(err);
                     job.error(err);
                 }
-                console.log('done processing ready jobs');
+                winston.log('done processing ready jobs');
                 done();
             });
         } else {
@@ -131,9 +130,9 @@ var process_initialized_jobs = function (done) {
     });
 };
 
-var process_initialized_job = function (job, done) {
+let process_initialized_job = function (job, done) {
     if ((job.episode.serie && job.episode.serie.named_episode) || job.episode.video_name.indexOf('${episode_name}') > 0) {
-        console.log('this needs a name, waiting for user input...');
+        winston.log('this needs a name, waiting for user input...');
         if (job.episode.episode_name) {
             job.episode.video_name = job.episode.video_name.replace('${episode_name}', job.episode.episode_name);
             job.episode.save(function () {
@@ -146,33 +145,33 @@ var process_initialized_job = function (job, done) {
     }
 };
 
-var process_video_ready_jobs = function (done) {
+let process_video_ready_jobs = function (done) {
     find_jobs(states.VIDEO_READY, function (err, jobs) {
         if (err) {
-            console.error(err);
+            winston.error(err);
             done(err, null);
             return;
         }
         if (jobs.length > 0) {
-            console.log('video ready jobs found to process:' + jobs.length);
+            winston.log('video ready jobs found to process:' + jobs.length);
             processVideoService();
         }
         done();
     });
 };
 
-var process_schedule_jobs = function (done) {
+let process_schedule_jobs = function (done) {
     find_jobs(states.SCHEDULE, function (err, jobs) {
         if (err) {
-            console.error(err);
+            winston.error(err);
             done(err, null);
             return;
         }
         if (jobs.length > 0) {
-            console.log('schedule jobs found to process:' + jobs.length);
+            winston.log('schedule jobs found to process:' + jobs.length);
             process_jobs(jobs, process_schedule_job, function (err, job) {
                 if (err) {
-                    console.error(err);
+                    winston.error(err);
                     job.error(err);
                 }
                 done();
@@ -183,20 +182,17 @@ var process_schedule_jobs = function (done) {
     });
 };
 
-var process_schedule_job = function (job, done) {
+let process_schedule_job = function (job, done) {
     sheetProcessor.getScheduledDate(job, function (err, result) {
         if (err) {
-            console.error(err);
             job.error(err);
-            done(err, null);
-            return;
+            return done(err, null);
         }
 
         job.episode.publishAt = moment(result).toDate();
-        console.log(job.episode.video_name + ' scheduled on ' + job.episode.publishAt);
+        winston.log(job.episode.video_name + ' scheduled on ' + job.episode.publishAt);
         job.episode.save(function (err, episode) {
             if (err) {
-                console.error(err);
                 job.error(err);
                 return done(err);
             }
@@ -212,34 +208,34 @@ var process_schedule_job = function (job, done) {
     });
 };
 
-var process_upload_ready_jobs = function (done) {
+let process_upload_ready_jobs = function (done) {
     find_jobs(states.UPLOAD_READY, function (err, jobs) {
         if (err) {
-            console.error(err);
+            winston.error(err);
             done(err, null);
             return;
         }
         if (jobs.length > 0) {
-            console.log('upload ready jobs found to process:' + jobs.length);
+            winston.log('upload ready jobs found to process:' + jobs.length);
             processUploadService();
         }
         done();
     })
 };
 
-var process_upload_done_jobs = function (done) {
+let process_upload_done_jobs = function (done) {
     find_jobs(states.UPLOAD_DONE, function (err, jobs) {
         if (err) {
-            console.error(err);
+            winston.error(err);
             done(err, null);
             return;
         }
 
         if (jobs.length > 0) {
-            console.log('upload done jobs found to process:' + jobs.length);
+            winston.log('upload done jobs found to process:' + jobs.length);
             process_jobs(jobs, process_upload_done_job, function (err, job) {
                 if (err) {
-                    console.error(err);
+                    winston.error(err);
                     job.error(err);
                 }
 
@@ -251,17 +247,17 @@ var process_upload_done_jobs = function (done) {
     });
 };
 
-var process_upload_done_job = function (job, done) {
+let process_upload_done_job = function (job, done) {
     job.next(function (err, job) {
         if (err) {
-            console.error(err);
+            winston.error(err);
             done(err, null);
             return;
         }
 
         thumbnailProcessor.setThumbnail(job, function (err, job) {
             if (err) {
-                console.error(err);
+                winston.error(err);
                 job.error(err);
                 return done(err, null);
             }
@@ -270,19 +266,19 @@ var process_upload_done_job = function (job, done) {
     });
 };
 
-var process_thumbnail_jobs = function (done) {
+let process_thumbnail_jobs = function (done) {
     find_jobs(states.THUMBNAIL, function (err, jobs) {
         if (err) {
-            console.error(err);
+            winston.error(err);
             done(err, null);
             return;
         }
 
         if (jobs.length > 0) {
-            console.log('thumbnail jobs found to process:' + jobs.length);
+            winston.log('thumbnail jobs found to process:' + jobs.length);
             process_jobs(jobs, process_thumbnail_job, function (err, job) {
                 if (err) {
-                    console.error(err);
+                    winston.error(err);
                     job.error(err);
                 }
 
@@ -294,23 +290,23 @@ var process_thumbnail_jobs = function (done) {
     });
 };
 
-var process_thumbnail_job = function (job, done) {
+let process_thumbnail_job = function (job, done) {
     job.next(done);
 };
 
-var process_playlists_jobs = function (done) {
+let process_playlists_jobs = function (done) {
     find_jobs(states.PLAYLIST, function (err, jobs) {
         if (err) {
-            console.error(err);
+            winston.error(err);
             done(err, null);
             return;
         }
 
         if (jobs.length > 0) {
-            console.log('playlist jobs found to process:' + jobs.length);
+            winston.log('playlist jobs found to process:' + jobs.length);
             process_jobs(jobs, process_playlist_job, function (err, job) {
                 if (err) {
-                    console.error(err);
+                    winston.error(err);
                     job.error(err);
                 }
 
@@ -322,7 +318,7 @@ var process_playlists_jobs = function (done) {
     });
 };
 
-var process_playlist_job = function (job, done) {
+let process_playlist_job = function (job, done) {
     if (job.episode.serie.playlist_id) {
         insertVideoToPlaylist(job, done);
     } else {
@@ -335,20 +331,20 @@ var process_playlist_job = function (job, done) {
     }
 };
 
-var insertVideoToPlaylist = function (job, done) {
+let insertVideoToPlaylist = function (job, done) {
     playlistProcessor.addToPlaylist(job, function (err) {
         if (err) {
-            console.error(err);
+            winston.error(err);
             job.error(err);
         }
         job.next(done);
     });
 };
 
-var createPlaylist = function (job, done) {
+let createPlaylist = function (job, done) {
     playlistProcessor.createPlaylist(job, function (err) {
         if (err) {
-            console.error(err);
+            winston.error(err);
             job.error(err);
             return done(err);
         }
@@ -356,19 +352,19 @@ var createPlaylist = function (job, done) {
     });
 };
 
-var process_all_done_jobs = function (done) {
+let process_all_done_jobs = function (done) {
     find_jobs(states.ALL_DONE, function (err, jobs) {
         if (err) {
-            console.error(err);
+            winston.error(err);
             done(err, null);
             return;
         }
 
         if (jobs.length > 0) {
-            console.log('all done job found to process:', jobs.length);
+            winston.log('all done job found to process:', jobs.length);
             process_jobs(jobs, process_all_done_job, function (err, job) {
                 if (err) {
-                    console.error(err);
+                    winston.error(err);
                     job.error(err);
                 }
                 done();
@@ -379,16 +375,16 @@ var process_all_done_jobs = function (done) {
     });
 };
 
-var process_all_done_job = function (job, done) {
-    var publicDate = moment(job.episode.publishAt);
-    var now = moment();
+let process_all_done_job = function (job, done) {
+    let publicDate = moment(job.episode.publishAt);
+    let now = moment();
 
     if (now.diff(publicDate) > 0) {
         // Episode is public
-        console.log('job found to mark as public');
+        winston.log('job found to mark as public');
         job.next(function (err, job) {
             if (err) {
-                console.error(err);
+                winston.error(err);
                 return done(err, null);
             }
             job.markOnPlanning(done);
@@ -398,19 +394,19 @@ var process_all_done_job = function (job, done) {
     }
 };
 
-var process_public_jobs = function (done) {
+let process_public_jobs = function (done) {
     find_jobs(states.PUBLIC, function (err, jobs) {
         if (err) {
-            console.error(err);
+            winston.error(err);
             done(err, null);
             return;
         }
 
         if (jobs.length > 0) {
-            console.log('public job found to process:', jobs.length);
+            winston.log('public job found to process:', jobs.length);
             process_jobs(jobs, process_public_job, function (err) {
                 if (err) {
-                    console.error(err);
+                    winston.error(err);
                 }
                 done();
             })
@@ -420,10 +416,10 @@ var process_public_jobs = function (done) {
     });
 };
 
-var process_public_job = function (job, done) {
+let process_public_job = function (job, done) {
     // clear all public videos from file system
     if (fs.existsSync(job.path)) {
-        console.log('found file to delete as the video is now public', job.path);
+        winston.log('found file to delete as the video is now public', job.path);
         fs.unlink(job.path, function (err) {
             if (err) {
                 return done(err);
@@ -435,19 +431,19 @@ var process_public_job = function (job, done) {
     }
 };
 
-var process_wait_youtube_processing_jobs = function (done) {
+let process_wait_youtube_processing_jobs = function (done) {
     find_jobs(states.WAIT_YOUTUBE_PROCESSING, function (err, jobs) {
         if (err) {
-            console.error(err);
+            winston.error(err);
             done(err, null);
             return;
         }
 
         if (jobs.length > 0) {
-            console.log('wait processing job found to process:', jobs.length);
+            winston.log('wait processing job found to process:', jobs.length);
             process_jobs(jobs, process_wait_youtube_processing_job, function (err) {
                 if (err) {
-                    console.error(err);
+                    winston.error(err);
                 }
                 done();
             })
@@ -457,13 +453,13 @@ var process_wait_youtube_processing_jobs = function (done) {
     });
 };
 
-var process_wait_youtube_processing_job = function (job, done) {
+let process_wait_youtube_processing_job = function (job, done) {
     youtubeProcessor.getVideoProcessorStats(job, function (err, job) {
         if (err) {
-            console.error(err);
+            winston.error(err);
             return done(err, null);
         }
-        console.log('processing info is', job.processing);
+        winston.log('processing info is', job.processing);
         if (job.processing && job.processing.processingStatus === 'succeeded') {
             // Move to next step as processing is done
             job.next(done);

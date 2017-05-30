@@ -5,6 +5,7 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 const path = require('path');
 const Episode = require('./episode.model');
+const winston = require('winston');
 
 let SerieSchema = new Schema({
     path: String,
@@ -31,20 +32,20 @@ let SerieSchema = new Schema({
 });
 
 SerieSchema.methods.addEpisode = function (job, done) {
-    console.log('retrieving last episode number');
+    winston.log('retrieving last episode number');
     Episode.getLastEpisodeNumber(this._id, function (err, lastEpisode) {
         if (err) {
-            console.error(err);
+            winston.error(err);
             return done(err, null);
         }
-        console.log('last episode is', lastEpisode);
+        winston.log('last episode is', lastEpisode);
         let last_episode_number = this.last_episode || 0;
         if (lastEpisode) {
             last_episode_number = lastEpisode.episode_number;
         }
 
         let episode_number = last_episode_number + 1;
-        console.log('new episode number is', episode_number);
+        winston.log('new episode number is', episode_number);
 
         // Check if episode already exists in DB
         Episode.findOne({date_created: job.date_created}).exec(function (err, episode) {
@@ -52,7 +53,7 @@ SerieSchema.methods.addEpisode = function (job, done) {
                 return done(err);
             }
 
-            console.log('does an episode exists ?', episode);
+            winston.log('does an episode exists ?', episode);
 
             if (episode) {
                 done(null, episode);
@@ -61,27 +62,27 @@ SerieSchema.methods.addEpisode = function (job, done) {
                     serie: this
                 });
                 episode.initialize(job, this, episode_number);
-                console.log('episode initialized');
+                winston.log('episode initialized');
                 episode.save(function (err, episode) {
                     if (err) {
                         if (err.code === 11000) {
-                            console.log('episode already stored in database', err);
+                            winston.log('episode already stored in database', err);
                             Episode.findOne({date_created: job.date_created}, function (err, episode) {
                                 if (err) {
-                                    console.error(err);
+                                    winston.error(err);
                                     return done(err, null);
                                 }
                                 done(null, episode);
                             })
                         } else {
-                            console.error(err);
+                            winston.error(err);
                             return done(err, null);
                         }
                     } else {
                         this.episodes.push(episode);
                         this.save(function (err, serie) {
                             if (err) {
-                                console.error('error saving serie', err);
+                                winston.error('error saving serie', err);
                                 return done(err, null);
                             }
 
@@ -103,17 +104,17 @@ SerieSchema.statics.findOrCreate = function (directory, done) {
         }
         if (serie) {
             // Serie exists
-            console.log('serie found for this job', serie._id);
+            winston.log('serie found for this job', serie._id);
             return done(null, serie);
         } else {
             // Create serie based on path
-            console.log('serie not found for path', directory);
+            winston.log('serie not found for path', directory);
             let serie = new self({
                 path: directory
             });
             let config = require(path.join(directory, 'serie.json'));
             if (!config) {
-                console.error('Cannot find serie.json in', directory);
+                winston.error('Cannot find serie.json in', directory);
                 done('Cannot find serie.json in' + directory);
             } else {
                 serie.planning_name = config.planning_name;
@@ -136,7 +137,7 @@ SerieSchema.statics.findOrCreate = function (directory, done) {
                     if (err) {
                         return done(err, null);
                     }
-                    console.log('new serie created with planning name', serie.planning_name);
+                    winston.log('new serie created with planning name', serie.planning_name);
                     done(null, serie);
                 })
             }

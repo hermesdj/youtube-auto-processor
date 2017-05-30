@@ -1,13 +1,14 @@
 /**
  * Created by Jérémy on 06/05/2017.
  */
-var mongoose = require('mongoose');
-var Schema = mongoose.Schema;
-var Serie = require('./serie.model');
-var states = require('../config/states');
-var sheetProcessor = require('../processors/sheet-processor');
+const mongoose = require('mongoose');
+const Schema = mongoose.Schema;
+const Serie = require('./serie.model');
+const states = require('../config/states');
+const sheetProcessor = require('../processors/sheet-processor');
+const winston = require('winston');
 
-var JobSchema = new Schema({
+let JobSchema = new Schema({
     path: String,
     date_created: {type: Date, default: null, unique: true, required: true, dropDubs: true},
     state: {type: String, default: states.READY.label},
@@ -23,7 +24,7 @@ var JobSchema = new Schema({
 JobSchema.static.states = states;
 
 JobSchema.methods.error = function (err) {
-    console.error('job error : ', err);
+    winston.error('job error : ', err);
     this.state = states.ERROR.label;
     this.err = err;
     this.save();
@@ -47,25 +48,25 @@ JobSchema.methods.markOnPlanning = function (done) {
 JobSchema.methods.next = function (done) {
     var next = states[this.state].next();
     if (next) {
-        console.log('moving job', this._id, 'from state', this.state, 'to', next.label);
+        winston.log('moving job', this._id, 'from state', this.state, 'to', next.label);
         this.last_state = this.state;
         this.state = next.label;
         if (this.state === states.INITIALIZED.label) {
             this.markOnPlanning(function (err, res) {
                 if (err) {
-                    console.error(err);
+                    winston.error(err);
                     return;
                 }
-                console.log('done marking on planning');
+                winston.log('done marking on planning');
             });
         }
         if (next.label === states.ALL_DONE.label) {
             this.markOnPlanning(function (err, res) {
                 if (err) {
-                    console.error(err);
+                    winston.error(err);
                     return;
                 }
-                console.log('done marking on planning');
+                winston.log('done marking on planning');
             });
         }
     }

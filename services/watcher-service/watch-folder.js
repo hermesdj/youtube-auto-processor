@@ -1,27 +1,26 @@
 /**
  * Created by Jérémy on 06/05/2017.
  */
-var chokidar = require('chokidar');
-var EventLogger = require('node-windows').EventLogger;
-var config = require('./service-config.json');
-var log = new EventLogger(config.service_name);
+const chokidar = require('chokidar');
+const config = require('./service-config.json');
+const winston = require('winston');
 
-var watcher = null;
+let watcher = null;
 
 exports.start = function (dir, onFile) {
-    var watch_directory =  dir + '/**/*.mp4';
-    log.info('directory watcher-service started on ' + watch_directory);
+    let watch_directory =  dir + '/**/*.mp4';
+    winston.info('directory watcher-service started on ' + watch_directory);
 
     watcher = chokidar.watch(watch_directory, {persistent: true, ignoreInitial: true});
 
     watcher.on('add', function (path) {
-        log.info('New file detected by watcher-service', path);
+        winston.info('New file detected by watcher-service', path);
         onFile(path);
     });
 };
 
 exports.stop = function (done) {
-    log.info('stopping file watcher-service');
+    winston.info('stopping file watcher-service');
     watcher.close();
     done();
 };

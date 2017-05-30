@@ -17,7 +17,7 @@ var service = new Service({
 });
 
 function get(next) {
-    var p = path.resolve(path.join(__dirname, 'service.js'));
+    let p = path.resolve(path.join(__dirname, 'service.js'));
     ServiceModel.findOne({path: p}).exec(next);
 }
 

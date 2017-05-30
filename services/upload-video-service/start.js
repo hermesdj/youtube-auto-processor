@@ -2,17 +2,23 @@
  * Created by Jérémy on 08/05/2017.
  */
 
-var mongoose = require('mongoose');
-var service = require('./service');
-var states = require('../../config/states');
+const mongoose = require('mongoose');
+const service = require('./service');
+const states = require('../../config/states');
+const uploadProcessor = require('../../processors/upload-processor');
+const Job = require('../../model/job.model');
+const db_config = require('../../config/database-config');
+const winston = require('winston');
+const wMongoDb = require('winston-mongodb').MongoDB;
+winston.add(winston.transports.MongoDB, {
+    db: db_config.mongo.uri,
+    options: db_config.mongo.options,
+    label: 'upload-video-service'
+});
 
-var uploadProcessor = require('../../processors/upload-processor');
-
-var Job = require('../../model/job.model');
-var db_config = require('../../config/database-config');
 mongoose.connect(db_config.mongo.uri, db_config.mongo.options);
 
-console.log('starting upload processor service with HOME ' + process.env.HOME);
+winston.log('starting upload processor service with HOME ' + process.env.HOME);
 Job.findOne({state: states.UPLOAD_READY.label}).sort('+date_created').populate({
     path: 'episode',
     populate: {
@@ -21,7 +27,7 @@ Job.findOne({state: states.UPLOAD_READY.label}).sort('+date_created').populate({
     }
 }).exec(function (err, job) {
     if (!job) {
-        console.error('no job in UPLOAD_READY state');
+        winston.error('no job in UPLOAD_READY state');
         service.stop();
         return;
     }
@@ -34,11 +40,11 @@ Job.findOne({state: states.UPLOAD_READY.label}).sort('+date_created').populate({
 
     uploadProcessor.upload(job, function (err) {
         if (err) {
-            console.error(err);
+            winston.error(err);
             service.stop();
             return;
         }
-        console.log('done uploading episode ' + job.episode.video_name);
+        winston.log('done uploading episode ' + job.episode.video_name);
 
         mongoose.connection.close();
         service.stop();
