@@ -19,6 +19,11 @@ winston.add(winston.transports.MongoDB, {
 });
 mongoose.connect(db_config.mongo.uri, db_config.mongo.options);
 
+process.on('uncaughtException', function (err) {
+    winston.error(err);
+    service.stop();
+});
+
 watcher.start(config.watch_directory, function (file) {
     winston.log('on new file', file);
     winston.log('video date is', path.basename(file, '.mp4'));

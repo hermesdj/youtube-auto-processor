@@ -42,6 +42,11 @@ service.on('stop', function () {
     clearInterval(i);
 });
 
+process.on('uncaughtException', function (err) {
+    winston.error(err);
+    service.stop();
+});
+
 process.on('exit', function () {
     winston.info('exiting Job Runner');
     clearInterval(i);
