@@ -14,7 +14,7 @@ import Services from 'src/services/Services';
 import Series from 'src/series/Series';
 import Logs from 'src/logs/Logs';
 
-export default angular.module('starter-app', ['ngMaterial', 'md.data.table', 'ui.router', 'angularMoment', Jobs.name, Services.name, Series.name, Logs.name])
+export default angular.module('youtube-auto-processor', ['ngMaterial', 'md.data.table', 'ui.router', 'angularMoment', Jobs.name, Services.name, Series.name, Logs.name])
     .config(($mdIconProvider, $mdThemingProvider, $stateProvider, $urlRouterProvider) => {
         // Register the user `avatar` icons
         $mdIconProvider

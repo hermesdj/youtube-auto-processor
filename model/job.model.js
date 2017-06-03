@@ -51,16 +51,7 @@ JobSchema.methods.next = function (done) {
         winston.log('moving job', this._id, 'from state', this.state, 'to', next.label);
         this.last_state = this.state;
         this.state = next.label;
-        if (this.state === states.INITIALIZED.label) {
-            this.markOnPlanning(function (err, res) {
-                if (err) {
-                    winston.error(err);
-                    return;
-                }
-                winston.log('done marking on planning');
-            });
-        }
-        if (next.label === states.ALL_DONE.label) {
+        if (this.state === states.INITIALIZED.label || next.label === states.ALL_DONE.label) {
             this.markOnPlanning(function (err, res) {
                 if (err) {
                     winston.error(err);

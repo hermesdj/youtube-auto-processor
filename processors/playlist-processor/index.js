@@ -36,6 +36,11 @@ function process(auth, job, done) {
 }
 
 exports.addToPlaylist = function (job, done) {
+    if (!job) {
+        winston.error('No job to insert the playlist from !');
+        return done('No job to insert the playlist from !');
+    }
+
     if (!job.episode) {
         winston.error('this job has no episode configured to add to a playlist !');
         return done('playlist job error, no episode', null);
@@ -77,19 +82,22 @@ function create(auth, job, done) {
         }
         job.episode.serie.playlist_id = data.id;
         job.episode.serie.save(done);
-        done(null, job);
     });
 }
 
 exports.createPlaylist = function (job, done) {
+    if (!job) {
+        winston.error('No job to create the playlist from !');
+        return done('No job to create the playlist from !');
+    }
     if (!job.episode) {
         winston.error('this job has no episode configured to add to a playlist !');
-        return done('playlist job error, no episode', null);
+        return done('playlist job error, no episode');
     }
 
     if (!job.episode.serie) {
         winston.error('this job has no serie configured to add configure a playlist !');
-        return done('playlist job error, no serie', null);
+        return done('playlist job error, no serie');
     }
 
     client(function (auth) {

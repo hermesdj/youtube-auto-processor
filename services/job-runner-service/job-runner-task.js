@@ -27,9 +27,9 @@ function jobRunner(done) {
         }, function () {
             process_initialized_jobs(this);
         }, function () {
-            process_video_ready_jobs(this);
-        }, function () {
             process_schedule_jobs(this);
+        }, function () {
+            process_video_ready_jobs(this);
         }, function () {
             process_upload_ready_jobs(this);
         }, function () {
@@ -138,6 +138,8 @@ let process_initialized_job = function (job, done) {
             job.episode.save(function () {
                 job.next(done);
             });
+        } else {
+            done();
         }
     } else {
         // Not a named serie

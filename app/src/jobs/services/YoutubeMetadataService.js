@@ -41,6 +41,7 @@ function YoutubeMetadataService($q, $http) {
                         oldPlaylist.accessibilityStr = oldPlaylist.playlistLength + ', ' + playlist.snippet.title;
                         oldPlaylist.title = playlist.snippet.title;
                         oldPlaylist.playlistId = playlist.id;
+                        // TODO find next episode id maybe ?
                         oldPlaylist.videoId = videoId;
                         oldPlaylist.targetUrl = encodeURIComponent('https://www.youtube.com/watch?v=' + videoId + '&list=' + playlist.id);
 
@@ -127,6 +128,10 @@ function YoutubeMetadataService($q, $http) {
             // TODO revoir l'authentification
             new_win.on('loaded', function () {
                 console.log('loaded !', new_win);
+            });
+
+            new_win.on('closed', function () {
+                deferred.resolve();
             });
         });
         return deferred.promise;

@@ -63,7 +63,7 @@ exports.process = function (job, done) {
     if (!allow_intro && !allow_outro) {
         winston.log('nothing to process !');
         job.state = 'VIDEO_DONE';
-        job.save(done);
+        return job.save(done);
     }
 
     winston.log('processing video content', path.resolve(content));

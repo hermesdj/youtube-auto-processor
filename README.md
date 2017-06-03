@@ -23,9 +23,6 @@ job move from state : (not accurate)
 - PUBLIC : la vidéo est publique (la date du jour est > à la date de publication) et elle est marquée comme public sur l'agenda
 - ERROR : Le job runner a rencontré une erreur et a passé le job en arrêt
 
-## Configuration
-
-
 ## TODO
 - [x] Suppression de la vidéo locale une fois que tout le traitement a été terminé et la vidéo publique. Idem pour le thumbnail
 - [x] Ajout d'un state MONETIZE pour gérer la monétisation automatique de la vidéo
@@ -40,3 +37,5 @@ job move from state : (not accurate)
 - [ ] Compilation de l'application avec nw-builder
 - [ ] Gérer le cas où on a une ou des cases vides dans l'agenda
 - [x] vérifier que cela check bien dans le mois suivant
+- [ ] Gérer la localization des vidéos (ça ne fonctionne pas actuellement et bug sur le serieProcessor à l'initialization)
+- [ ] Cleanup des vidéos uploadées + configuration

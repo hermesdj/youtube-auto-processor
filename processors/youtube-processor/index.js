@@ -30,6 +30,10 @@ function process(auth, job, done) {
     });
 }
 exports.getVideoProcessorStats = function (job, done) {
+    if (!job) {
+        return done('no job to retrieve the video status from !');
+    }
+
     if (!job.episode) {
         job.error('no episode in this job');
         return;

@@ -32,7 +32,13 @@ function process(auth, job, done) {
         }
         if (data) {
             job.episode.thumbnails = data.items;
-            job.save(done);
+            job.episode.save(function (err) {
+                if (err) {
+                    return done(err);
+                }
+
+                job.save(done);
+            });
         }
     });
 }

@@ -24,7 +24,7 @@ process.on('uncaughtException', function (err) {
 });
 
 winston.log('starting upload processor service with HOME ' + process.env.HOME);
-Job.findOne({state: states.UPLOAD_READY.label}).sort('+date_created').populate({
+Job.findOne({state: states.UPLOAD_READY.label}).sort('-date_created').populate({
     path: 'episode',
     populate: {
         path: 'serie',

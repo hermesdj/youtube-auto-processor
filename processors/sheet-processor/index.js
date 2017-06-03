@@ -76,7 +76,6 @@ function parseDate(haystack, i, j, done) {
     for (let k = i - 1; k >= 0; k--) {
         if (haystack[k][j]) {
             let m = haystack[k][j].match(/(\d+)(-|\/)(\d+)(?:-|\/)(?:(\d+)\s+(\d+):(\d+)(?::(\d+))?(?:\.(\d+))?)?/);
-            winston.log(m);
             if (m !== null) {
                 day = haystack[k][j];
                 break;
