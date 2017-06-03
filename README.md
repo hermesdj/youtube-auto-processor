@@ -1,7 +1,10 @@
 # youtube-auto-processor
 
-## Install
+## Description
+
+## Installation & Configuration
 Download ffmpeg : http://ffmpeg.zeranoe.com/builds/
+To be completed
 
 ## State machine
 job move from state : (not accurate)
@@ -32,7 +35,6 @@ job move from state : (not accurate)
 - [x] Traitement de la vidéo avec intro et outro
 - [x] Ajout d'un écran de fin automatique
 - [ ] Terminer le client nw.js pour consulter le status des jobs et manager le système
-- [ ] Essayer de superposer sur l'écran de fin la date du prochain épisode
 - [ ] Setter le nom du jeu sur la vidéo automatiquement
 - [ ] Charger automatiquement la base de données au lancement de l'application si mongo n'est pas lancé (service windows)
 - [ ] Compilation de l'application avec nw-builder
