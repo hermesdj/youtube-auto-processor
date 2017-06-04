@@ -43,19 +43,26 @@ You will then need to generate a ID clients OAuth 2.0, download the JSON file, r
 
 ```json
 {
-  "watch_directory": "Z:/Content Creation/Processor/Watch", // Folder where the app will look for new .mp4 videos
-  "working_directory": "Z:/Content Creation/Processor/Work", // Folder where FFMPEG will store the data during processing
-  "output_directory": "Z:/Content Creation/Processor/Output", // Folder where FFMPEG will output the videos
-  "ffmpeg_path": "Z:/Dev/workspace/youtube-auto-processor/lib/ffmpeg-3.3.1-win64-static/bin/ffmpeg.exe", // Path to ffmpeg.exe
-  "ffprobe_path": "Z:/Dev/workspace/youtube-auto-processor/lib/ffmpeg-3.3.1-win64-static/bin/ffprobe.exe", // Path to ffprobe.exe
-  "pause_before_processing": true // If the application should pause a job before starting the video processing. Useful if you want to keep recording videos and process them later
+  "watch_directory": "Z:/Content Creation/Processor/Watch",
+  "working_directory": "Z:/Content Creation/Processor/Work",
+  "output_directory": "Z:/Content Creation/Processor/Output",
+  "ffmpeg_path": "Z:/Dev/workspace/youtube-auto-processor/lib/ffmpeg-3.3.1-win64-static/bin/ffmpeg.exe", 
+  "ffprobe_path": "Z:/Dev/workspace/youtube-auto-processor/lib/ffmpeg-3.3.1-win64-static/bin/ffprobe.exe",
+  "pause_before_processing": true
 }
 ```
+
+- `watch_directory`: Folder where the app will look for new .mp4 videos
+- `working_directory` :  Folder where FFMPEG will store the data during processing
+- `output_directory`: Folder where FFMPEG will output the videos
+- `ffmpeg_path`: Path to ffmpeg.exe
+- `ffprobe_path`: Path to ffprobe.exe (usually in the same folder as ffmpeg.exe)
+- `pause_before_processing`: If the application should pause a job before starting the video processing. Useful if you want to keep recording videos and process them later
 
 `config/youtube.json`
 ```json
 {
-  "agenda_spreadsheet_id": "SPREADSHEET_ID", // Spreadsheet where the videos are scheduled. You can find mine at http://agenda.jaysgaming.fr
+  "agenda_spreadsheet_id": "SPREADSHEET_ID",
   "default_description_template": "${game_title} Gameplay FR 1080p HD\r\n\r\n${description}\r\n\r\nVous pouvez retrouver le jeu en suivant le lien suivant : \r\n${store_url}\r\n\r\nVous pouvez suivre la série grâce à la playlist suivante :\r\n${playlist_url}\r\n\r\n${default_description}", // default video description template
   "default_description_template_localized": {
     "en": "${game_title} Gameplay FR 1080p HD\r\n\r\n${description}\r\n\r\nYou can buy the game here : \r\n${store_url}\r\n\r\nYou can follow the whole serie thanks to the following playlist :\r\n${playlist_url}\r\n\r\n${default_description}" // Not working yet
@@ -67,6 +74,15 @@ You will then need to generate a ID clients OAuth 2.0, download the JSON file, r
   "intro_outro_air_date": "2017/06/01 00:00:00"
 }
 ```
+- `agenda_spreadsheet_id`: Spreadsheet where the videos are scheduled. You can find mine at http://agenda.jaysgaming.fr
+- `default_description_template`:
+- `default_description_template_localized`:
+- `default_intro`:
+- `default_outro`:
+- `prepend_intro`:
+- `append_outro`:
+- `intro_outro_air_date`:
+
 For the description_templates, the following values are for now available :
 - `${game_title}` : The game title as defined in the `serie.json` descriptor (see below)
 - `${description}` : The description of the video
@@ -79,16 +95,16 @@ When the File Watcher service starts, it will look into the folder configured as
 `examples/serie.json`
 ```json
 {
-  "planning_name": "Test ${episode_number}", // Name to look in the google spreadsheet for scheduling the video date
-  "playlist_id": "YOUTUBE_PLAYLIST_ID", // Playlist ID. If not provided, add a playlist_title key in this file and the program will create it 
-  "video_keywords": "Test, Programming, API, Processor", // The keywords of each videos
-  "last_episode": 0, // The last episode uploaded but not managed by the program. This is useful to start the program on an existing serie
-  "video_title_template": "Test Processing - Episode ${episode_number}", // The video title template
-  "description": "Ceci est une vidéo de test pour le processeur Youtube !", // The video description that will be included in the default_description_template
-  "description_template": null, // A description template specific for this serie
-  "named_episode": false, // If the video title will need a custom name. If set to true, the process will stop in INITIALIZED state until an episode_name is provided
-  "game_title": "Test", // The name of the game
-  "localizations": [ // Localization management for title and description. Not working for now
+  "planning_name": "Test ${episode_number}", 
+  "playlist_id": "YOUTUBE_PLAYLIST_ID", 
+  "video_keywords": "Test, Programming, API, Processor", 
+  "last_episode": 0, 
+  "video_title_template": "Test Processing - Episode ${episode_number}",
+  "description": "Ceci est une vidéo de test pour le processeur Youtube !", 
+  "description_template": null, 
+  "named_episode": false, 
+  "game_title": "Test",
+  "localizations": [ 
     {
       "key": "en",
       "title": "Test Processing - Episode ${episode_number}",
@@ -99,9 +115,22 @@ When the File Watcher service starts, it will look into the folder configured as
 }
 ```
 
+- `planning_name`: Name to look in the google spreadsheet for scheduling the video date
+- `playlist_id`: Playlist ID. If not provided, add a playlist_title key in this file and the program will create it
+- `video_keywords`: The keywords of each videos
+- `last_episode`: The last episode uploaded but not managed by the program. This is useful to start the program on an existing serie
+- `video_title_template`: The video title template
+- `description`: The video description that will be included in the default_description_template
+- `description_template`: A description template specific for this serie
+- `named_episode`: If the video title will need a custom name. If set to true, the process will stop in INITIALIZED state until an episode_name is provided
+- `game_title`: The name of the game
+- `localizations`: Localization management for title and description. Not working for now
+
 In the Watch folder, you will need to create a `thumbnails` folder containing all the episodes thumbnails named by the episode number and in png format 1280x720p
 
 Once everything is configured, run the application `npm start`
+
+If you want to have debug available in the NW.js client, run `npm install nw --nwjs_build_type=sdk` before launching the app
 
 ## State machine
 job move from state : 
@@ -144,6 +173,7 @@ job move from state :
 - [x] vérifier que cela check bien dans le mois suivant
 - [ ] Gérer la localization des vidéos (ça ne fonctionne pas actuellement et bug sur le serieProcessor à l'initialization)
 - [ ] Cleanup des vidéos uploadées + configuration
+- [ ] Compléter le readme avec des screenshots par exemple...
 
 ## Troubleshooting
 If you encounter an issue, please use the Issue tracker of this repository : https://github.com/hermesdj/youtube-auto-processor/issues
