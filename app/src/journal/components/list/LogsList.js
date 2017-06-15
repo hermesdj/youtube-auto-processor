@@ -5,7 +5,7 @@
 export default {
     name: 'logsList',
     config: {
-        templateUrl: 'src/journaljournal/components/list/LogsList.html',
+        templateUrl: 'src/journal/components/list/LogsList.html',
         controller: LogsListController
     }
 };

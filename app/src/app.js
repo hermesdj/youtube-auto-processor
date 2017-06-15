@@ -12,7 +12,7 @@ import AppController from 'src/AppController';
 import Jobs from 'src/jobs/Jobs';
 import Services from 'src/services/Services';
 import Series from 'src/series/Series';
-import Logs from 'src/journaljournal/Logs';
+import Logs from 'src/journal/Logs';
 
 export default angular.module('youtube-auto-processor', ['ngMaterial', 'md.data.table', 'ui.router', 'angularMoment', Jobs.name, Services.name, Series.name, Logs.name])
     .config(($mdIconProvider, $mdThemingProvider, $stateProvider, $urlRouterProvider) => {
