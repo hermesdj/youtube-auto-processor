@@ -1,0 +1,31 @@
+<md-list ng-cloack>
+    <md-subheader>Application Settings</md-subheader>
+    <md-list-item class="md-2-line">
+        <div class="md-list-item-text" layout="column">
+            <h4>{{$ctrl.settings.app.watch_directory}}</h4>
+            <p>Directory where the application will watch new .mp4 files</p>
+        </div>
+    </md-list-item>
+    <md-list-item class="md-2-line">
+        <div class="md-list-item-text" layout="column">
+            <h4>{{$ctrl.settings.app.working_directory}}</h4>
+            <p>Directory where processing videos are temporarily stored</p>
+        </div>
+    </md-list-item>
+    <md-list-item class="md-2-line">
+        <div class="md-list-item-text" layout="column">
+            <h4>{{$ctrl.settings.app.output_directory}}</h4>
+            <p>Directory where processed videos are stored</p>
+        </div>
+    </md-list-item>
+    <md-list-item>
+        <p>Pause before processing video</p>
+        <md-switch class="md-secondary" ng-model="$ctrl.settings.app.pause_before_processing"></md-switch>
+    </md-list-item>
+    <md-divider></md-divider>
+
+    <md-subheader>Youtube Settings</md-subheader>
+    <md-list-item>
+
+    </md-list-item>
+</md-list>

@@ -35,11 +35,27 @@
                 md-component-id="left" ng-click="app.toggleList()">
         <!-- Custom UsersList component -->
         <md-list>
-            <md-list-item ui-sref="jobs">Jobs</md-list-item>
-            <md-list-item ui-sref="series">Series</md-list-item>
-            <md-list-item ui-sref="services">Services</md-list-item>
-            <md-list-item ui-sref="settings">Settings</md-list-item>
-            <md-list-item ui-sref="logs">Logs</md-list-item>
+            <md-list-item ui-sref="jobs">
+                <md-icon md-svg-icon="jobs"></md-icon>
+                <p>Jobs</p>
+            </md-list-item>
+            <md-list-item ui-sref="series">
+                <md-icon md-svg-icon="series"></md-icon>
+                <p>Series</p>
+            </md-list-item>
+            <md-divider></md-divider>
+            <md-list-item ui-sref="services">
+                <md-icon md-svg-icon="services"></md-icon>
+                <p>Services</p>
+            </md-list-item>
+            <md-list-item ui-sref="settings">
+                <md-icon md-svg-icon="settings"></md-icon>
+                <p>Settings</p>
+            </md-list-item>
+            <md-list-item ui-sref="logs">
+                <md-icon md-svg-icon="logs"></md-icon>
+                <p>Logs</p>
+            </md-list-item>
         </md-list>
     </md-sidenav>
 

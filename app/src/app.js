@@ -13,8 +13,10 @@ import Jobs from 'src/jobs/Jobs';
 import Services from 'src/services/Services';
 import Series from 'src/series/Series';
 import Logs from 'src/journal/Logs';
+import Settings from 'src/settings/Settings';
 
-export default angular.module('youtube-auto-processor', ['ngMaterial', 'md.data.table', 'ui.router', 'angularMoment', Jobs.name, Services.name, Series.name, Logs.name])
+export default angular.module('youtube-auto-processor', ['ngMaterial', 'md.data.table', 'ui.router', 'angularMoment',
+    Jobs.name, Services.name, Series.name, Logs.name, Settings.name])
     .config(($mdIconProvider, $mdThemingProvider, $stateProvider, $urlRouterProvider) => {
         // Register the user `avatar` icons
         $mdIconProvider
@@ -35,7 +37,14 @@ export default angular.module('youtube-auto-processor', ['ngMaterial', 'md.data.
             .icon('delete', './assets/svg/delete.svg', 24)
             .icon('next', './assets/svg/arrow-right-bold-circle.svg', 24)
             .icon('phone', './assets/svg/phone.svg', 24)
-            .icon('pause', './assets/svg/pause-circle-outline.svg', 24);
+            .icon('pause', './assets/svg/pause-circle-outline.svg', 24)
+            .icon('folder_open', './assets/svg/folder-open.svg', 24)
+
+            .icon('jobs', './assets/svg/buffer.svg', 24)
+            .icon('series', './assets/svg/view-list.svg', 24)
+            .icon('settings', './assets/svg/settings.svg', 24)
+            .icon('logs', './assets/svg/bug.svg', 24)
+            .icon('services', './assets/svg/microsoft.svg', 24);
 
         let customPrimary = {
             '50': '#ef7579',
@@ -184,7 +193,8 @@ export default angular.module('youtube-auto-processor', ['ngMaterial', 'md.data.
                 }
             })
             .state('settings', {
-                url: '/settings'
+                url: '/settings',
+                component: 'settingsPage'
             })
             .state('logs', {
                 url: '/journal',
