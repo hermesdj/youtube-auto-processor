@@ -19,7 +19,7 @@ function process(auth, job, done) {
     month = month.charAt(0).toUpperCase() + month.slice(1);
     let year = moment().format('YYYY');
     let start = 'A1';
-    let end = 'H33';
+    let end = 'H40';
     let range = month.concat(' ').concat(year).concat('!').concat(start).concat(':').concat(end);
 
     processRange(auth, job, range, function (err, haystack, i, j) {
