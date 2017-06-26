@@ -169,12 +169,13 @@ job move from state :
 - [ ] Setter le nom du jeu sur la vidéo automatiquement
 - [ ] Charger automatiquement la base de données au lancement de l'application si mongo n'est pas lancé (service windows)
 - [ ] Compilation de l'application avec nw-builder
-- [ ] Gérer le cas où on a une ou des cases vides dans l'agenda
+- [x] Gérer le cas où on a une ou des cases vides dans l'agenda
 - [x] vérifier que cela check bien dans le mois suivant
 - [ ] Gérer la localization des vidéos (ça ne fonctionne pas actuellement et bug sur le serieProcessor à l'initialization)
 - [ ] Cleanup des vidéos uploadées + configuration
 - [ ] Compléter le readme avec des screenshots par exemple...
 - [ ] changer la gestion des URL de store pour supporter les nouveaux partenariats
+- [ ] Intégrer l'appli aux API Steam (http://steamcommunity.com/dev), GOG (https://gogapidocs.readthedocs.io/en/latest/) ou encore GamesPlanet
 
 ## Troubleshooting
 If you encounter an issue, please use the Issue tracker of this repository : https://github.com/hermesdj/youtube-auto-processor/issues
