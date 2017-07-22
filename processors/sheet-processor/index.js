@@ -22,10 +22,12 @@ function process(auth, job, done) {
     let end = 'H40';
     let range = month.concat(' ').concat(year).concat('!').concat(start).concat(':').concat(end);
 
+
     processRange(auth, job, range, function (err, haystack, i, j) {
         if (err) {
             month = moment().add(1, 'M').format('MMMM');
             month = month.charAt(0).toUpperCase() + month.slice(1);
+            month = month.replace('û', 'u');
             let range = month.concat(' ').concat(year).concat('!').concat(start).concat(':').concat(end);
             processRange(auth, job, range, function (err, haystack, i, j) {
                 return done(err, haystack, i, j, month.concat(' ').concat(year));
@@ -39,7 +41,7 @@ function process(auth, job, done) {
 }
 
 function processRange(auth, job, range, done) {
-    winston.log('processing with range', range);
+    winston.info('processing with range', range);
     let sheets = google.sheets({
         version: 'v4',
         auth: auth.oauth2client
@@ -68,7 +70,7 @@ function find(haystack, needle, done) {
 }
 
 function parseDate(haystack, i, j, done) {
-    winston.log('parsing value at', i, j);
+    winston.info('parsing value at', i, j);
     let result = null;
     let hour = haystack[i][0];
     let day = null;
@@ -84,7 +86,7 @@ function parseDate(haystack, i, j, done) {
     }
 
     if (day && hour) {
-        winston.log('day && hour found', day, hour);
+        winston.info('day && hour found', day, hour);
         result = moment(day + hour, 'DD/MM/YYYY HH:mm:ss').format('YYYY-MM-DDTHH:mm:ss.sZ');
     }
 
@@ -205,22 +207,22 @@ function updateCells(auth, requests, done) {
 }
 
 exports.markAsProcessing = function (job, done) {
-    winston.log('mark as processing on agenda');
+    winston.info('mark as processing on agenda');
     mark(job, COLORS.processing, done);
 };
 
 exports.markAsReady = function (job, done) {
-    winston.log('marking as ready on agenda');
+    winston.info('marking as ready on agenda');
     mark(job, COLORS.done, done);
 };
 
 exports.markAsPublic = function (job, done) {
-    winston.log('marking as public on agenda');
+    winston.info('marking as public on agenda');
     mark(job, COLORS.public, done);
 };
 
 exports.markAsError = function (job, done) {
-    winston.log('marking as error on agenda');
+    winston.info('marking as error on agenda');
     mark(job, COLORS.error, function (err, res) {
         winston.error(err);
         done(err, res);

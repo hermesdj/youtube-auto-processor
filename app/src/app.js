@@ -167,6 +167,10 @@ export default angular.module('youtube-auto-processor', ['ngMaterial', 'md.data.
             })
             .state('series', {
                 url: '/series',
+                templateUrl: 'src/series/series.html'
+            })
+            .state('series.list', {
+                url: '/list',
                 component: 'seriesList', // The component's name
                 resolve: {
                     series: function (SeriesDataService) {
@@ -178,7 +182,8 @@ export default angular.module('youtube-auto-processor', ['ngMaterial', 'md.data.
                 url: '/edit/:id',
                 component: 'editSerie', // The component's name
                 resolve: {
-                    serie: function (SeriesDataService, $stateParams) {
+                    serie: function (SeriesDataService, $stateParams, $mdSidenav) {
+                        $mdSidenav('right').toggle();
                         return SeriesDataService.get($stateParams.id);
                     }
                 }

@@ -16,5 +16,5 @@ winston.add(winston.transports.MongoDB, {
 
 let services = new Services();
 services.init(function (services) {
-    winston.log('done initiating services');
+    winston.info('done initiating services');
 });

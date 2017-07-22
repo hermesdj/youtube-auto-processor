@@ -23,7 +23,7 @@ process.on('uncaughtException', function (err) {
     service.stop();
 });
 
-winston.log('starting upload processor service with HOME ' + process.env.HOME);
+winston.info('starting upload processor service with HOME ' + process.env.HOME);
 Job.findOne({state: states.UPLOAD_READY.label}).sort('-date_created').populate({
     path: 'episode',
     populate: {
@@ -49,7 +49,7 @@ Job.findOne({state: states.UPLOAD_READY.label}).sort('-date_created').populate({
             service.stop();
             return;
         }
-        winston.log('done uploading episode ' + job.episode.video_name);
+        winston.info('done uploading episode ' + job.episode.video_name);
 
         mongoose.connection.close();
         service.stop();

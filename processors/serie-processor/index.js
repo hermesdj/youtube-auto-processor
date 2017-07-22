@@ -6,7 +6,7 @@ const Serie = require('../../model/serie.model');
 const winston = require('winston');
 
 exports.process = function (job, done) {
-    winston.log('called serie processor on job', job._id);
+    winston.info('called serie processor on job', job._id);
     Serie.findOrCreate(path.dirname(job.path), function (err, serie) {
         if (err) {
             winston.error(err);
@@ -19,7 +19,7 @@ exports.process = function (job, done) {
                 return done(err, null);
             }
             job.episode = episode;
-            winston.log('passing serie to next step');
+            winston.info('passing serie to next step');
             job.next(done);
         });
     });

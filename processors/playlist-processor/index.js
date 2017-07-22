@@ -21,6 +21,8 @@ function process(auth, job, done) {
         return done('no video id in episode', null);
     }
 
+    winston.info('adding ' + videoId + ' to playlist ' + playlistId);
+
     youtube.playlistItems.insert({
         part: 'snippet',
         resource: {
@@ -51,7 +53,10 @@ exports.addToPlaylist = function (job, done) {
         return done('playlist job error, no serie', null);
     }
 
+    winston.debug('adding episode to playlist', job.episode.video_name);
+
     client(function (auth) {
+        winston.debug('authenticated on google', auth);
         process(auth, job, done);
     });
 };

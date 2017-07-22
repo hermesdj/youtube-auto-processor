@@ -55,7 +55,7 @@ Job.findOne({state: states.VIDEO_READY.label}).sort('-date_created').populate({
             return;
         }
 
-        winston.log('done processing episode ' + job.episode.video_name, result);
+        winston.info('done processing episode ' + job.episode.video_name, result);
         // Move job to next state
         job.next(function (err, job) {
             if (err) {

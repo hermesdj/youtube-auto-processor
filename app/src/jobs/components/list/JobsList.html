@@ -73,7 +73,7 @@
             </div>
         </md-card-content>
         <md-card-actions layout="row" layout-align="end center">
-            <md-select ng-model="$ctrl.selectedState" ng-change="job.goto($ctrl.selectedState)" placeholder="Jump to State..." class="md-no-underline">
+            <md-select ng-model="$ctrl.selectedState" ng-change="$ctrl.goto(job, $ctrl.selectedState)" placeholder="Jump to State..." class="md-no-underline">
                 <md-option ng-repeat="state in $ctrl.states" ng-value="state.label">{{state.label}}</md-option>
             </md-select>
             <md-button ng-click="job.pause()" ng-if="job.state !== 'PAUSED' && job.state !== 'UPLOAD_PROCESS'">

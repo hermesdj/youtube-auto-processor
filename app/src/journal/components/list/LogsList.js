@@ -16,9 +16,8 @@ function LogsListController(LogsDataService, $interval) {
     function Factory() {
         this.query = {
             filter: {
-                level: 'debug'
             },
-            order: '-timestamp',
+            order: '+timestamp',
             limit: 10,
             page: 1
         };
@@ -40,8 +39,9 @@ function LogsListController(LogsDataService, $interval) {
     };
 
     Factory.prototype.reload = function (query) {
-        //console.log(query);
+        console.log(query);
         LogsDataService.list(query.filter, query.order, query.limit, query.page).then(function (logs) {
+            console.log(logs);
             this.logs = logs;
         }.bind(this), function (err) {
             console.error(err);

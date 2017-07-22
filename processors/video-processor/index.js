@@ -18,18 +18,24 @@ exports.process = function (job, done) {
         process.env['FFPROBE_PATH'] = config.ffprobe_path;
     }
 
-    winston.log('FFMPEG_PATH=', process.env.FFMPEG_PATH);
+    winston.info('FFMPEG_PATH=', process.env.FFMPEG_PATH);
 
     let intro = null;
     let outro = null;
     let content = null;
+    let partner = null;
 
     if (job) {
-        if (job.intro) {
-            intro = path.resolve(job.intro);
-        }
-        if (job.outro) {
-            outro = path.resolve(job.outro);
+        if (job.episode && job.episode.serie) {
+            if (job.episode.serie.intro) {
+                intro = path.resolve(job.intro);
+            }
+            if (job.episode.serie.partner) {
+                partner = path.resolve(job.partner);
+            }
+            if (job.episode.serie.outro) {
+                outro = path.resolve(job.outro);
+            }
         }
         if (job.path) {
             content = path.resolve(job.path);
@@ -55,35 +61,39 @@ exports.process = function (job, done) {
 
     let airDate = moment(options.intro_outro_air_date, 'YYYY/MM/DD HH:mm:ss');
     let publicDate = moment(job.episode.publishAt);
-    winston.log(airDate, publicDate, publicDate.diff(airDate));
+    winston.info(airDate, publicDate, publicDate.diff(airDate));
     let allow_intro = publicDate.diff(airDate) >= 0 && options.prepend_intro;
     let allow_outro = publicDate.diff(airDate) >= 0 && options.append_outro;
 
     let out = path.resolve(outputDirectory, job.episode.episode_number + '.mp4');
 
     if (!allow_intro && !allow_outro) {
-        winston.log('nothing to process !');
+        winston.info('nothing to process !');
         job.state = 'VIDEO_DONE';
         return job.save(done);
     }
 
-    winston.log('processing video content', path.resolve(content));
-    winston.log('output directory is', out);
+    winston.info('processing video content', path.resolve(content));
+    winston.info('output directory is', out);
 
 
     let command = new Ffmpeg();
     if (intro && allow_intro) {
-        winston.log('adding intro to the video', path.resolve(intro));
+        winston.info('adding intro to the video', path.resolve(intro));
         command.input(intro);
+    }
+    if (partner) {
+        winston.info('adding partner to the video', path.resolve(partner));
+        command.input(partner);
     }
     command.input(content);
     if (outro && allow_outro) {
-        winston.log('adding outro to the video', path.resolve(outro));
+        winston.info('adding outro to the video', path.resolve(outro));
         command.input(outro);
     }
 
     command.on('start', function (commandLine) {
-        winston.log('Spawned ffmpeg with command', commandLine);
+        winston.info('Spawned ffmpeg with command', commandLine);
         job.state = 'VIDEO_PROCESSING';
         job.process_data = {
             totalSize: fs.statSync(content).size,
@@ -117,5 +127,5 @@ exports.process = function (job, done) {
 
     command.mergeToFile(out, config.working_directory);
 
-    winston.log('started');
+    winston.info('started');
 };

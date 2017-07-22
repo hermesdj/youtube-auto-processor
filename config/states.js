@@ -56,21 +56,21 @@ module.exports = function () {
             id: 8,
             label: 'THUMBNAIL',
             next: function () {
-                return states.PLAYLIST;
+                return states.WAIT_YOUTUBE_PROCESSING;
             }
         },
         PLAYLIST: {
             id: 9,
             label: 'PLAYLIST',
             next: function () {
-                return states.WAIT_YOUTUBE_PROCESSING;
+                return states.MONETIZE;
             }
         },
         WAIT_YOUTUBE_PROCESSING: {
             id: 10,
             label: 'WAIT_YOUTUBE_PROCESSING',
             next: function () {
-                return states.MONETIZE;
+                return states.PLAYLIST;
             }
         },
         MONETIZE: {

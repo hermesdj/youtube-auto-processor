@@ -19,6 +19,10 @@ function authorize(credentials, done) {
         client_secret: clientSecret,
         scope: SCOPES
     }, function (err, token) {
+        if (err) {
+            console.error(err);
+        }
+        console.log('authorized with token', token);
         done(err, token);
     });
 }

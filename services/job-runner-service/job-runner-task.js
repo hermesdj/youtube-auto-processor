@@ -93,13 +93,13 @@ let process_ready_jobs = function (done) {
             return;
         }
         if (job) {
-            winston.log('ready jobs found to process:' + job._id);
+            winston.info('ready jobs found to process:' + job._id);
             serieProcessor.process(job, function (err, job) {
                 if (err) {
                     winston.error(err);
                     job.error(err);
                 }
-                winston.log('done processing ready job');
+                winston.info('done processing ready job');
                 done();
             });
         } else {
@@ -115,13 +115,13 @@ let process_initialized_jobs = function (done) {
             done(err, null);
         }
         if (jobs.length > 0) {
-            winston.log('initialized jobs found to process:' + jobs.length);
+            winston.info('initialized jobs found to process:' + jobs.length);
             process_jobs(jobs, process_initialized_job, function (err, job) {
                 if (err) {
                     winston.error(err);
                     job.error(err);
                 }
-                winston.log('done processing ready jobs');
+                winston.info('done processing ready jobs');
                 done();
             });
         } else {
@@ -132,7 +132,7 @@ let process_initialized_jobs = function (done) {
 
 let process_initialized_job = function (job, done) {
     if ((job.episode.serie && job.episode.serie.named_episode) || job.episode.video_name.indexOf('${episode_name}') > 0) {
-        winston.log('this needs a name, waiting for user input...');
+        winston.info('this needs a name, waiting for user input...');
         if (job.episode.episode_name) {
             job.episode.video_name = job.episode.video_name.replace('${episode_name}', job.episode.episode_name);
             job.episode.save(function () {
@@ -155,7 +155,7 @@ let process_video_ready_jobs = function (done) {
             return;
         }
         if (jobs.length > 0) {
-            winston.log('video ready jobs found to process:' + jobs.length);
+            winston.info('video ready jobs found to process:' + jobs.length);
             processVideoService();
         }
         done();
@@ -170,7 +170,7 @@ let process_schedule_jobs = function (done) {
             return;
         }
         if (jobs.length > 0) {
-            winston.log('schedule jobs found to process:' + jobs.length);
+            winston.info('schedule jobs found to process:' + jobs.length);
             process_jobs(jobs, process_schedule_job, function (err, job) {
                 if (err) {
                     winston.error(err);
@@ -192,7 +192,7 @@ let process_schedule_job = function (job, done) {
         }
 
         job.episode.publishAt = moment(result).toDate();
-        winston.log(job.episode.video_name + ' scheduled on ' + job.episode.publishAt);
+        winston.info(job.episode.video_name + ' scheduled on ' + job.episode.publishAt);
         job.episode.save(function (err, episode) {
             if (err) {
                 job.error(err);
@@ -218,7 +218,7 @@ let process_upload_ready_jobs = function (done) {
             return;
         }
         if (jobs.length > 0) {
-            winston.log('upload ready jobs found to process:' + jobs.length);
+            winston.info('upload ready jobs found to process:' + jobs.length);
             processUploadService();
         }
         done();
@@ -234,7 +234,7 @@ let process_upload_done_jobs = function (done) {
         }
 
         if (jobs.length > 0) {
-            winston.log('upload done jobs found to process:' + jobs.length);
+            winston.info('upload done jobs found to process:' + jobs.length);
             process_jobs(jobs, process_upload_done_job, function (err, job) {
                 if (err) {
                     winston.error(err);
@@ -277,7 +277,7 @@ let process_thumbnail_jobs = function (done) {
         }
 
         if (jobs.length > 0) {
-            winston.log('thumbnail jobs found to process:' + jobs.length);
+            winston.info('thumbnail jobs found to process:' + jobs.length);
             process_jobs(jobs, process_thumbnail_job, function (err, job) {
                 if (err) {
                     winston.error(err);
@@ -305,7 +305,7 @@ let process_playlists_jobs = function (done) {
         }
 
         if (jobs.length > 0) {
-            winston.log('playlist jobs found to process:' + jobs.length);
+            winston.info('playlist jobs found to process:' + jobs.length);
             process_jobs(jobs, process_playlist_job, function (err, job) {
                 if (err) {
                     winston.error(err);
@@ -363,7 +363,7 @@ let process_all_done_jobs = function (done) {
         }
 
         if (jobs.length > 0) {
-            winston.log('all done job found to process:', jobs.length);
+            winston.info('all done job found to process:', jobs.length);
             process_jobs(jobs, process_all_done_job, function (err, job) {
                 if (err) {
                     winston.error(err);
@@ -383,7 +383,7 @@ let process_all_done_job = function (job, done) {
 
     if (now.diff(publicDate) > 0) {
         // Episode is public
-        winston.log('job found to mark as public');
+        winston.info('job found to mark as public');
         job.next(function (err, job) {
             if (err) {
                 winston.error(err);
@@ -405,7 +405,7 @@ let process_public_jobs = function (done) {
         }
 
         if (jobs.length > 0) {
-            winston.log('public job found to process:', jobs.length);
+            winston.info('public job found to process:', jobs.length);
             process_jobs(jobs, process_public_job, function (err) {
                 if (err) {
                     winston.error(err);
@@ -421,16 +421,16 @@ let process_public_jobs = function (done) {
 let process_public_job = function (job, done) {
     // clear all public videos from file system
     if (fs.existsSync(job.path)) {
-        winston.log('found file to delete as the video is now public', job.path);
-        fs.unlink(job.path, function (err) {
-            if (err) {
-                return done(err);
-            }
-            return done(null, job);
-        });
-    } else {
-        done(null, job);
+        winston.info('found file to delete as the video is now public :' + job.path);
+        fs.unlinkSync(job.path);
     }
+
+    if (fs.existsSync(job.episode.path)) {
+        winston.info('found episode file to delete as the video is now public :' + job.episode.path);
+        fs.unlinkSync(job.episode.path);
+    }
+
+    done(null, job);
 };
 
 let process_wait_youtube_processing_jobs = function (done) {
@@ -442,7 +442,7 @@ let process_wait_youtube_processing_jobs = function (done) {
         }
 
         if (jobs.length > 0) {
-            winston.log('wait processing job found to process:', jobs.length);
+            winston.info('wait processing job found to process:', jobs.length);
             process_jobs(jobs, process_wait_youtube_processing_job, function (err) {
                 if (err) {
                     winston.error(err);
@@ -461,7 +461,7 @@ let process_wait_youtube_processing_job = function (job, done) {
             winston.error(err);
             return done(err, null);
         }
-        winston.log('processing info is', job.processing);
+        winston.info('processing info is', job.processing);
         if (job.processing && job.processing.processingStatus === 'succeeded') {
             // Move to next step as processing is done
             job.next(done);

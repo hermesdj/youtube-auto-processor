@@ -25,8 +25,8 @@ process.on('uncaughtException', function (err) {
 });
 
 watcher.start(config.watch_directory, function (file) {
-    winston.log('on new file', file);
-    winston.log('video date is', path.basename(file, '.mp4'));
+    winston.info('on new file', file);
+    winston.info('video date is', path.basename(file, '.mp4'));
     let date = moment(path.basename(file, '.mp4'), 'YYYY-MM-DD_HH:mm:ss', 'fr');
 
     let job = new Job({
@@ -38,14 +38,14 @@ watcher.start(config.watch_directory, function (file) {
             winston.error('error creating job', err);
             return err;
         }
-        winston.log('new job saved', job);
+        winston.info('new job saved', job);
     });
 });
 
 service.on('stop', function () {
-    winston.log('Service is being stopped');
+    winston.info('Service is being stopped');
     mongoose.connection.close();
     watcher.stop(function () {
-        winston.log('Watcher has been stopped');
+        winston.info('Watcher has been stopped');
     });
 });

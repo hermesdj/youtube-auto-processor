@@ -11,11 +11,13 @@ const db_config = require('../../config/database-config');
 const service = require('./service');
 const winston = require('winston');
 const wMongoDb = require('winston-mongodb').MongoDB;
+
 winston.add(winston.transports.MongoDB, {
     db: db_config.mongo.uri,
     options: db_config.mongo.options,
     label: 'job-runner-service'
 });
+
 mongoose.connect(db_config.mongo.uri, db_config.mongo.options);
 
 let interval = parseInt(config.scheduled_interval);
@@ -38,7 +40,7 @@ i = setInterval(function () {
 }, interval * 1000);
 
 service.on('stop', function () {
-    winston.log('clearing interval on service stop');
+    winston.info('clearing interval on service stop');
     clearInterval(i);
 });
 

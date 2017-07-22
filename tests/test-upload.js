@@ -36,19 +36,24 @@ Job.findOne({state: 'UPLOAD_READY'}).sort('-date_created').populate({
         return;
     }
 
-    sheet_processor.getScheduledDate(job, function (err, result) {
-        if (err) {
-            console.error(err);
-        }
-        console.log('scheduled date for', job.episode.video_name, 'is', result);
-        job.episode.publishAt = moment(result).toDate();
-        job.save();
-        console.log('uploading episode', job.episode.video_name, 'and scheduling at', job.episode.publishAt);
-        upload_processor.upload(job, function (err) {
-            console.log('done uploading episode');
-            thumbnail_processor.setThumbnail(job, function (err, result) {
-
+    if (!job.episode.publishAt) {
+        sheet_processor.getScheduledDate(job, function (err, result) {
+            if (err) {
+                console.error(err);
+            }
+            console.log('scheduled date for', job.episode.video_name, 'is', result);
+            job.episode.publishAt = moment(result).toDate();
+            job.save();
+            console.log('uploading episode', job.episode.video_name, 'and scheduling at', job.episode.publishAt);
+            upload_processor.upload(job, function (err) {
+                console.log('done uploading episode');
             });
         });
-    });
+    } else {
+        upload_processor.upload(job, function (err) {
+            console.log('done uploading episode');
+        });
+    }
+
+
 });

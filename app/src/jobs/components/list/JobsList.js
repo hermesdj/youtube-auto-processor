@@ -51,7 +51,7 @@ function JobsListController(JobsDataService, YoutubeMetadataService, $interval, 
             let endscreen = _.filter(this.jobs, function (job) {
                 return job.state === 'ENDSCREEN'
             });
-            if(endscreen.length > 0){
+            if (endscreen.length > 0) {
                 console.log('found', endscreen.length, 'job to process in ENDSCREEN state');
                 for (let i = 0; i < endscreen.length; i++) {
                     let job = endscreen[i];
@@ -117,7 +117,7 @@ function JobsListController(JobsDataService, YoutubeMetadataService, $interval, 
 
     Factory.prototype.endscreen = function (job) {
         console.log('processing endscreen', job);
-        YoutubeMetadataService.setEndscreen(job).then(function(result){
+        YoutubeMetadataService.setEndscreen(job).then(function (result) {
             job.next(function (err, job) {
                 if (err) {
                     console.error(err);
@@ -125,10 +125,15 @@ function JobsListController(JobsDataService, YoutubeMetadataService, $interval, 
                 }
                 console.log('job is next now', job);
             });
-        }, function(err){
+        }, function (err) {
             console.error(err);
             job.error(err);
         });
+    };
+
+    Factory.prototype.goto = function (job, state) {
+        job.goto(state);
+        this.selectedState = null;
     };
 
     return new Factory();

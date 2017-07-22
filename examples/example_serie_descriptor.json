@@ -8,6 +8,23 @@
   "description_template": null,
   "named_episode": false,
   "game_title": "Test",
+  "is_partner": false,
+  "partner_key": "gog",
+  "store_url": "steam.com",
+  "stores_url": [
+    {
+      "key": "gog",
+      "url": "gog.com"
+    },
+    {
+      "key": "gamesplanet",
+      "url": "gamesplanet.com"
+    },
+    {
+      "key": "steam",
+      "url": "steam.com"
+    }
+  ],
   "localizations": [
     {
       "key": "en",

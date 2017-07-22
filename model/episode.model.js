@@ -5,6 +5,7 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 const fs = require('fs');
 const path = require('path');
+const stores = require('../config/stores.json');
 const config = require('../config/youtube.json');
 const winston = require('winston');
 
@@ -37,9 +38,25 @@ EpisodeSchema.methods.initialize = function (job, serie, episode_number) {
     let description_template = serie.description_template || config.default_description_template;
     this.description = description_template.replace('${game_title}', serie.game_title)
         .replace('${description}', serie.description)
-        .replace('${store_url}', serie.store_url)
         .replace('${playlist_url}', 'https://www.youtube.com/playlist?list=' + serie.playlist_id)
         .replace('${default_description}', fs.readFileSync(path.join(__dirname, '../config/default_description.txt'), 'utf-8'));
+
+    if (!serie.store_url) {
+        if (serie.stores_url) {
+            let stores_string = null;
+            for (let i = 0; i < serie.stores_url.length; i++) {
+                let store_url = serie.stores_url[i];
+                let store_config = stores[store_url.key];
+                store_config.description_fr = store_config.description_fr.replace('{{url}}', store_url.url);
+                stores_string += store_config.description_fr + "\r\n\r\n";
+            }
+            this.description = this.description.replace('${store_url}', stores_string);
+        } else {
+            this.description = this.description.replace('${store_url}', '');
+        }
+    } else {
+        this.description = this.description.replace('${store_url}', stores.default.description_fr.replace('{{url}}', serie.store_url));
+    }
 
     if (serie.localizations.length > 0) {
         this.localizations = {};
@@ -54,9 +71,26 @@ EpisodeSchema.methods.initialize = function (job, serie, episode_number) {
                 title: localization.title.replace('${episode_number}', this.episode_number),
                 description: localized_description_template.replace('${game_title}', serie.game_title)
                     .replace('${description}', localization.description)
-                    .replace('${store_url}', serie.store_url)
                     .replace('${playlist_url}', 'https://www.youtube.com/playlist?list=' + serie.playlist_id)
                     .replace('${default_description}', fs.readFileSync(path.join(__dirname, '../config/default_description_' + localization.key + '.txt'), 'utf-8'))
+            };
+
+            if (!serie.store_url) {
+                if (serie.stores_url) {
+                    let loc_stores_string = null;
+                    for (let i = 0; i < serie.stores_url.length; i++) {
+                        let store_url = serie.stores_url[i];
+                        let store_config = stores[store_url.key];
+                        store_config['description_' + localization.key] = store_config['description_' + localization.key].replace('{{url}}', store_url.url);
+                        loc_stores_string += store_config['description_' + localization.key] + "\r\n\r\n";
+                    }
+                    this.localizations[localization.key].description = this.localizations[localization.key].description.replace('${store_url}', loc_stores_string);
+                } else {
+                    this.localizations[localization.key].description = this.localizations[localization.key].description.replace('${store_url}', '');
+                }
+            } else {
+                this.localizations[localization.key].description = this.localizations[localization.key].description.replace('${store_url}',
+                    stores.default['description_' + localization.key].replace('{{url}}', serie.store_url));
             }
         }
     }

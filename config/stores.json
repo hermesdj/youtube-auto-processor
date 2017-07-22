@@ -1,0 +1,24 @@
+{
+  "gog": {
+    "description_fr": "Vous pouvez acheter le jeu en suivant le lien partenaire suivant sur Gog.com : \r\n{{url}}",
+    "description_en": "You can buy the game here on this partner link on Gog.com : \r\n{{url}}",
+    "partner_intro": "Z:/Content Creation/Processor/Assets/Partners/Gog.mp4",
+    "partner_desc_fr": "",
+    "partner_desc_en": ""
+  },
+  "steam": {
+    "description_fr": "Vous pouvez retrouver le jeu en suivant le lien suivant sur Steam : \r\n{{url}}",
+    "description_en": "You can buy the game here on Steam : \r\n{{url}}"
+  },
+  "gamesplanet": {
+    "description_fr": "Vous pouvez acheter le jeu en suivant le lien partenaire suivant sur Gamesplanet.com : \r\n{{url}}",
+    "description_en": "You can buy the game here on this partner link on Gamesplanet.com : \r\n{{url}}",
+    "partner_intro": "Z:/Content Creation/Processor/Assets/Partners/Gamesplanet.mp4",
+    "partner_desc_fr": "",
+    "partner_desc_en": ""
+  },
+  "default": {
+    "description_fr": "Vous pouvez trouver le jeu en suivant le lien suivant : \r\n{{url}}",
+    "description_en": "You can find the game by following this url: \r\n{{url}}"
+  }
+}

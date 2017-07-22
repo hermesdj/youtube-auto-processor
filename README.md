@@ -174,6 +174,7 @@ job move from state :
 - [ ] Gérer la localization des vidéos (ça ne fonctionne pas actuellement et bug sur le serieProcessor à l'initialization)
 - [ ] Cleanup des vidéos uploadées + configuration
 - [ ] Compléter le readme avec des screenshots par exemple...
+- [ ] Paramétrer les playlist pour mettre plusieurs liens de store comme gamesplanet, Gog, Steam, etc.
 
 ## Troubleshooting
 If you encounter an issue, please use the Issue tracker of this repository : https://github.com/hermesdj/youtube-auto-processor/issues

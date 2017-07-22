@@ -31,7 +31,7 @@ function process(auth, job, done) {
     if (episode.localizations && episode.localizations.length > 0) {
         metadata.localizations = episode.localizations;
         resumable.parts.push('localizations');
-        winston.log('localization added to metadata', metadata);
+        winston.info('localization added to metadata', metadata);
     }
 
     resumable.tokens = auth.token;
@@ -58,6 +58,7 @@ function process(auth, job, done) {
 
     resumable.on('error', function (error) {
         winston.error('error processing video: ', error);
+        job.err = error;
         job.state = 'UPLOAD_ERROR';
         job.save();
         done(error, null);
