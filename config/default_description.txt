@@ -31,11 +31,8 @@ https://www.youtube.com/c/JaysGaming?sub_confirmation=1
     http://boutique.jaysgaming.fr
 
 - Rejoignez la communauté sur le Discord de la Jay's Army :
-<<<<<<< HEAD
     https://discord.gg/arN7PMY
-=======
-    http://discord.jaysgaming.fr
->>>>>>> origin/master
+
 
 
 --------------- || REMERCIEMENTS || ---------------

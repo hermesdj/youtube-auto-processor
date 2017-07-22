@@ -31,11 +31,7 @@ http://playlists.jaysgaming.fr
 https://shop.spreadshirt.fr/jaysgaming/
 
 - The Jay's Army Discord:
-<<<<<<< HEAD
 https://discord.gg/arN7PMY
-=======
-http://discord.jaysgaming.fr
->>>>>>> origin/master
 
 
 --------------- || THANKS || ---------------
