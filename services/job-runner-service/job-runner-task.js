@@ -47,7 +47,7 @@ function jobRunner(done) {
         }, function () {
             done();
         }
-    )
+    );
 }
 
 util.inherits(jobRunner, EventEmitter);
@@ -222,7 +222,7 @@ let process_upload_ready_jobs = function (done) {
             processUploadService();
         }
         done();
-    })
+    });
 };
 
 let process_upload_done_jobs = function (done) {
@@ -242,7 +242,7 @@ let process_upload_done_jobs = function (done) {
                 }
 
                 done();
-            })
+            });
         } else {
             done();
         }
@@ -285,7 +285,7 @@ let process_thumbnail_jobs = function (done) {
                 }
 
                 done();
-            })
+            });
         } else {
             done();
         }
@@ -313,7 +313,7 @@ let process_playlists_jobs = function (done) {
                 }
 
                 done();
-            })
+            });
         } else {
             done();
         }
@@ -464,7 +464,11 @@ let process_wait_youtube_processing_job = function (job, done) {
         winston.info('processing info is', job.processing);
         if (job.processing && job.processing.processingStatus === 'succeeded') {
             // Move to next step as processing is done
-            job.next(done);
+            if (job.details.definition === 'hd') {
+                job.next(done);
+            }else{
+                job.message = 'video is still in sd on youtube';
+            }
         } else {
             done(err, job);
         }

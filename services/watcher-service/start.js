@@ -12,6 +12,7 @@ const moment = require('moment');
 const Job = require('../../model/job.model');
 const winston = require('winston');
 const wMongoDb = require('winston-mongodb').MongoDB;
+const Task = require('../job-runner-service/job-runner-task');
 winston.add(winston.transports.MongoDB, {
     db: db_config.mongo.uri,
     options: db_config.mongo.options,
@@ -39,6 +40,15 @@ watcher.start(config.watch_directory, function (file) {
             return err;
         }
         winston.info('new job saved', job);
+
+        // Start a task immediately to avoid waiting
+        Task.run(function (err, result) {
+            if (err) {
+                log.error(err, null);
+            } else {
+                log.info('Task executed');
+            }
+        });
     });
 });
 

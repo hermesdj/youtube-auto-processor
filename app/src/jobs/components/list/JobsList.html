@@ -27,6 +27,9 @@
             <div ng-if="job.state === 'ERROR'">
                 {{job.err}}
             </div>
+            <div ng-if="job.message">
+                {{job.message}}
+            </div>
             <div ng-if="job.state === 'INITIALIZED'">
                 <md-input-container>
                     <label>Episode Name</label>

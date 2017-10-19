@@ -46,5 +46,5 @@ exports.getVideoProcessorStats = function (job, done) {
 
     client(function (auth) {
         process(auth, job, done);
-    })
+    });
 };

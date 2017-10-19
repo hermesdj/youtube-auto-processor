@@ -18,7 +18,8 @@ let JobSchema = new Schema({
     processing: Schema.Types.Mixed,
     details: Schema.Types.Mixed,
     episode: {type: Schema.Types.ObjectId, ref: 'Episode'},
-    err: Schema.Types.Mixed
+    err: Schema.Types.Mixed,
+    message: {type: String}
 });
 
 JobSchema.static.states = states;
