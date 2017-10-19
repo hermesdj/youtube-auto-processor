@@ -45,6 +45,7 @@ service.on('stop', function () {
 });
 
 process.on('uncaughtException', function (err) {
+    winston.info('job runner encountered uncaught exception');
     winston.error(err);
     service.stop();
 });

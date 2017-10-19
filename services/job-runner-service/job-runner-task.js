@@ -382,6 +382,11 @@ let process_all_done_job = function (job, done) {
     let now = moment();
 
     if (now.diff(publicDate) > 0) {
+        job.markOnPlanning(done);
+    }
+
+    // Mark as public so it is deleted 24 hours after being online
+    if (now.diff(publicDate) > 86400000) {
         // Episode is public
         winston.info('job found to mark as public');
         job.next(function (err, job) {
@@ -389,7 +394,6 @@ let process_all_done_job = function (job, done) {
                 winston.error(err);
                 return done(err, null);
             }
-            job.markOnPlanning(done);
         });
     } else {
         done();

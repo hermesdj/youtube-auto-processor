@@ -17,6 +17,7 @@ function process(auth, job, done) {
     moment.locale('fr');
     let month = moment().format('MMMM');
     month = month.charAt(0).toUpperCase() + month.slice(1);
+    month = month.replace('û', 'u');
     let year = moment().format('YYYY');
     let start = 'A1';
     let end = 'H40';
@@ -52,6 +53,7 @@ function processRange(auth, job, range, done) {
         range: range
     }, function (err, res) {
         if (err) {
+            winston.error('error on retrieving google agenda info : ' + err);
             done(err, job);
         }
         find(res.values, job.episode.serie.planning_name.replace('${episode_number}', job.episode.episode_number).replace('${episode_name}', job.episode.episode_name), done);
