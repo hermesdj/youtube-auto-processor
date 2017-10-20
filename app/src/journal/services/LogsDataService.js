@@ -9,13 +9,8 @@ function LogsDataService($q) {
     Factory.prototype.list = function (opts, orders, limit, page) {
         // Simulate async nature of real remote calls
         opts = opts || {};
-        return Log.find(opts).sort(orders).limit(limit).skip(limit * (page - 1)).exec().then(function (data) {
-            return Log.count(opts).exec().then(function (count) {
-                return {
-                    data: data,
-                    count: count
-                }
-            })
+        return Log.find({}).sort(orders).exec().then(function (data) {
+            return {data: data};
         });
     };
 

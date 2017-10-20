@@ -10,14 +10,15 @@ System.config({
   },
 
   map: {
-    "angular": "github:angular/bower-angular@1.5.8",
-    "angular-animate": "github:angular/bower-angular-animate@1.5.8",
-    "angular-aria": "github:angular/bower-angular-aria@1.5.8",
+    "angular": "github:angular/bower-angular@1.6.6",
+    "angular-animate": "github:angular/bower-angular-animate@1.6.6",
+    "angular-aria": "github:angular/bower-angular-aria@1.6.6",
     "angular-material": "github:angular/bower-material@master",
     "angular-material-data-table": "npm:angular-material-data-table@0.10.10",
-    "angular-messages": "github:angular/bower-angular-messages@1.5.8",
+    "angular-messages": "github:angular/bower-angular-messages@1.6.6",
     "angular-mocks": "github:angular/bower-angular-mocks@1.5.8",
     "angular-moment": "npm:angular-moment@1.0.1",
+    "angular-sanitize": "github:angular/bower-angular-sanitize@1.6.6",
     "angular-ui-router": "npm:angular-ui-router@1.0.3",
     "babel": "npm:babel-core@5.8.38",
     "babel-runtime": "npm:babel-runtime@5.8.38",
@@ -29,20 +30,23 @@ System.config({
     "text": "github:systemjs/plugin-text@0.0.4",
     "traceur": "github:jmcriffey/bower-traceur@0.0.93",
     "traceur-runtime": "github:jmcriffey/bower-traceur-runtime@0.0.93",
-    "github:angular/bower-angular-animate@1.5.8": {
-      "angular": "github:angular/bower-angular@1.6.4"
+    "github:angular/bower-angular-animate@1.6.6": {
+      "angular": "github:angular/bower-angular@1.6.6"
     },
-    "github:angular/bower-angular-aria@1.5.8": {
-      "angular": "github:angular/bower-angular@1.6.4"
+    "github:angular/bower-angular-aria@1.6.6": {
+      "angular": "github:angular/bower-angular@1.6.6"
     },
-    "github:angular/bower-angular-messages@1.5.8": {
-      "angular": "github:angular/bower-angular@1.6.4"
+    "github:angular/bower-angular-messages@1.6.6": {
+      "angular": "github:angular/bower-angular@1.6.6"
+    },
+    "github:angular/bower-angular-sanitize@1.6.6": {
+      "angular": "github:angular/bower-angular@1.6.6"
     },
     "github:angular/bower-material@master": {
-      "angular": "github:angular/bower-angular@1.5.8",
-      "angular-animate": "github:angular/bower-angular-animate@1.5.8",
-      "angular-aria": "github:angular/bower-angular-aria@1.5.8",
-      "angular-messages": "github:angular/bower-angular-messages@1.5.8",
+      "angular": "github:angular/bower-angular@1.6.6",
+      "angular-animate": "github:angular/bower-angular-animate@1.6.6",
+      "angular-aria": "github:angular/bower-angular-aria@1.6.6",
+      "angular-messages": "github:angular/bower-angular-messages@1.6.6",
       "css": "github:systemjs/plugin-css@0.1.35"
     },
     "github:jspm/nodelibs-assert@0.1.0": {
@@ -73,10 +77,10 @@ System.config({
       "process": "github:jspm/nodelibs-process@0.1.2"
     },
     "npm:angular-material@1.1.4": {
-      "angular": "github:angular/bower-angular@1.6.4",
-      "angular-animate": "github:angular/bower-angular-animate@1.5.8",
-      "angular-aria": "github:angular/bower-angular-aria@1.5.8",
-      "angular-messages": "github:angular/bower-angular-messages@1.5.8",
+      "angular": "github:angular/bower-angular@1.6.6",
+      "angular-animate": "github:angular/bower-angular-animate@1.6.6",
+      "angular-aria": "github:angular/bower-angular-aria@1.6.6",
+      "angular-messages": "github:angular/bower-angular-messages@1.6.6",
       "css": "github:systemjs/plugin-css@0.1.35"
     },
     "npm:angular-moment@1.0.1": {

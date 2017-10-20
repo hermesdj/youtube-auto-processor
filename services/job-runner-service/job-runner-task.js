@@ -3,6 +3,7 @@
  */
 const path = require('path');
 const Job = require('../../model/job.model');
+const Log = require('../../model/log.model');
 const Serie = require('../../model/serie.model');
 const EventEmitter = require('events').EventEmitter;
 const util = require('util');
@@ -44,6 +45,8 @@ function jobRunner(done) {
             process_all_done_jobs(this);
         }, function () {
             process_public_jobs(this);
+        }, function () {
+            process_finished_jobs(this);
         }, function () {
             done();
         }
@@ -409,7 +412,7 @@ let process_public_jobs = function (done) {
         }
 
         if (jobs.length > 0) {
-            winston.info('public job found to process:', jobs.length);
+            winston.info('public jobs found to process:', jobs.length);
             process_jobs(jobs, process_public_job, function (err) {
                 if (err) {
                     winston.error(err);
@@ -434,7 +437,13 @@ let process_public_job = function (job, done) {
         fs.unlinkSync(job.episode.path);
     }
 
-    done(null, job);
+    job.next(function (err, job) {
+        if (err) {
+            winston.error(err);
+            return done(err, null);
+        }
+        return done(null, job);
+    });
 };
 
 let process_wait_youtube_processing_jobs = function (done) {
@@ -470,13 +479,59 @@ let process_wait_youtube_processing_job = function (job, done) {
             // Move to next step as processing is done
             if (job.details.definition === 'hd') {
                 job.next(done);
-            }else{
+            } else {
                 job.message = 'video is still in sd on youtube';
             }
         } else {
             done(err, job);
         }
     })
+};
+
+let process_finished_jobs = function (done) {
+    find_jobs(states.FINISHED, function (err, jobs) {
+        if (err) {
+            winston.error('cannot find finished jobs');
+            winston.error(err);
+            return done(err, null);
+        }
+
+        if (jobs.length > 0) {
+            winston.info('found ' + jobs.length + 'finished jobs to process');
+
+            for (let i = 0; i < jobs.length; i++) {
+                let job = jobs[i];
+                job.remove();
+            }
+
+            winston.info('removed ' + jobs.length + ' jobs');
+        } else {
+            winston.info('no jobs to remove');
+        }
+    });
+
+    // Clean logs
+    let oneWeekAgo = new Date();
+    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+
+    Log.find({timestamp: {$lte: oneWeekAgo}}).exec(function (err, logs) {
+        if (err) {
+            winston.error('error retrieving logs older than a week ago');
+        }
+
+        if (logs.length > 0) {
+            winston.info('found ' + logs.length + ' logs to remove');
+
+            for (let i = 0; i < logs.length; i++) {
+                let log = logs[i];
+                log.remove();
+            }
+
+            winston.info('removed ' + logs.length + ' logs');
+        } else {
+            winston.info('no logs to remove');
+        }
+    });
 };
 
 

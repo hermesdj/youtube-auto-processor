@@ -15,7 +15,8 @@ const wMongoDb = require('winston-mongodb').MongoDB;
 winston.add(winston.transports.MongoDB, {
     db: db_config.mongo.uri,
     options: db_config.mongo.options,
-    label: 'job-runner-service'
+    label: 'job-runner-service',
+    level: 'debug'
 });
 
 mongoose.connect(db_config.mongo.uri, db_config.mongo.options);
@@ -32,9 +33,9 @@ i = setInterval(function () {
 
     Task.run(function (err, result) {
         if (err) {
-            log.error(err, null);
+            winston.error(err, null);
         } else {
-            log.info('task execution launched');
+            winston.info('task execution launched');
         }
     });
 }, interval * 1000);
@@ -48,6 +49,12 @@ process.on('uncaughtException', function (err) {
     winston.info('job runner encountered uncaught exception');
     winston.error(err);
     service.stop();
+});
+
+process.on('warning', (warning) => {
+    winston.warn(warning.name);    // Print the warning name
+    winston.warn(warning.message); // Print the warning message
+    winston.warn(warning.stack);   // Print the stack trace
 });
 
 process.on('exit', function () {

@@ -14,6 +14,8 @@ function process(auth, job, done) {
         return done(job.err, null);
     }
 
+    winston.debug('processing on agenda for current month');
+
     moment.locale('fr');
     let month = moment().format('MMMM');
     month = month.charAt(0).toUpperCase() + month.slice(1);
@@ -31,6 +33,10 @@ function process(auth, job, done) {
             month = month.replace('û', 'u');
             let range = month.concat(' ').concat(year).concat('!').concat(start).concat(':').concat(end);
             processRange(auth, job, range, function (err, haystack, i, j) {
+                if(err){
+                    winston.error('cannot find episode on the agenda');
+                    return done(err);
+                }
                 return done(err, haystack, i, j, month.concat(' ').concat(year));
             });
         }
@@ -53,7 +59,7 @@ function processRange(auth, job, range, done) {
         range: range
     }, function (err, res) {
         if (err) {
-            winston.error('error on retrieving google agenda info : ' + err);
+            winston.error('error on retrieving google agenda info : ');
             done(err, job);
         }
         find(res.values, job.episode.serie.planning_name.replace('${episode_number}', job.episode.episode_number).replace('${episode_name}', job.episode.episode_name), done);
@@ -161,9 +167,12 @@ function mark(job, format, done) {
         return done(job.err, null);
     }
 
+    winston.debug('authenticating on google agenda');
     client(function (auth) {
+        winston.debug('done authenticating on google agenda, processing mark on planning');
         process(auth, job, function (err, haystack, i, j, sheetName) {
             if (err) {
+                winston.error('error marking on planning !');
                 return done(err, job);
             }
             getSpreadsheetId(auth, sheetName, function (err, sheetId) {
@@ -201,6 +210,7 @@ function updateCells(auth, requests, done) {
         resource: {requests: requests}
     }, function (err, res) {
         if (err) {
+            winston.error('error updating cells');
             done(err, job);
             return;
         }

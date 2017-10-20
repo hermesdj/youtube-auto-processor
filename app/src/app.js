@@ -3,6 +3,7 @@ import angular from 'angular';
 
 import 'angular-animate';
 import 'angular-aria';
+import 'angular-sanitize';
 import 'angular-material';
 import 'angular-ui-router';
 import 'angular-moment';
@@ -15,7 +16,7 @@ import Series from 'src/series/Series';
 import Logs from 'src/journal/Logs';
 import Settings from 'src/settings/Settings';
 
-export default angular.module('youtube-auto-processor', ['ngMaterial', 'md.data.table', 'ui.router', 'angularMoment',
+export default angular.module('youtube-auto-processor', ['ngMaterial', 'md.data.table', 'ui.router', 'angularMoment', 'ngSanitize',
     Jobs.name, Services.name, Series.name, Logs.name, Settings.name])
     .config(($mdIconProvider, $mdThemingProvider, $stateProvider, $urlRouterProvider) => {
         // Register the user `avatar` icons
