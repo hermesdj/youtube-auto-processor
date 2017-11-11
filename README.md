@@ -93,7 +93,9 @@ For the description_templates, the following values are for now available:
 - `${playlist_url}`: the URL of the playlist
 - `${default_description}`: The default description defined in `config/default_description.txt`
 
-When the File Watcher service starts, it will look into the folder configured as `watch_directory` for .mp4 files. In the folder, a serie.json file must be present in order to define what serie the folder is linked to.
+When the File Watcher service starts, it will look into the folder configured as `watch_directory` for .mp4 files.
+
+For each serie you need to create a folder, and in the folder, a serie.json file must be present in order to define the serie.
 
 `examples/serie.json`
 ```json
@@ -129,7 +131,25 @@ When the File Watcher service starts, it will look into the folder configured as
 - `game_title`: The name of the game
 - `localizations`: Localization management for title and description. Not working for now
 
-In the Watch folder, you will need to create a `thumbnails` folder containing all the episodes thumbnails named by the episode number and in png format 1280x720p
+In the serie's folder, you will need to create a `thumbnails` folder containing all the episodes thumbnails named by the episode number and in png format 1280x720p.
+
+An example of file structure would be:
+
+```
+--Watch/
+  |--Stellaris Utopia/
+    |--serie.json
+    |--<drop your videos here>  
+    |--thumbnails/
+      |--1.png  
+      |--2.png  
+  |--Endless Space 2/
+    |--serie.json
+    |--<drop your videos here>  
+    |--thumbnails/
+      |--1.png  
+      |--2.png
+```
 
 Once everything is configured, run the application `npm start`
 
