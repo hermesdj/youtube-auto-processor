@@ -29,11 +29,11 @@ In order to install the application, a few dependencies must be installed:
 
 After these 8 steps are done, you are ready to configure the project. The configuration files are located in the config folder.
 
-You will need a Google API credential files in order to connect to the Google API using your own google Account. Navigate to :
+You will need a Google API credential files in order to connect to the Google API using your own google Account. Navigate to:
 
 https://console.developers.google.com
 
-You will need to activate :
+You will need to activate:
 - Youtube Data API
 - Google Sheets API
 
