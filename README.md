@@ -84,7 +84,7 @@ You'll also need a `config/youtube.json` file. You can copy the one in `examples
 - `default_outro`: Path to the outro to be appended to all processed videos
 - `prepend_intro`: A flag to prepend the intro specified above to all processed videos
 - `append_outro`:A flag to append the outro specified above to all processed videos
-- `intro_outro_air_date`:
+- `intro_outro_air_date`: Date from when the intro and outro should be added to all processed videos
 
 For the description_templates, the following values are for now available:
 - `${game_title}`: The game title as defined in the `serie.json` descriptor (see below)
