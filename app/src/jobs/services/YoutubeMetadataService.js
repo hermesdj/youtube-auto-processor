@@ -40,13 +40,13 @@ function YoutubeMetadataService($q, $http) {
                     _.pull(editorData.elements, oldPlaylist);
                     return getCurrentPlaylist(job).then(function (playlist) {
                         oldPlaylist.displayImages.thumbnails = [playlist.snippet.thumbnails.high];
-                        oldPlaylist.playlistLength = playlist.contentDetails.itemCount + " vidéos";
-                        oldPlaylist.accessibilityStr = oldPlaylist.playlistLength + ', ' + playlist.snippet.title;
+                        // oldPlaylist.playlistLength = playlist.contentDetails.itemCount + " vidéos";
+                        // oldPlaylist.accessibilityStr = oldPlaylist.playlistLength + ', ' + playlist.snippet.title;
                         oldPlaylist.title = playlist.snippet.title;
                         oldPlaylist.playlistId = playlist.id;
                         // TODO find next episode id maybe ?
                         oldPlaylist.videoId = videoId;
-                        oldPlaylist.targetUrl = encodeURIComponent('https://www.youtube.com/watch?v=' + videoId + '&list=' + playlist.id);
+                        oldPlaylist.targetUrl = 'https://www.youtube.com/watch?v=' + videoId + '&list=' + playlist.id;
 
                         editorData.elements.push(oldPlaylist);
 
