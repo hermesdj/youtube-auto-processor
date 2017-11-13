@@ -59,7 +59,7 @@ function processRange(auth, job, range, done) {
         range: range
     }, function (err, res) {
         if (err) {
-            winston.error('error on retrieving google agenda info : ');
+            winston.error(`error on retrieving google agenda info: ${err}`);
             done(err, job);
         }
         find(res.values, job.episode.serie.planning_name.replace('${episode_number}', job.episode.episode_number).replace('${episode_name}', job.episode.episode_name), done);
@@ -117,6 +117,7 @@ exports.getScheduledDate = function (job, done) {
     }
 
     client(function (auth) {
+
         process(auth, job, function (err, haystack, i, j) {
             if (err) {
                 return done(err, job);

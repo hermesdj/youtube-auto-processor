@@ -19,6 +19,7 @@ exports.process = function (job, done) {
     }
 
     winston.info('FFMPEG_PATH=', process.env.FFMPEG_PATH);
+    winston.info('FFPROBE_PATH=', process.env.FFPROBE_PATH);
 
     let intro = null;
     let outro = null;
@@ -109,8 +110,8 @@ exports.process = function (job, done) {
     });
 
     command.on('error', function (err) {
-        winston.error(err);
-        done(JSON.stringify(err));
+        winston.error(`FFMPEG err ${err}`);
+        done(err);
     });
 
     command.on('end', function () {
