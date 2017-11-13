@@ -11,10 +11,10 @@ const winston = require('winston');
 
 
 exports.process = function (job, done) {
-    if (!process.env.FFMPEG_PATH) {
+    if (config.ffmpeg_path) {
         process.env['FFMPEG_PATH'] = config.ffmpeg_path;
     }
-    if (!process.env.FFPROBE_PATH) {
+    if (config.ffmpeg_path) {
         process.env['FFPROBE_PATH'] = config.ffprobe_path;
     }
 
