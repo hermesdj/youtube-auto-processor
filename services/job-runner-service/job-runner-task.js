@@ -384,22 +384,23 @@ let process_all_done_job = function (job, done) {
     let publicDate = moment(job.episode.publishAt);
     let now = moment();
 
-    if (now.diff(publicDate) > 0) {
-        job.markOnPlanning(done);
-    }
-
-    // Mark as public so it is deleted 24 hours after being online
-    if (now.diff(publicDate) > 86400000) {
-        // Episode is public
+    if (now.isAfter(publicDate)) {
         winston.info('job found to mark as public');
         job.next(function (err, job) {
             if (err) {
                 winston.error(err);
                 return done(err, null);
             }
+            job.markOnPlanning(function (err, res) {
+                if (err) {
+                    winstong.error('job task error on marking on planning');
+                    done();
+                }
+                done();
+            });
         });
     } else {
-        done();
+        winston.info('job ' + job._id + ' is not public yet');
     }
 };
 
@@ -427,23 +428,20 @@ let process_public_jobs = function (done) {
 
 let process_public_job = function (job, done) {
     // clear all public videos from file system
-    if (fs.existsSync(job.path)) {
-        winston.info('found file to delete as the video is now public :' + job.path);
-        fs.unlinkSync(job.path);
-    }
 
-    if (fs.existsSync(job.episode.path)) {
-        winston.info('found episode file to delete as the video is now public :' + job.episode.path);
-        fs.unlinkSync(job.episode.path);
+    // Mark as public so it is deleted 24 hours after being online
+    if (moment().isAfter(publicDate, 'day')) {
+        // Episode is public
+        winston.info('job found to mark as finished');
+        job.next(function (err, job) {
+            if (err) {
+                winston.error(err);
+                return done(err, null);
+            }
+        });
+    } else {
+        done();
     }
-
-    job.next(function (err, job) {
-        if (err) {
-            winston.error(err);
-            return done(err, null);
-        }
-        return done(null, job);
-    });
 };
 
 let process_wait_youtube_processing_jobs = function (done) {
@@ -474,13 +472,15 @@ let process_wait_youtube_processing_job = function (job, done) {
             winston.error(err);
             return done(err, null);
         }
-        winston.info('processing info is', job.processing);
+        winston.info('processing info is', JSON.stringify(job.processing));
         if (job.processing && job.processing.processingStatus === 'succeeded') {
             // Move to next step as processing is done
+            winston.info('video definition is', job.details.definition);
             if (job.details.definition === 'hd') {
                 job.next(done);
             } else {
                 job.message = 'video is still in sd on youtube';
+                done(null, job);
             }
         } else {
             done(err, job);
@@ -501,6 +501,16 @@ let process_finished_jobs = function (done) {
 
             for (let i = 0; i < jobs.length; i++) {
                 let job = jobs[i];
+                if (fs.existsSync(job.path)) {
+                    winston.info('found file to delete as the video is now public :' + job.path);
+                    fs.unlinkSync(job.path);
+                }
+
+                if (fs.existsSync(job.episode.path)) {
+                    winston.info('found episode file to delete as the video is now public :' + job.episode.path);
+                    fs.unlinkSync(job.episode.path);
+                }
+
                 job.remove();
             }
 
