@@ -53,7 +53,7 @@ function LogsListController(LogsDataService, $interval, $filter) {
                 newstring += $filter('date')(log.timestamp, 'dd/MM/yyyy HH:mm:ss') + ' ' + log.label + ' ' + log.level + ' ' + log.message + '\r \n';
             }
 
-            this.logstring = newstring + this.logstring;
+            this.logstring = newstring;
         }.bind(this), function (err) {
             console.error(err);
         });
