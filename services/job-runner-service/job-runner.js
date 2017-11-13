@@ -29,8 +29,6 @@ if (interval === 0) {
 let i = null;
 winston.debug('starting interval job-runner-service for jobs with ' + interval + ' seconds interval');
 i = setInterval(function () {
-    winston.debug('starting new job runner task after an interval of ' + interval + ' seconds');
-
     Task.run(function (err, result) {
         if (err) {
             winston.error(err, null);

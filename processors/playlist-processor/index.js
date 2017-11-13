@@ -56,7 +56,6 @@ exports.addToPlaylist = function (job, done) {
     winston.debug('adding episode to playlist', job.episode.video_name);
 
     client(function (auth) {
-        winston.debug('authenticated on google', auth);
         process(auth, job, done);
     });
 };
