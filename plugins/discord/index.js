@@ -1,10 +1,13 @@
 const Discord = require('discord.js');
-const hook = new Discord.WebhookClient('316937764463706123', 'eRVqdCiOijQYC4RDJ0vsi00lASFtlNdeKbpTKHUe1iEBYhgKb-BRUb2n3eQWK729u1KI');
+const config = require('../../config/discord.json');
+const hook = new Discord.WebhookClient(discord.webhook_id, discord.webhook_token);
 
 exports.share = function (job, next) {
-    let content = 'Jay a mis en ligne l\'épisode suivant : ' + job.episode.video_name
-            + ' '
-        + ' https://www.youtube.com/watch?v=' + job.episode.youtube_id + '&list=' + job.episode.serie.playlist_id;
+    let content = config.publication_message
+      .replace('${video_name}', job.episode.video_name)
+      .replace('${youtube_id}', job.episode.youtube_id)
+      .replace('${playlist_id}', job.episode.serie.playlist_id)
+
     hook.send(content)
         .then(message => next(null, `Sent message: ${message.content}`))
         .catch(error => next(error, null));

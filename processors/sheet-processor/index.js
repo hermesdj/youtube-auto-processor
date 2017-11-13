@@ -118,6 +118,7 @@ exports.getScheduledDate = function (job, done) {
     }
 
     client(function (auth) {
+
         process(auth, job, function (err, haystack, i, j) {
             if (err) {
                 return done(err, job);

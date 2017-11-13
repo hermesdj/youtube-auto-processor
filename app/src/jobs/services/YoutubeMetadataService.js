@@ -7,6 +7,9 @@ const States = require('./config/states');
 const moment = require('moment');
 const google = require('googleapis');
 const client = require('./config/google-client');
+const fs = require('fs');
+const path = require('path');
+const config = JSON.parse(fs.readFileSync(path.resolve(path.join('./config', 'youtube.json'))))
 
 import _ from 'lodash';
 
@@ -16,7 +19,7 @@ function YoutubeMetadataService($q, $http) {
 
     Factory.prototype.setEndscreen = function (job) {
         let videoId = job.episode.youtube_id;
-        let sourceId = 'uoArPjzsStk';
+        let sourceId = config.endscreen_source_video_id || 'uoArPjzsStk';
         let deferred = $q.defer();
         console.log('setting endscreen for video', videoId);
 
@@ -40,13 +43,13 @@ function YoutubeMetadataService($q, $http) {
                     return getCurrentPlaylist(job).then(function (playlist) {
                         console.log('found playlist', playlist);
                         oldPlaylist.displayImages.thumbnails = [playlist.snippet.thumbnails.high];
-                        //oldPlaylist.playlistLength = playlist.contentDetails.itemCount + " vidéos";
-                        //oldPlaylist.accessibilityStr = oldPlaylist.playlistLength + ', ' + playlist.snippet.title;
+                        // oldPlaylist.playlistLength = playlist.contentDetails.itemCount + " vidéos";
+                        // oldPlaylist.accessibilityStr = oldPlaylist.playlistLength + ', ' + playlist.snippet.title;
                         oldPlaylist.title = playlist.snippet.title;
                         oldPlaylist.playlistId = playlist.id;
                         // TODO find next episode id maybe ?
                         oldPlaylist.videoId = videoId;
-                        oldPlaylist.targetUrl = encodeURIComponent('https://www.youtube.com/watch?v=' + videoId + '&list=' + playlist.id);
+                        oldPlaylist.targetUrl = 'https://www.youtube.com/watch?v=' + videoId + '&list=' + playlist.id;
 
                         editorData.elements.push(oldPlaylist);
 

@@ -41,4 +41,7 @@ lib
 services/**/daemon/*
 .tmp
 
+config/app.json
 config/client_secret.json
+config/youtube.json
+config/discord.json

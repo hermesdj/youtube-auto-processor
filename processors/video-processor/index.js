@@ -11,14 +11,15 @@ const winston = require('winston');
 
 
 exports.process = function (job, done) {
-    if (!process.env.FFMPEG_PATH) {
+    if (config.ffmpeg_path) {
         process.env['FFMPEG_PATH'] = config.ffmpeg_path;
     }
-    if (!process.env.FFPROBE_PATH) {
+    if (config.ffmpeg_path) {
         process.env['FFPROBE_PATH'] = config.ffprobe_path;
     }
 
     winston.info('FFMPEG_PATH=', process.env.FFMPEG_PATH);
+    winston.info('FFPROBE_PATH=', process.env.FFPROBE_PATH);
 
     let intro = null;
     let outro = null;
@@ -109,8 +110,8 @@ exports.process = function (job, done) {
     });
 
     command.on('error', function (err) {
-        winston.error(err);
-        done(JSON.stringify(err));
+        winston.error(`FFMPEG err ${err}`);
+        done(err);
     });
 
     command.on('end', function () {

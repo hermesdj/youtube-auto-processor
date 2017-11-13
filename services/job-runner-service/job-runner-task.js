@@ -516,7 +516,7 @@ let process_finished_jobs = function (done) {
 
             winston.info('removed ' + jobs.length + ' jobs');
         } else {
-            winston.info('no jobs to remove');
+            // no jobs to remove
         }
     });
 
@@ -539,9 +539,7 @@ let process_finished_jobs = function (done) {
 
             winston.info('removed ' + logs.length + ' logs');
         } else {
-            winston.info('no logs to remove');
+          // no logs to remove
         }
     });
 };
-
-
