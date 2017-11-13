@@ -27,7 +27,9 @@ function YoutubeMetadataService($q, $http) {
             }
             getSession('https://www.youtube.com/endscreen?v=', videoId).then(function (session) {
                 console.log('session retrieved is', session);
-                return retrieveEndscreen(videoId, sourceId, session).then(function (editorData) {
+                return retrieveEndscreen(videoId, sourceId, session).then(function (data) {
+                    var editorData = angular.copy(data);
+                    console.log('retrieved endscreen', data);
                     let oldPlaylist = _.find(editorData.elements, function (element) {
                         return element.type === 'PLAYLIST';
                     });
@@ -36,9 +38,10 @@ function YoutubeMetadataService($q, $http) {
                     }
                     _.pull(editorData.elements, oldPlaylist);
                     return getCurrentPlaylist(job).then(function (playlist) {
+                        console.log('found playlist', playlist);
                         oldPlaylist.displayImages.thumbnails = [playlist.snippet.thumbnails.high];
-                        oldPlaylist.playlistLength = playlist.contentDetails.itemCount + " vidéos";
-                        oldPlaylist.accessibilityStr = oldPlaylist.playlistLength + ', ' + playlist.snippet.title;
+                        //oldPlaylist.playlistLength = playlist.contentDetails.itemCount + " vidéos";
+                        //oldPlaylist.accessibilityStr = oldPlaylist.playlistLength + ', ' + playlist.snippet.title;
                         oldPlaylist.title = playlist.snippet.title;
                         oldPlaylist.playlistId = playlist.id;
                         // TODO find next episode id maybe ?
@@ -52,7 +55,11 @@ function YoutubeMetadataService($q, $http) {
                 });
             }).then(function (result) {
                 console.log(result);
-                deferred.resolve(result);
+                if (result.errors && result.errors.length > 0) {
+                    deferred.reject(result.errors[0]);
+                } else {
+                    deferred.resolve(result);
+                }
             }, function (err) {
                 console.error(err);
                 deferred.reject(err);
@@ -70,6 +77,7 @@ function YoutubeMetadataService($q, $http) {
             action_save: 1
         };
         metadata = angular.extend(metadata, data);
+        console.log('setting endscreen', metadata);
         return $http({
             method: 'POST',
             url: 'https://www.youtube.com/endscreen_ajax?v=' + videoId,
@@ -78,6 +86,11 @@ function YoutubeMetadataService($q, $http) {
                 'Content-Type': 'application/json'
             },
         }).then(function (res) {
+            if (res.data.errors && res.data.errors.length > 0) {
+                console.error('error while updating endscreen !');
+                return $q.reject('error while posting endscreen : ' + res.data.errors);
+            }
+            console.log('update endscreen is successfull', res);
             return res.data;
         });
     }
@@ -94,11 +107,13 @@ function YoutubeMetadataService($q, $http) {
                 part: 'snippet,contentDetails'
             }, function (err, data) {
                 if (err) {
+                    console.error(err);
                     deferred.reject(err);
                 }
                 if (data) {
                     deferred.resolve(data.items[0]);
                 } else {
+                    console.error('no data in playlist response');
                     deferred.reject('no data in get playlist response');
                 }
             });

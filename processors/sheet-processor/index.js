@@ -28,12 +28,13 @@ function process(auth, job, done) {
 
     processRange(auth, job, range, function (err, haystack, i, j) {
         if (err) {
+            winston.error(err);
             month = moment().add(1, 'M').format('MMMM');
             month = month.charAt(0).toUpperCase() + month.slice(1);
             month = month.replace('û', 'u');
             let range = month.concat(' ').concat(year).concat('!').concat(start).concat(':').concat(end);
             processRange(auth, job, range, function (err, haystack, i, j) {
-                if(err){
+                if (err) {
                     winston.error('cannot find episode on the agenda');
                     return done(err);
                 }
@@ -59,7 +60,7 @@ function processRange(auth, job, range, done) {
         range: range
     }, function (err, res) {
         if (err) {
-            winston.error('error on retrieving google agenda info : ');
+            winston.error('error on retrieving google agenda info : ' + err);
             done(err, job);
         }
         find(res.values, job.episode.serie.planning_name.replace('${episode_number}', job.episode.episode_number).replace('${episode_name}', job.episode.episode_name), done);
@@ -209,10 +210,11 @@ function updateCells(auth, requests, done) {
         spreadsheetId: config.agenda_spreadsheet_id,
         resource: {requests: requests}
     }, function (err, res) {
+        winston.debug('spreadsheet batch update response' + JSON.stringify(res));
         if (err) {
             winston.error('error updating cells');
-            done(err, job);
-            return;
+            winston.error(err);
+            return done(err, job);
         }
         done(null, res);
     });

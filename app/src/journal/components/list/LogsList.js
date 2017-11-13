@@ -38,7 +38,7 @@ function LogsListController(LogsDataService, $interval, $filter) {
         this.reload(this.query);
         this.interval = $interval(function () {
             this.reload(this.query);
-        }.bind(this), 1000);
+        }.bind(this), 10000);
     };
 
     Factory.prototype.reload = function (query) {
@@ -46,14 +46,14 @@ function LogsListController(LogsDataService, $interval, $filter) {
         var lastAgo = angular.copy(this.ago);
         this.ago = new Date();
 
-        LogsDataService.list({timestamp: {$gte: lastAgo}}, {timestamp: -1}, query.limit, query.page).then(function (logs) {
+        LogsDataService.list({timestamp: {$gte: lastAgo}, level: 'error'}, {timestamp: -1}, query.limit, query.page).then(function (logs) {
             var newstring = '';
             for (var i = 0; i < logs.data.length; i++) {
                 var log = logs.data[i];
                 newstring += $filter('date')(log.timestamp, 'dd/MM/yyyy HH:mm:ss') + ' ' + log.label + ' ' + log.level + ' ' + log.message + '\r \n';
             }
 
-            this.logstring = newstring + this.logstring;
+            this.logstring = newstring;
         }.bind(this), function (err) {
             console.error(err);
         });

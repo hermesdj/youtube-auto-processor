@@ -65,14 +65,17 @@
             </div>
             <div ng-if="job.state === 'WAIT_YOUTUBE_PROCESSING'" layout="row" layout-align="start center">
                 <span flex="20">status is {{job.processing.processingStatus}}</span>
-                <span flex="5"
-                      ng-if="job.processing.processingStatus === 'processing' && job.processing.processingProgress">
-                    {{job.processing.processingProgress.partsProcessed / job.processing.processingProgress.partsTotal * 100}}%
+                <span ng-if="job.processing.processingStatus !== 'succeeded'">
+                    <span flex="5"
+                          ng-if="job.processing.processingStatus === 'processing' && job.processing.processingProgress">
+                        {{job.processing.processingProgress.partsProcessed / job.processing.processingProgress.partsTotal * 100}}%
+                    </span>
+                    <span flex="55">
+                        <md-progress-linear md-mode="determinate" value="{{(job.processing.processingProgress.partsProcessed / job.processing.processingProgress.partsTotal * 100)}}"></md-progress-linear>
+                    </span>
+                    <span flex="20" style="padding-left: 10px;" ng-if="job.processing.processingStatus !== 'succeeded'">{{(job.processing.processingProgress.timeLeftMs / 1000) | amDurationFormat : 'seconds' }} left</span>
                 </span>
-                <span flex="55">
-                    <md-progress-linear md-mode="determinate" value="{{(job.processing.processingProgress.partsProcessed / job.processing.processingProgress.partsTotal * 100)}}"></md-progress-linear>
-                </span>
-                <span flex="20" style="padding-left: 10px;">{{(job.processing.processingProgress.timeLeftMs / 1000) | amDurationFormat : 'seconds' }} left</span>
+                <p>current quality is {{job.details.definition}}</p>
             </div>
         </md-card-content>
         <md-card-actions layout="row" layout-align="end center">
