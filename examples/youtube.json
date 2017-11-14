@@ -9,5 +9,6 @@
   "prepend_intro": true,
   "append_outro": true,
   "intro_outro_air_date": "2017/06/01 00:00:00",
-  "endscreen_source_video_id": "VIDEO_ID"
+  "endscreen_source_video_id": "VIDEO_ID",
+  "locale": "fr"
 }

@@ -75,7 +75,8 @@ You'll also need a `config/youtube.json` file. You can copy the one in `examples
   "prepend_intro": true,
   "append_outro": true,
   "intro_outro_air_date": "2017/06/01 00:00:00",
-  "endscreen_source_video_id": "VIDEO_ID"
+  "endscreen_source_video_id": "VIDEO_ID",
+  "locale": "fr"
 }
 ```
 - `agenda_spreadsheet_id`: Spreadsheet where the videos are scheduled. You can find mine at http://agenda.jaysgaming.fr
@@ -87,6 +88,7 @@ You'll also need a `config/youtube.json` file. You can copy the one in `examples
 - `append_outro`:A flag to append the outro specified above to all processed videos
 - `intro_outro_air_date`: Date from when the intro and outro should be added to all processed videos
 - `endscreen_source_video_id`: The Youtube video id from where to copy the endscreen from
+- `locale`: The locale to be used in the planning spreadsheet. Defaults to `fr`.
 
 For the description_templates, the following values are for now available:
 - `${game_title}`: The game title as defined in the `serie.json` descriptor (see below)
