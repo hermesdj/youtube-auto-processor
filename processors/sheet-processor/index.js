@@ -16,7 +16,7 @@ function process(auth, job, done) {
 
     winston.debug('processing on agenda for current month');
 
-    moment.locale('fr');
+    moment.locale(config.locale ? config.locale : 'fr');
     let month = moment().format('MMMM');
     month = month.charAt(0).toUpperCase() + month.slice(1);
     month = month.replace('û', 'u');
