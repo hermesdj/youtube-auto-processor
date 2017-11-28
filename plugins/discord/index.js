@@ -6,7 +6,7 @@ exports.share = function (job, next) {
     let content = config.publication_message
       .replace('${video_name}', job.episode.video_name)
       .replace('${youtube_id}', job.episode.youtube_id)
-      .replace('${playlist_id}', job.episode.serie.playlist_id)
+      .replace('${playlist_id}', job.episode.serie.playlist_id);
 
     hook.send(content)
         .then(message => next(null, `Sent message: ${message.content}`))

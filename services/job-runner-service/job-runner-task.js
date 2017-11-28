@@ -401,6 +401,7 @@ let process_all_done_job = function (job, done) {
         });
     } else {
         winston.info('job ' + job._id + ' is not public yet');
+        done();
     }
 };
 
@@ -428,11 +429,12 @@ let process_public_jobs = function (done) {
 
 let process_public_job = function (job, done) {
     // clear all public videos from file system
+    let publicDate = moment(job.episode.publishAt);
 
     // Mark as public so it is deleted 24 hours after being online
     if (moment().isAfter(publicDate, 'day')) {
         // Episode is public
-        winston.info('job found to mark as finished');
+        winston.info('job found to mark as finished ' + job._id);
         job.next(function (err, job) {
             if (err) {
                 winston.error(err);
@@ -497,7 +499,7 @@ let process_finished_jobs = function (done) {
         }
 
         if (jobs.length > 0) {
-            winston.info('found ' + jobs.length + 'finished jobs to process');
+            winston.info('found ' + jobs.length + ' finished jobs to process');
 
             for (let i = 0; i < jobs.length; i++) {
                 let job = jobs[i];
