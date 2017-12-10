@@ -26,20 +26,36 @@ let EpisodeSchema = new Schema({
 });
 
 EpisodeSchema.statics.getLastEpisodeNumber = function (serie_id, done) {
+    winston.debug('findOne on serie id ' + serie_id);
     this.findOne({serie: serie_id}).select('episode_number').sort('-episode_number').exec(done);
 };
 
 EpisodeSchema.methods.initialize = function (job, serie, episode_number) {
+    winston.debug('serie provided is ' + serie._id);
     this.episode_number = episode_number || 1;
     this.path = job.path;
     this.date_created = job.date_created;
     this.keywords = serie.video_keywords;
+    winston.debug('keywords initialized: ' + this.keywords);
     this.video_name = serie.video_title_template.replace('${episode_number}', this.episode_number);
+    winston.debug('video_name initialized: ' + this.video_name);
     let description_template = serie.description_template || config.default_description_template;
+    winston.debug('description template initialized');
+
+    let default_description = null;
+    if (!fs.existsSync(path.join(__dirname, '../config/default_description.txt'))) {
+        winston.warn('default_description.txt template not found on file system !');
+    } else {
+        default_description = fs.readFileSync(path.join(__dirname, '../config/default_description.txt'), 'utf-8');
+    }
+
     this.description = description_template.replace('${game_title}', serie.game_title)
         .replace('${description}', serie.description)
         .replace('${playlist_url}', 'https://www.youtube.com/playlist?list=' + serie.playlist_id)
-        .replace('${default_description}', fs.readFileSync(path.join(__dirname, '../config/default_description.txt'), 'utf-8'));
+        .replace('${default_description}', default_description);
+    winston.debug('description initialized: ' + this.description);
+
+    winston.info('episode base params initalized: ' + this.video_name);
 
     if (!serie.store_url) {
         if (serie.stores_url) {
@@ -57,6 +73,8 @@ EpisodeSchema.methods.initialize = function (job, serie, episode_number) {
     } else {
         this.description = this.description.replace('${store_url}', stores.default.description_fr.replace('{{url}}', serie.store_url));
     }
+
+    winston.info('description initialized');
 
     if (serie.localizations.length > 0) {
         this.localizations = {};
@@ -93,6 +111,7 @@ EpisodeSchema.methods.initialize = function (job, serie, episode_number) {
                     stores.default['description_' + localization.key].replace('{{url}}', serie.store_url));
             }
         }
+        winston.info('localization initialized');
     }
 };
 

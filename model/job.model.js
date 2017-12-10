@@ -52,7 +52,7 @@ JobSchema.methods.next = function (done) {
         winston.info('moving job', this._id, 'from state', this.state, 'to', next.label);
         this.last_state = this.state;
         this.state = next.label;
-        if (this.state === states.INITIALIZED.label || next.label === states.ALL_DONE.label) {
+        if (this.state === states.VIDEO_READY.label || next.label === states.ALL_DONE.label) {
             this.markOnPlanning(function (err, res) {
                 if (err) {
                     winston.error(err);

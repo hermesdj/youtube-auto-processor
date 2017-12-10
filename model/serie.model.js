@@ -40,15 +40,16 @@ let SerieSchema = new Schema({
 });
 
 SerieSchema.methods.addEpisode = function (job, done) {
-    winston.info('retrieving last episode number');
+    winston.info('retrieving last episode number for serie ' + this._id);
     Episode.getLastEpisodeNumber(this._id, function (err, lastEpisode) {
         if (err) {
+            winston.error('error on last episode query');
             winston.error(err);
             return done(err, null);
         }
-        winston.info('last episode is', lastEpisode);
         let last_episode_number = this.last_episode || 0;
         if (lastEpisode) {
+            winston.info('last episode is', lastEpisode._id);
             last_episode_number = lastEpisode.episode_number;
         }
 
@@ -61,7 +62,7 @@ SerieSchema.methods.addEpisode = function (job, done) {
                 return done(err);
             }
 
-            winston.info('does an episode exists ?', episode);
+            winston.info('does an episode exists ?', episode ? episode._id : 'no');
 
             if (episode) {
                 done(null, episode);
@@ -69,35 +70,41 @@ SerieSchema.methods.addEpisode = function (job, done) {
                 episode = new Episode({
                     serie: this
                 });
-                episode.initialize(job, this, episode_number);
-                winston.info('episode initialized');
-                episode.save(function (err, episode) {
-                    if (err) {
-                        if (err.code === 11000) {
-                            winston.info('episode already stored in database', err);
-                            Episode.findOne({date_created: job.date_created}, function (err, episode) {
-                                if (err) {
-                                    winston.error(err);
-                                    return done(err, null);
-                                }
-                                done(null, episode);
-                            })
-                        } else {
-                            winston.error(err);
-                            return done(err, null);
-                        }
-                    } else {
-                        this.episodes.push(episode);
-                        this.save(function (err, serie) {
-                            if (err) {
-                                winston.error('error saving serie', err);
+                try {
+                    winston.info('initializing episode');
+                    episode.initialize(job, this, episode_number);
+                    winston.info('episode initialized');
+                    episode.save(function (err, episode) {
+                        if (err) {
+                            if (err.code === 11000) {
+                                winston.info('episode already stored in database', err);
+                                Episode.findOne({date_created: job.date_created}, function (err, episode) {
+                                    if (err) {
+                                        winston.error(err);
+                                        return done(err, null);
+                                    }
+                                    done(null, episode);
+                                })
+                            } else {
+                                winston.error(err);
                                 return done(err, null);
                             }
+                        } else {
+                            this.episodes.push(episode);
+                            this.save(function (err, serie) {
+                                if (err) {
+                                    winston.error('error saving serie', err);
+                                    return done(err, null);
+                                }
 
-                            done(null, episode);
-                        });
-                    }
-                }.bind(this))
+                                done(null, episode);
+                            });
+                        }
+                    }.bind(this))
+                } catch (e) {
+                    winston.error(e);
+                    done(e, null);
+                }
             }
         }.bind(this));
     }.bind(this));

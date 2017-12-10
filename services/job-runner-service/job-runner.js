@@ -29,13 +29,18 @@ if (interval === 0) {
 let i = null;
 winston.debug('starting interval job-runner-service for jobs with ' + interval + ' seconds interval');
 i = setInterval(function () {
-    Task.run(function (err, result) {
-        if (err) {
-            winston.error(err, null);
-        } else {
-            winston.info('task execution launched');
-        }
-    });
+    try {
+        Task.run(function (err, result) {
+            if (err) {
+                winston.error(err, null);
+            } else {
+                winston.info('task execution launched');
+            }
+        });
+    } catch (e) {
+        winston.error('job runner caught exception ' + JSON.stringify(e));
+        service.stop();
+    }
 }, interval * 1000);
 
 service.on('stop', function () {
@@ -46,7 +51,7 @@ service.on('stop', function () {
 process.on('uncaughtException', function (err) {
     winston.info('job runner encountered uncaught exception');
     console.error(err);
-    winston.error(err);
+    winston.error('error caught : ' + JSON.stringify(err));
     service.stop();
 });
 

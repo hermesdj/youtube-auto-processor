@@ -20,6 +20,7 @@ function process(auth, job, done) {
     let month = moment().format('MMMM');
     month = month.charAt(0).toUpperCase() + month.slice(1);
     month = month.replace('û', 'u');
+    month = month.replace('é', 'e');
     let year = moment().format('YYYY');
     let start = 'A1';
     let end = 'H40';
@@ -33,6 +34,7 @@ function process(auth, job, done) {
             month = month.charAt(0).toUpperCase() + month.slice(1);
             month = month.replace('û', 'u');
             month = month.replace('é', 'e');
+            year = moment().add(1, 'M').format('YYYY');
             let range = month.concat(' ').concat(year).concat('!').concat(start).concat(':').concat(end);
             processRange(auth, job, range, function (err, haystack, i, j) {
                 if (err) {
