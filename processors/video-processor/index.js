@@ -101,7 +101,7 @@ exports.process = function (job, done) {
             startDate: moment().toDate()
         };
         job.save();
-        job.markOnPlanning();
+        //job.markOnPlanning();
     });
 
     command.on('progress', function (progress) {
