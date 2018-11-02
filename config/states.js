@@ -135,6 +135,13 @@ module.exports = function () {
             next: function () {
                 return null;
             }
+        },
+        VIDEO_PROCESSING: {
+            id: -3,
+            label: 'VIDEO_PROCESSING',
+            next: function () {
+                return states.VIDEO_DONE;
+            }
         }
     };
 

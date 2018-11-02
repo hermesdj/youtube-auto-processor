@@ -3,6 +3,7 @@
  */
 
 const mongoose = require('mongoose');
+mongoose.Promise = require('bluebird');
 const config = require('./service-config.json');
 const EventLogger = require('node-windows').EventLogger;
 const log = new EventLogger(config.service_name);
@@ -52,7 +53,6 @@ process.on('uncaughtException', function (err) {
     winston.info('job runner encountered uncaught exception');
     console.error(err);
     winston.error('error caught : ' + JSON.stringify(err));
-    service.stop();
 });
 
 process.on('warning', (warning) => {

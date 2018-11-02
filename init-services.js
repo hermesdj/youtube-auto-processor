@@ -3,11 +3,13 @@
  */
 const Services = require('./services');
 const mongoose = require('mongoose');
+mongoose.Promise = require('bluebird');
 const db_config = require('./config/database-config');
 mongoose.connect(db_config.mongo.uri, db_config.mongo.options);
 mongoose.Promise = require('q').Promise;
 const winston = require('winston');
 const wMongoDb = require('winston-mongodb').MongoDB;
+
 winston.add(winston.transports.MongoDB, {
     db: db_config.mongo.uri,
     options: db_config.mongo.options,

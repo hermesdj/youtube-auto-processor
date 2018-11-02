@@ -1,8 +1,8 @@
 <md-toolbar class="md-toolbar-tools" md-scroll-shrink>
-    <h3 style="color: white;">Series List</h3>
+    <h3 style="color: white;">Series List <input type="text" ng-model="search.playlist_title" /></h3>
 </md-toolbar>
 <md-list>
-    <md-list-item ng-repeat="serie in $ctrl.series | orderBy:'playlist_title'" md-theme="{{ showDarkTheme ? 'dark-grey' : 'default' }}"
+    <md-list-item ng-repeat="serie in $ctrl.series | filter:search | orderBy:'playlist_title'" md-theme="{{ showDarkTheme ? 'dark-grey' : 'default' }}"
                   md-theme-watch>
         <img ng-src="{{serie.path}}/thumbnails/{{serie.episodes[0].episode_number}}.png"
              alt="{{serie.playlist_title}}" class="md-avatar"/>

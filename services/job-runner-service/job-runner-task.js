@@ -18,8 +18,8 @@ const sheetProcessor = require('../../processors/sheet-processor');
 const thumbnailProcessor = require('../../processors/thumbnail-processor');
 const playlistProcessor = require('../../processors/playlist-processor');
 const youtubeProcessor = require('../../processors/youtube-processor');
-const processVideoService = require('../../services/process-video-service/install-service');
-const processUploadService = require('../../services/upload-video-service/install-service');
+const processVideoService = require('../../services/process-video-service/install-service')();
+const processUploadService = require('../../services/upload-video-service/install-service')();
 
 function jobRunner(done) {
     flow.exec(
@@ -96,7 +96,7 @@ let process_ready_jobs = function (done) {
             return;
         }
         if (job) {
-            winston.info('ready jobs found to process:' + job._id);
+            winston.debug('ready jobs found to process:' + job._id);
             serieProcessor.process(job, function (err, job) {
                 if (err) {
                     winston.error(err);
@@ -159,7 +159,30 @@ let process_video_ready_jobs = function (done) {
         }
         if (jobs.length > 0) {
             winston.info('video ready jobs found to process:' + jobs.length);
-            processVideoService();
+            processVideoService.start();
+        } else {
+            // There are no jobs in ready states. If chain video processing is true, unpause next video
+            // There are no jobs in VIDEO_PROCESSING either
+            find_jobs(states.VIDEO_PROCESSING, function (err, jobs) {
+                if (err) {
+                    winston.error(err);
+                    done(err, null);
+                    return;
+                }
+                if (jobs.length === 0) {
+                    find_job(states.PAUSED, function (err, job) {
+                        if (err) {
+                            winston.error(err);
+                            done(err, null);
+                            return;
+                        }
+                        if (job && config.chain_processing) {
+                            winston.debug('chaining next job');
+                            job.resume();
+                        }
+                    });
+                }
+            });
         }
         done();
     });
@@ -198,6 +221,7 @@ let process_schedule_job = function (job, done) {
         winston.info(job.episode.video_name + ' scheduled on ' + job.episode.publishAt);
         job.episode.save(function (err, episode) {
             if (err) {
+                winston.error('error on saving episode' + err);
                 job.error(err);
                 return done(err);
             }
@@ -222,7 +246,7 @@ let process_upload_ready_jobs = function (done) {
         }
         if (jobs.length > 0) {
             winston.info('upload ready jobs found to process:' + jobs.length);
-            processUploadService();
+            processUploadService.start();
         }
         done();
     });
@@ -366,7 +390,7 @@ let process_all_done_jobs = function (done) {
         }
 
         if (jobs.length > 0) {
-            winston.info('all done job found to process:', jobs.length);
+            winston.debug('all done job found to process:', jobs.length);
             process_jobs(jobs, process_all_done_job, function (err, job) {
                 if (err) {
                     winston.error(err);
@@ -400,7 +424,6 @@ let process_all_done_job = function (job, done) {
             });
         });
     } else {
-        winston.info('job ' + job._id + ' is not public yet');
         done();
     }
 };
@@ -532,16 +555,16 @@ let process_finished_jobs = function (done) {
         }
 
         if (logs.length > 0) {
-            winston.info('found ' + logs.length + ' logs to remove');
+            winston.debug('found ' + logs.length + ' logs to remove');
 
             for (let i = 0; i < logs.length; i++) {
                 let log = logs[i];
                 log.remove();
             }
 
-            winston.info('removed ' + logs.length + ' logs');
+            winston.debug('removed ' + logs.length + ' logs');
         } else {
-          // no logs to remove
+            // no logs to remove
         }
     });
 };

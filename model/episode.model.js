@@ -21,8 +21,9 @@ let EpisodeSchema = new Schema({
     serie: {type: Schema.Types.ObjectId, ref: 'Serie'},
     date_created: {type: Date, default: null, unique: true, required: true, dropDubs: true},
     thumbnails: Schema.Types.Mixed,
-    publishAt: Date,
-    localizations: Schema.Types.Mixed
+    publishAt: {type: Date, unique: false},
+    localizations: Schema.Types.Mixed,
+    lbry: Schema.Types.Mixed
 });
 
 EpisodeSchema.statics.getLastEpisodeNumber = function (serie_id, done) {

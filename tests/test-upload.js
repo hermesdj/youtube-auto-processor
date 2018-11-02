@@ -51,7 +51,11 @@ Job.findOne({state: 'UPLOAD_READY'}).sort('-date_created').populate({
         });
     } else {
         upload_processor.upload(job, function (err) {
-            console.log('done uploading episode');
+            if (err) {
+                console.error(err);
+            } else {
+                console.log('done uploading episode');
+            }
         });
     }
 

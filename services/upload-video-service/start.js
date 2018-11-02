@@ -3,6 +3,7 @@
  */
 
 const mongoose = require('mongoose');
+mongoose.Promise = require('bluebird');
 const service = require('./service');
 const states = require('../../config/states');
 const uploadProcessor = require('../../processors/upload-processor');

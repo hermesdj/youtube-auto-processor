@@ -11,4 +11,5 @@ export default {
 };
 
 function SeriesListController() {
+    console.log(this.series);
 }

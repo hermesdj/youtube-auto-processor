@@ -46,7 +46,7 @@ function LogsListController(LogsDataService, $interval, $filter) {
         var lastAgo = angular.copy(this.ago);
         this.ago = new Date();
 
-        LogsDataService.list({timestamp: {$gte: lastAgo}, level: 'error'}, {timestamp: -1}, query.limit, query.page).then(function (logs) {
+        LogsDataService.list({timestamp: {$gte: lastAgo}, level: 'info'}, {timestamp: -1}, query.limit, query.page).then(function (logs) {
             var newstring = '';
             for (var i = 0; i < logs.data.length; i++) {
                 var log = logs.data[i];

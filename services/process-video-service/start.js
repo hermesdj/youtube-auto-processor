@@ -3,6 +3,7 @@
  */
 
 const mongoose = require('mongoose');
+mongoose.Promise = require('bluebird');
 const service = require('./service');
 const videoProcessor = require('../../processors/video-processor');
 const Job = require('../../model/job.model');

@@ -42,7 +42,10 @@ function YoutubeMetadataService($q, $http) {
                     _.pull(editorData.elements, oldPlaylist);
                     return getCurrentPlaylist(job).then(function (playlist) {
                         console.log('found playlist', playlist);
-                        oldPlaylist.displayImages.thumbnails = [playlist.snippet.thumbnails.high];
+                        console.log('old playlist is', oldPlaylist);
+                        if(oldPlaylist.displayImages) {
+                            oldPlaylist.displayImages.thumbnails = [playlist.snippet.thumbnails.high];
+                        }
                         // oldPlaylist.playlistLength = playlist.contentDetails.itemCount + " vidéos";
                         // oldPlaylist.accessibilityStr = oldPlaylist.playlistLength + ', ' + playlist.snippet.title;
                         oldPlaylist.title = playlist.snippet.title;

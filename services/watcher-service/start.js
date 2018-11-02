@@ -3,6 +3,8 @@
  */
 
 const mongoose = require('mongoose');
+mongoose.Promise = require('bluebird');
+
 const watcher = require('./watch-folder');
 const config = require('../../config/app.json');
 const service = require('./service');
@@ -22,7 +24,6 @@ mongoose.connect(db_config.mongo.uri, db_config.mongo.options);
 
 process.on('uncaughtException', function (err) {
     winston.error(err);
-    service.stop();
 });
 
 watcher.start(config.watch_directory, function (file) {

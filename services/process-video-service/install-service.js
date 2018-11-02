@@ -2,30 +2,27 @@
  * Created by Jérémy on 07/05/2017.
  */
 var service = require('./service');
+console.log('Init ' + service.name + ' service');
 
-module.exports = function(){
-    console.log('starting ' + service.name + ' service');
+service.on('install', function () {
+    console.log('starting service');
+    service.start();
+});
 
-    service.on('install', function () {
-        console.log('starting service');
-        service.start();
-    });
+service.on('alreadyinstalled', function () {
+    console.log('service already installed');
+    service.start();
+});
 
-    service.on('alreadyinstalled', function(){
-        console.log('service already installed');
-        service.start();
-    });
+service.on('uninstall', function () {
+    console.log('service uninstalled');
+});
 
-    service.on('uninstall', function(){
-        console.log('service uninstalled');
-    });
+if (!service.exists) {
+    console.log('installing service');
+    service.install();
+}
 
-    if(!service.exists) {
-        console.log('installing service');
-        service.install();
-    }else{
-        service.start();
-    }
-
+module.exports = function () {
     return service;
 };
