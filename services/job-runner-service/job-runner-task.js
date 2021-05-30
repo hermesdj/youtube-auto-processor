@@ -1,16 +1,15 @@
 /**
  * Created by Jérémy on 07/05/2017.
  */
-const path = require('path');
 const Job = require('../../model/job.model');
 const Log = require('../../model/log.model');
-const Serie = require('../../model/serie.model');
 const EventEmitter = require('events').EventEmitter;
 const util = require('util');
 const moment = require('moment');
 const flow = require('flow');
 const config = require('../../config/app.json');
 const fs = require('fs');
+const _ = require('lodash');
 const winston = require('winston');
 const states = require('../../config/states');
 const serieProcessor = require('../../processors/serie-processor');
@@ -18,6 +17,7 @@ const sheetProcessor = require('../../processors/sheet-processor');
 const thumbnailProcessor = require('../../processors/thumbnail-processor');
 const playlistProcessor = require('../../processors/playlist-processor');
 const youtubeProcessor = require('../../processors/youtube-processor');
+const youtubeStudioProcessor = require('../../processors/youtube-studio-processor');
 const processVideoService = require('../../services/process-video-service/install-service')();
 const processUploadService = require('../../services/upload-video-service/install-service')();
 
@@ -25,29 +25,47 @@ function jobRunner(done) {
     flow.exec(
         function () {
             process_ready_jobs(this);
-        }, function () {
+        },
+        function () {
             process_initialized_jobs(this);
-        }, function () {
+        },
+        function () {
             process_schedule_jobs(this);
-        }, function () {
+        },
+        function () {
             process_video_ready_jobs(this);
-        }, function () {
+        },
+        function () {
             process_upload_ready_jobs(this);
-        }, function () {
+        },
+        function () {
             process_upload_done_jobs(this);
-        }, function () {
+        },
+        function () {
             process_thumbnail_jobs(this);
-        }, function () {
+        },
+        function () {
             process_playlists_jobs(this);
-        }, function () {
+        },
+        function () {
             process_wait_youtube_processing_jobs(this);
-        }, function () {
+        },
+        function () {
+            process_monetize_jobs(this);
+        },
+        function () {
+            process_endscreen_jobs(this);
+        },
+        function () {
             process_all_done_jobs(this);
-        }, function () {
+        },
+        function () {
             process_public_jobs(this);
-        }, function () {
+        },
+        function () {
             process_finished_jobs(this);
-        }, function () {
+        },
+        function () {
             done();
         }
     );
@@ -83,6 +101,7 @@ let process_jobs = function (jobs, process, done) {
     }, function (err, job) {
         if (err) {
             winston.error(err);
+            console.error(err);
         }
     }, function () {
         done();
@@ -370,7 +389,7 @@ let insertVideoToPlaylist = function (job, done) {
     });
 };
 
-let createPlaylist = function (job, done) {
+const createPlaylist = function (job, done) {
     playlistProcessor.createPlaylist(job, function (err) {
         if (err) {
             winston.error(err);
@@ -381,7 +400,7 @@ let createPlaylist = function (job, done) {
     });
 };
 
-let process_all_done_jobs = function (done) {
+const process_all_done_jobs = function (done) {
     find_jobs(states.ALL_DONE, function (err, jobs) {
         if (err) {
             winston.error(err);
@@ -390,6 +409,7 @@ let process_all_done_jobs = function (done) {
         }
 
         if (jobs.length > 0) {
+            console.log('found', jobs.length, 'all done jobs');
             winston.debug('all done job found to process:', jobs.length);
             process_jobs(jobs, process_all_done_job, function (err, job) {
                 if (err) {
@@ -399,12 +419,13 @@ let process_all_done_jobs = function (done) {
                 done();
             })
         } else {
+            console.log('no all done jobs found to process');
             done();
         }
     });
 };
 
-let process_all_done_job = function (job, done) {
+const process_all_done_job = function (job, done) {
     let publicDate = moment(job.episode.publishAt);
     let now = moment();
 
@@ -424,11 +445,12 @@ let process_all_done_job = function (job, done) {
             });
         });
     } else {
+        console.log('video ', job.episode.youtube_id, 'is not yet public, publish at is', job.episode.publishAt);
         done();
     }
 };
 
-let process_public_jobs = function (done) {
+const process_public_jobs = function (done) {
     find_jobs(states.PUBLIC, function (err, jobs) {
         if (err) {
             winston.error(err);
@@ -450,7 +472,7 @@ let process_public_jobs = function (done) {
     });
 };
 
-let process_public_job = function (job, done) {
+const process_public_job = function (job, done) {
     // clear all public videos from file system
     let publicDate = moment(job.episode.publishAt);
 
@@ -469,8 +491,8 @@ let process_public_job = function (job, done) {
     }
 };
 
-let process_wait_youtube_processing_jobs = function (done) {
-    find_jobs(states.WAIT_YOUTUBE_PROCESSING, function (err, jobs) {
+const process_monetize_jobs = function (done) {
+    find_jobs(states.MONETIZE, function (err, jobs) {
         if (err) {
             winston.error(err);
             done(err, null);
@@ -478,8 +500,8 @@ let process_wait_youtube_processing_jobs = function (done) {
         }
 
         if (jobs.length > 0) {
-            winston.info('wait processing job found to process:', jobs.length);
-            process_jobs(jobs, process_wait_youtube_processing_job, function (err) {
+            winston.info('wait monetization jobs found to process: %d', jobs.length);
+            process_jobs(jobs, process_monetize_job, function (err) {
                 if (err) {
                     winston.error(err);
                 }
@@ -488,30 +510,164 @@ let process_wait_youtube_processing_jobs = function (done) {
         } else {
             done();
         }
+    })
+}
+
+const process_monetize_job = function (job, done) {
+    job.next(async function (err, job) {
+        if (err) {
+            winston.error(err);
+            job.error(err);
+            return done(err, null);
+        }
+        // Job moved to monetizing
+        await youtubeStudioProcessor.setMonetization(job, function (err, result) {
+            if (err) {
+                winston.error(err);
+                job.error(err);
+                return done(err, null);
+            }
+
+            if (result && result.overallResult && result.overallResult.resultCode === 'UPDATE_SUCCESS') {
+                // Job moved to endscreen
+                job.next(function (err, job) {
+                    if (err) {
+                        winston.error(err);
+                        return done(err, null);
+                    }
+                    done(null, job);
+                })
+            } else {
+                const err = new Error('Monetize result is ' + result.overallResult.resultCode);
+                winston.error(err.message);
+                job.error(err);
+                done(err);
+            }
+        })
+    })
+}
+
+const process_endscreen_jobs = function (done) {
+    find_jobs(states.ENDSCREEN, function (err, jobs) {
+        if (err) {
+            winston.error(err);
+            done(err, null);
+            return;
+        }
+
+        if (jobs.length > 0) {
+            winston.info('wait endscreen jobs found to process: %d', jobs.length);
+            process_jobs(jobs, process_endscreen_job, function (err) {
+                if (err) {
+                    winston.error(err);
+                }
+                done();
+            })
+        } else {
+            done();
+        }
+    })
+}
+
+const process_endscreen_job = function (job, done) {
+    job.next(async function (err, job) {
+        if (err) {
+            winston.error(err);
+            job.error(err);
+            return done(err, null);
+        }
+        // Job moved to monetizing
+        await youtubeStudioProcessor.setEndScreen(job, function (err, result) {
+            if (err) {
+                winston.error(err);
+                job.error(err);
+                return done(err, null);
+            }
+
+            if (result && result.executionStatus === 'EDIT_EXECUTION_STATUS_DONE') {
+                // Job moved to endscreen
+                job.next(function (err, job) {
+                    if (err) {
+                        winston.error(err);
+                        return done(err, null);
+                    }
+                    done(null, job);
+                })
+            } else {
+                const err = new Error('Endscreen result is ' + result.executionStatus);
+                winston.error(err.message);
+                job.error(err);
+                done(err);
+            }
+        })
+    })
+}
+
+const process_wait_youtube_processing_jobs = function (done) {
+    find_jobs(states.WAIT_YOUTUBE_PROCESSING, async function (err, jobs) {
+        if (err) {
+            winston.error(err);
+            done(err, null);
+            return;
+        }
+
+        let notUpdatedJobs = jobs.filter(job => !job.lastProcessFetchDate);
+
+        if (notUpdatedJobs.length > 0) {
+            winston.info('wait processing job found to process:', jobs.length);
+            await updateMultipleJobsProcessing(notUpdatedJobs, done);
+        } else {
+            // No not updated jobs
+            let alreadyUpdatedJobs = jobs.filter(job => job.lastProcessFetchDate);
+            let minLastUpdateDate = _.minBy(alreadyUpdatedJobs, 'lastProcessFetchDate');
+
+            if (moment(minLastUpdateDate).isBefore(moment().subtract(1, 'hour'))) {
+                // Not updated in an hour
+                await updateMultipleJobsProcessing(alreadyUpdatedJobs, done);
+            } else {
+                done();
+            }
+        }
     });
 };
 
-let process_wait_youtube_processing_job = function (job, done) {
-    youtubeProcessor.getVideoProcessorStats(job, function (err, job) {
-        if (err) {
-            winston.error(err);
-            return done(err, null);
-        }
-        winston.info('processing info is', JSON.stringify(job.processing));
-        if (job.processing && job.processing.processingStatus === 'succeeded') {
-            // Move to next step as processing is done
-            winston.info('video definition is', job.details.definition);
-            if (job.details.definition === 'hd') {
-                job.next(done);
-            } else {
-                job.message = 'video is still in sd on youtube';
-                done(null, job);
+const updateMultipleJobsProcessing = async function (jobs, done) {
+    try {
+        await youtubeProcessor.getVideoProcessorStatsMultiple(jobs, async function (err, {items}) {
+            if (err) {
+                return done(err);
             }
-        } else {
-            done(err, job);
-        }
-    })
-};
+
+            for (let {id, processingDetails, contentDetails} of items) {
+                let job = jobs.find(job => job.episode.youtube_id === id);
+
+                if (job) {
+                    if (processingDetails.processingStatus === 'succeeded') {
+                        // Move to next step as processing is done
+                        winston.info('video definition is', contentDetails.definition);
+                        if (contentDetails.definition === 'hd') {
+                            await new Promise((resolve, reject) =>
+                                job.next((err) => {
+                                    if (err) return reject(err);
+                                    resolve();
+                                })
+                            );
+                        } else {
+                            job.message = 'video is still in sd on youtube';
+                            await job.save();
+                        }
+                    }
+                } else {
+                    console.warn('job not found for video id', id);
+                }
+            }
+
+            done();
+        });
+    } catch (err) {
+        done(err);
+    }
+}
 
 let process_finished_jobs = function (done) {
     find_jobs(states.FINISHED, function (err, jobs) {

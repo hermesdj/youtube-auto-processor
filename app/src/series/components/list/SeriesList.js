@@ -10,6 +10,21 @@ export default {
     }
 };
 
-function SeriesListController() {
-    console.log(this.series);
+function SeriesListController(SeriesDataService) {
+    function Factory() {
+
+    }
+
+    Factory.prototype.refresh = function () {
+        return SeriesDataService.list().then(series => {
+            this.series = series;
+        });
+    };
+
+    Factory.prototype.delete = function (serie) {
+        console.log(serie);
+        return serie.remove().then(() => this.refresh());
+    };
+
+    return new Factory();
 }

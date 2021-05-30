@@ -20,8 +20,9 @@ util.inherits(resumableUpload, EventEmitter);
 //Init the upload by POSTing google for an upload URL (saved to self.location)
 resumableUpload.prototype.upload = function () {
     var self = this;
+    console.log('token is', self.tokens);
     var options = {
-            url: 'https://' + self.host + self.api + '?uploadType=resumable&part=' + self.parts.join(','),
+            uri: 'https://' + self.host + self.api + '?uploadType=resumable&part=' + self.parts.join(','),
             headers: {
                 'Host': self.host,
                 'Authorization': 'Bearer ' + self.tokens.access_token,
@@ -30,19 +31,19 @@ resumableUpload.prototype.upload = function () {
                 'X-Upload-Content-Length': fs.statSync(self.filepath).size,
                 'X-Upload-Content-Type': mime.lookup(self.filepath)
             },
-            body: JSON.stringify
-            (self.metadata)
+            body: JSON.stringify(self.metadata)
         }
     ;
     //Send request and start upload if success
     request.post(options, function (err, res, body) {
         if (err || !res.headers.location) {
-            console.error(err);
-            console.error(body);
+            console.error('request post error', err);
+            console.error('request post body', body);
+            console.log('request res headers is', res.headers);
 
-            if(!err){
+            if (!err) {
                 self.emit('error', new Error(body.error));
-            }else{
+            } else {
                 self.emit('error', new Error(err));
             }
 
@@ -63,7 +64,7 @@ resumableUpload.prototype.upload = function () {
 resumableUpload.prototype.send = function () {
     var self = this;
     var options = {
-        url: self.location, //self.location becomes the Google-provided URL to PUT to
+        uri: self.location, //self.location becomes the Google-provided URL to PUT to
         headers: {
             'Authorization': 'Bearer ' + self.tokens.access_token,
             'Content-Length': fs.statSync(self.filepath).size - self.byteCount,
@@ -97,6 +98,11 @@ resumableUpload.prototype.send = function () {
         if ((self.retry > 0) || (self.retry <= -1)) {
             self.retry--;
             self.getProgress(function (err, res, b) {
+                console.log('get progress', err, res, b);
+                if(err){
+                    self.emit('error', new Error(err));
+                    return console.error(err);
+                }
                 if (typeof res.headers.range !== 'undefined') {
                     self.byteCount = res.headers.range.substring(8); //parse response
                 } else {

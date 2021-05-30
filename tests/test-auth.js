@@ -3,6 +3,8 @@
  */
 var client = require('../config/google-client');
 
-client(function (auth) {
-    console.log(auth.token);
+client(async function (auth) {
+    console.log('auth is', auth);
+    console.log(await auth.getCredentials());
+    console.log(await auth.getAccessToken());
 });

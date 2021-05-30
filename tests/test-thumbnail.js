@@ -3,9 +3,9 @@
  */
 
 var mongoose = require('mongoose');
-var thumbnail_processor = require('./processors/thumbnail-processor');
-var Job = require('./model/job.model');
-var db_config = require('./config/database-config');
+var thumbnail_processor = require('../processors/thumbnail-processor');
+var Job = require('../model/job.model');
+var db_config = require('../config/database-config');
 mongoose.connect(db_config.mongo.uri, db_config.mongo.options);
 
 Job.findOne({state: 'UPLOAD_DONE'}).sort('-date_created').populate('episode').exec(function (err, job) {
@@ -24,6 +24,7 @@ Job.findOne({state: 'UPLOAD_DONE'}).sort('-date_created').populate('episode').ex
         return;
     }
     thumbnail_processor.setThumbnail(job, function (err, result) {
-
+        if(err) console.error(err);
+        else console.log(result);
     });
 });

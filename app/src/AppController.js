@@ -9,6 +9,9 @@ function AppController($mdSidenav) {
     self.toggleList = function () {
         $mdSidenav('left').toggle();
     };
+    self.showDevTools = function () {
+        win.showDevTools();
+    }
 }
 
 export default ['$mdSidenav', AppController];

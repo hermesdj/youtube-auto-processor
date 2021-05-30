@@ -1,8 +1,8 @@
 /**
  * Created by Jérémy on 09/05/2017.
  */
-const google = require('googleapis');
-const client = require('../../config/google-client');
+const {google} = require('googleapis');
+const client = require('../../config/google-client-v1');
 const winston = require('winston');
 
 function process(auth, job, done) {
@@ -21,7 +21,7 @@ function process(auth, job, done) {
         return done('no video id in episode', null);
     }
 
-    winston.info('adding ' + videoId + ' to playlist ' + playlistId);
+    winston.info('adding video ' + videoId + ' to playlist ' + playlistId);
 
     youtube.playlistItems.insert({
         part: 'snippet',
@@ -56,14 +56,20 @@ exports.addToPlaylist = function (job, done) {
     winston.debug('adding episode to playlist', job.episode.video_name);
 
     client(function (auth) {
-        process(auth, job, done);
+        process(auth, job, function (err, res) {
+            if (err) {
+                console.error(err);
+                return done(err);
+            }
+            done(null, res);
+        });
     });
 };
 
 function create(auth, job, done) {
     let youtube = google.youtube({
         version: 'v3',
-        auth: auth.oauth2client
+        auth: auth
     });
 
     let metadata = {
@@ -80,7 +86,7 @@ function create(auth, job, done) {
         }
     };
 
-    youtube.playlists.insert(metadata, function (err, data) {
+    youtube.playlists.insert(metadata, function (err, {data}) {
         if (err) {
             return done(err, null);
         }

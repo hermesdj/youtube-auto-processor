@@ -19,7 +19,8 @@ let JobSchema = new Schema({
     details: Schema.Types.Mixed,
     episode: {type: Schema.Types.ObjectId, ref: 'Episode'},
     err: Schema.Types.Mixed,
-    message: {type: String}
+    message: {type: String},
+    lastProcessFetchDate: {type: Date, default: null}
 });
 
 JobSchema.static.states = states;
@@ -49,7 +50,7 @@ JobSchema.methods.markOnPlanning = function (done) {
 JobSchema.methods.next = function (done) {
     var next = states[this.state].next();
     if (next) {
-        winston.info('moving job', this._id, 'from state', this.state, 'to', next.label);
+        winston.info('moving job %s from state %s to %s', this._id, this.state, next.label);
         this.last_state = this.state;
         this.state = next.label;
         if (this.state === states.VIDEO_READY.label || next.label === states.ALL_DONE.label) {

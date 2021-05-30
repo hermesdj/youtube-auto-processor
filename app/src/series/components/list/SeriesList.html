@@ -5,14 +5,14 @@
     <md-list-item ng-repeat="serie in $ctrl.series | filter:search | orderBy:'playlist_title'" md-theme="{{ showDarkTheme ? 'dark-grey' : 'default' }}"
                   md-theme-watch>
         <img ng-src="{{serie.path}}/thumbnails/{{serie.episodes[0].episode_number}}.png"
-             alt="{{serie.playlist_title}}" class="md-avatar"/>
+             class="md-avatar"/>
         <p>{{::serie.playlist_title}}</p>
         <div class="md-secondary-container">
             <md-button class="md-icon-button" ui-sref="series.edit({id: serie._id})">
                 <md-icon md-svg-icon="edit"></md-icon>
                 <md-tooltip>Edit serie</md-tooltip>
             </md-button>
-            <md-button class="md-icon-button" ng-click="serie.remove()">
+            <md-button class="md-icon-button" ng-click="$ctrl.delete(serie)">
                 <md-icon md-svg-icon="delete"></md-icon>
                 <md-tooltip>Delete serie (not working !)</md-tooltip>
             </md-button>

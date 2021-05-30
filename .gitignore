@@ -46,3 +46,4 @@ config/client_secret.json
 config/youtube.json
 config/discord.json
 config/default_description*.txt
+config/client_secret_v1.json

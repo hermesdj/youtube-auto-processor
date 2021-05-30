@@ -1,8 +1,8 @@
 /**
  * Created by Jérémy on 08/05/2017.
  */
-const client = require('../../config/google-client');
-const google = require('googleapis');
+const client = require('../../config/google-client-v1');
+const {google} = require('googleapis');
 const config = require('../../config/youtube.json');
 const moment = require('moment');
 const COLORS = require('../../config/colors');
@@ -14,7 +14,7 @@ function process(auth, job, done) {
         return done(job.err, null);
     }
 
-    winston.debug('processing on agenda for current month');
+    winston.debug('processing on agenda for current month with id %s', config.agenda_spreadsheet_id);
 
     moment.locale(config.locale ? config.locale : 'fr');
     let month = moment().format('MMMM');
@@ -38,6 +38,7 @@ function process(auth, job, done) {
             let range = month.concat(' ').concat(year).concat('!').concat(start).concat(':').concat(end);
             processRange(auth, job, range, function (err, haystack, i, j) {
                 if (err) {
+                    console.error(err);
                     winston.error('cannot find episode on the agenda');
                     return done(err);
                 }
@@ -53,6 +54,7 @@ function process(auth, job, done) {
 
 function processRange(auth, job, range, done) {
     winston.info('processing with range', range);
+    console.log('process range', range);
     let sheets = google.sheets({
         version: 'v4',
         auth: auth.oauth2client
@@ -63,14 +65,22 @@ function processRange(auth, job, range, done) {
         range: range
     }, function (err, res) {
         if (err) {
+            console.error(res);
+            console.error(err);
             winston.error('error on retrieving google agenda info : ' + err);
-            done(err, job);
+            return done(err, job);
         }
-        find(res.values, job.episode.serie.planning_name.replace('${episode_number}', job.episode.episode_number).replace('${episode_name}', job.episode.episode_name), done);
+
+        if (res && res.data) {
+            let {data: {values}} = res;
+
+            find(values, job.episode.serie.planning_name.replace('${episode_number}', job.episode.episode_number).replace('${episode_name}', job.episode.episode_name), done);
+        }
     });
 }
 
 function find(haystack, needle, done) {
+    console.log('search needle ' + needle);
     for (let i = 0; i < haystack.length; i++) {
         for (let j = 0; j < haystack[i].length; j++) {
             if (haystack[i][j] === needle) {
@@ -78,7 +88,7 @@ function find(haystack, needle, done) {
             }
         }
     }
-    done('Episde ' + needle + ' cannot be found on the agenda', null, null, null);
+    done('Episode ' + needle + ' cannot be found on the agenda', null, null, null);
 }
 
 function parseDate(haystack, i, j, done) {
@@ -143,9 +153,11 @@ function getSpreadsheetId(auth, sheetName, done) {
         if (err) {
             done(err, job);
         }
+
+        let {data} = res;
         let result = null;
-        for (let i = 0; i < res.sheets.length; i++) {
-            let sheet = res.sheets[i];
+        for (let i = 0; i < data.sheets.length; i++) {
+            let sheet = data.sheets[i];
             if (sheet.properties.title === sheetName) {
                 result = sheet.properties.sheetId;
                 break;
@@ -214,13 +226,13 @@ function updateCells(auth, requests, done) {
         spreadsheetId: config.agenda_spreadsheet_id,
         resource: {requests: requests}
     }, function (err, res) {
-        winston.debug('spreadsheet batch update response' + JSON.stringify(res));
+        winston.info('spreadsheet batch update response ' + JSON.stringify(res));
         if (err) {
             winston.error('error updating cells');
             winston.error(err);
-            return done(err, job);
+            return done(err);
         }
-        done(null, res);
+        done(null, res.data);
     });
 }
 

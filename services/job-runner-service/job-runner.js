@@ -6,12 +6,11 @@ const mongoose = require('mongoose');
 mongoose.Promise = require('bluebird');
 const config = require('./service-config.json');
 const EventLogger = require('node-windows').EventLogger;
-const log = new EventLogger(config.service_name);
 const Task = require('./job-runner-task');
 const db_config = require('../../config/database-config');
 const service = require('./service');
 const winston = require('winston');
-const wMongoDb = require('winston-mongodb').MongoDB;
+require('winston-mongodb').MongoDB;
 
 winston.add(winston.transports.MongoDB, {
     db: db_config.mongo.uri,

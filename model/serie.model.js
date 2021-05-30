@@ -26,6 +26,10 @@ let SerieSchema = new Schema({
     partner: String,
     intro: String,
     outro: String,
+    resolution: {
+        type: String,
+        default: '1080p'
+    },
     stores_url: [{type: Schema.Types.Mixed}],
     named_episode: {type: Boolean, default: false},
     episodes: [{type: Schema.Types.ObjectId, ref: 'Episode'}],
@@ -149,6 +153,7 @@ SerieSchema.statics.findOrCreate = function (directory, done) {
                 serie.intro = config.intro || null;
                 serie.outro = config.outro || null;
                 serie.partner = null;
+                serie.resolution = config.resolution || '1080p';
 
                 if (config.is_partner && config.partner_key) {
                     winston.info('adding partner intro to serie config: ' + config.partner_key);

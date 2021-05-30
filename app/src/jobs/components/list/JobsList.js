@@ -38,26 +38,6 @@ function JobsListController(JobsDataService, YoutubeMetadataService, $interval, 
             if (initialized.length === 0) {
                 this.jobs = jobs;
             }
-            let monetize = _.filter(this.jobs, function (job) {
-                return job.state === 'MONETIZE'
-            });
-            if (monetize.length > 0) {
-                for (let i = 0; i < monetize.length; i++) {
-                    let job = monetize[i];
-                    this.monetize(job);
-                }
-            }
-
-            let endscreen = _.filter(this.jobs, function (job) {
-                return job.state === 'ENDSCREEN'
-            });
-            if (endscreen.length > 0) {
-                console.log('found', endscreen.length, 'job to process in ENDSCREEN state');
-                for (let i = 0; i < endscreen.length; i++) {
-                    let job = endscreen[i];
-                    this.endscreen(job);
-                }
-            }
         }.bind(this), function (err) {
             console.error(err);
         });
@@ -101,33 +81,23 @@ function JobsListController(JobsDataService, YoutubeMetadataService, $interval, 
     };
 
     Factory.prototype.monetize = function (job) {
-        YoutubeMetadataService.setMonetization(job).then(function (result) {
-            job.next(function (err, job) {
-                if (err) {
-                    console.error(err);
-                    job.error(err);
-                }
-                console.log('job is next now', job);
-            });
-        }, function (err) {
-            console.error(err);
-            job.error(err);
-        });
-    };
-
-    Factory.prototype.endscreen = function (job) {
-        console.log('processing endscreen', job);
-        YoutubeMetadataService.setEndscreen(job).then(function (result) {
-            job.next(function (err, job) {
-                if (err) {
-                    console.error(err);
-                    job.error(err);
-                }
-                console.log('job is next now', job);
-            });
-        }, function (err) {
-            console.error(err);
-            job.error(err);
+        job.next(function (err, job) {
+            if (err) {
+                console.error(err);
+                job.error(err);
+                return;
+            }
+            YoutubeMetadataService.setMonetization(job)
+                .then(() => {
+                    job.next(function (err, job) {
+                        if (err) {
+                            console.error(err);
+                            job.error(err);
+                            return;
+                        }
+                        console.log('job is in state', job.state);
+                    })
+                })
         });
     };
 

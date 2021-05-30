@@ -2,14 +2,12 @@
  * Created by jdallard on 22/05/2017.
  */
 'use strict';
-const Job = require('./model/job.model');
-const States = require('./config/states');
 const moment = require('moment');
-const google = require('googleapis');
-const client = require('./config/google-client');
+const {google} = require('googleapis');
+const client = require('./config/google-client-v1');
 const fs = require('fs');
 const path = require('path');
-const config = JSON.parse(fs.readFileSync(path.resolve(path.join('./config', 'youtube.json'))))
+const config = JSON.parse(fs.readFileSync(path.resolve(path.join('./config', 'youtube.json'))));
 
 import _ from 'lodash';
 
@@ -43,7 +41,7 @@ function YoutubeMetadataService($q, $http) {
                     return getCurrentPlaylist(job).then(function (playlist) {
                         console.log('found playlist', playlist);
                         console.log('old playlist is', oldPlaylist);
-                        if(oldPlaylist.displayImages) {
+                        if (oldPlaylist.displayImages) {
                             oldPlaylist.displayImages.thumbnails = [playlist.snippet.thumbnails.high];
                         }
                         // oldPlaylist.playlistLength = playlist.contentDetails.itemCount + " vidéos";
@@ -108,7 +106,7 @@ function YoutubeMetadataService($q, $http) {
                 version: 'v3',
                 auth: auth.oauth2client
             });
-            let req = youtube.playlists.list({
+            youtube.playlists.list({
                 id: job.episode.serie.playlist_id,
                 part: 'snippet,contentDetails'
             }, function (err, data) {
@@ -145,7 +143,7 @@ function YoutubeMetadataService($q, $http) {
 
     function authenticateOnYoutube(videoId) {
         let deferred = $q.defer();
-        nw.Window.open('https://www.youtube.com/edit?o=U&ns=1&video_id=' + videoId, {}, function (new_win) {
+        nw.Window.open(`https://studio.youtube.com/video/${videoId}/edit`, {}, function (new_win) {
             // TODO revoir l'authentification
             new_win.on('loaded', function () {
                 console.log('loaded !', new_win);
@@ -158,120 +156,22 @@ function YoutubeMetadataService($q, $http) {
         return deferred.promise;
     }
 
-    function postMetadata(job, session) {
-        let metadata = {
-            video_monetization_style: 'ads',
-            syndication: 'everywhere',
-            modified_fields: 'video_monetization_style,syndication',
-            video_id: job.episode.youtube_id,
-            session_token: session
-        };
-
-        let duration = moment.duration(job.details.duration);
-        if (duration.asMinutes() > 10) {
-            metadata.ad_breaks = {
-                has_preroll: true,
-                has_postroll: true,
-            };
-            let parts = Math.floor(duration.asMinutes() / 25);
-            console.log('parts found in video with', duration.asMinutes(), 'duration are', parts);
-            var midrolls = [];
-            for (var i = 1; i <= parts; i++) {
-                midrolls.push("" + Math.floor((duration.asMinutes() / (parts + 1))) * i + ":" + Math.floor(Math.random() * 60));
-            }
-            console.log('midrolls generated are', midrolls);
-            metadata.ad_breaks.has_midroll = midrolls.length > 0;
-            if (midrolls.length > 0) {
-                metadata.ad_breaks.midrolls_are_manual = true;
-                metadata.ad_breaks.manual_midroll_times = midrolls
-            }
-            metadata.modified_fields = metadata.modified_fields + ',ad_breaks';
-        }
-
-        console.log('metadata sent to youtube:', metadata);
-
-        return $http({
-            method: 'POST',
-            url: 'https://www.youtube.com/metadata_ajax?action_edit_video=1',
-            data: metadata,
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded'
-            },
-            transformRequest: function (obj) {
-                let str = [];
-                for (let p in obj) {
-                    if (obj[p].hasOwnProperty('has_preroll')) {
-                        str.push(encodeURIComponent(p) + "=" + encodeURIComponent(JSON.stringify(obj[p])));
-                    } else {
-                        str.push(encodeURIComponent(p) + "=" + encodeURIComponent(obj[p]));
-                    }
-                }
-                return str.join("&");
-            }
-        }).then(function (result) {
-            if (result.data.metadata_errors.length === 0) {
-                return true;
-            } else {
-                return $q.reject(result.data.metadata_errors);
-            }
-        });
-    }
-
-    function getSession(url, videoId) {
+    function openMonetizeYoutubePage(videoId) {
         let deferred = $q.defer();
-        $http.get(url + videoId).then(function (res) {
-            let session = res.data.match(/var session_token = \"(.*?)\";/);
-            if (session) {
-                return session[1];
-            } else {
-                session = res.data.match(/'XSRF_TOKEN': \"(.*?)\"/);
-                if (session) {
-                    return session[1];
-                } else {
-                    return $q.reject({code: 4000});
-                }
-            }
-        }).then(function (session) {
-            deferred.resolve(session);
-        }, function (err) {
-            if (err.code === 4000) {
-                console.log('no session found, authenticating on youtube');
-                authenticateOnYoutube(videoId).then(function () {
-                    getSession(url, videoId).then(function (session) {
-                        deferred.resolve(session);
-                    }, function (err) {
-                        console.error(err);
-                        deferred.reject(err);
-                    });
-                }, function (err) {
-                    console.error(err);
-                    deferred.reject('error while authenticating on Youtube');
-                });
-            } else {
-                console.error(err);
-                deferred.reject('error on get Session');
-            }
+        nw.Window.open(`https://studio.youtube.com/video/${videoId}/monetization/ads`, {}, function (new_win) {
+            new_win.on('loaded', function () {
+                console.log('loaded !', new_win);
+            });
+
+            new_win.on('closed', function () {
+                deferred.resolve();
+            });
         });
         return deferred.promise;
     }
 
     Factory.prototype.setMonetization = function (job) {
-        let deferred = $q.defer();
-
-        // Move to monetizing state
-        job.next(function (err, job) {
-            getSession('https://www.youtube.com/edit?o=U&ns=1&video_id=', job.episode.youtube_id)
-                .then(function (session) {
-                    postMetadata(job, session).then(function (result) {
-                        deferred.resolve(result);
-                    }, function (err) {
-                        console.error(err);
-                        deferred.reject('error while posting metadata');
-                    });
-                });
-        });
-
-        return deferred.promise;
+        return openMonetizeYoutubePage(job.episode.youtube_id);
     };
 
     return new Factory();

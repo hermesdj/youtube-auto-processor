@@ -23,7 +23,7 @@ process.on('uncaughtException', function (err) {
     service.stop();
 });
 
-winston.info('starting video processor service with env' + process.env);
+winston.info('starting video processor service with env %j', process.env);
 Job.findOne({state: states.VIDEO_READY.label}).sort('-date_created').populate({
     path: 'episode',
     populate: {

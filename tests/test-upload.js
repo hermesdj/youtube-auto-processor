@@ -4,9 +4,7 @@
 
 var mongoose = require('mongoose');
 var upload_processor = require('../processors/upload-processor');
-var thumbnail_processor = require('../processors/thumbnail-processor');
 var sheet_processor = require('../processors/sheet-processor');
-var path = require('path');
 var moment = require('moment');
 
 var Job = require('../model/job.model');
@@ -58,6 +56,4 @@ Job.findOne({state: 'UPLOAD_READY'}).sort('-date_created').populate({
             }
         });
     }
-
-
 });

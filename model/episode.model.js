@@ -51,6 +51,7 @@ EpisodeSchema.methods.initialize = function (job, serie, episode_number) {
     }
 
     this.description = description_template.replace('${game_title}', serie.game_title)
+        .replace('${resolution}', serie.resolution)
         .replace('${description}', serie.description)
         .replace('${playlist_url}', 'https://www.youtube.com/playlist?list=' + serie.playlist_id)
         .replace('${default_description}', default_description);

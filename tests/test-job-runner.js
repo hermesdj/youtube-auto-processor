@@ -3,6 +3,7 @@
  */
 
 var mongoose = require('mongoose');
+mongoose.Promise = require('bluebird');
 var Task = require('../services/job-runner-service/job-runner-task');
 var db_config = require('../config/database-config');
 mongoose.connect(db_config.mongo.uri, db_config.mongo.options);
