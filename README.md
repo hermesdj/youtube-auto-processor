@@ -7,7 +7,7 @@ using FFMPEG and add an intro and an outro to it, then it will read the publish 
 then it will upload and schedule the video on youtube and then it will configure the video uploaded by setting its
 thumbnail, playlist, monetization policy and endscreen.
 
-##June 2021 Update :
+## June 2021 Update :
 
 I have rewritten huge parts of the code to update it using async/await. Since the end of 2019, the processor was no longer working
 due to youtube changing some policies on their API. In order to have the monetisation, endscreen and upload working again, I had to
