@@ -1,4 +1,4 @@
-import {app, BrowserWindow, Menu, nativeTheme, Tray} from 'electron'
+import {app, BrowserWindow, Menu, nativeTheme, nativeImage, Tray} from 'electron'
 import {setup} from '../utils/db'
 import '../utils/images'
 import '../utils/google-auth'
@@ -67,7 +67,7 @@ async function createWindow() {
 
 
 app.on('ready', async () => {
-  tray = new Tray(path.resolve(path.join(__dirname, '../icons/icon.ico')));
+  tray = new Tray(nativeImage.createFromPath(path.resolve(path.join(__dirname, '../icons/icon.ico'))));
 
   const contextMenu = Menu.buildFromTemplate([
     {
