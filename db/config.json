@@ -1,0 +1,11 @@
+﻿{
+  "mongo": {
+    "uri": "mongodb://localhost:27017/youtube-auto-processor",
+    "options": {
+      "useUnifiedTopology": true,
+      "useNewUrlParser": true,
+      "poolSize": 2,
+      "createIndexes": true
+    }
+  }
+}

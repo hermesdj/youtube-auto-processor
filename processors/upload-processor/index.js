@@ -1,103 +1,148 @@
 /**
  * Created by Jérémy on 07/05/2017.
  */
-const ResumableUpload = require('./youtube-resumable-upload');
 const fs = require('fs');
-const client = require('../../config/google-client-v1');
+const {google} = require('googleapis');
+const {GoogleToken, GoogleCookieConfig, YoutubeChannel} = require('../../model/google.model');
+const {createLogger} = require('../../logger');
+const logger = createLogger({label: 'upload-processor'});
+const {uploadWithPuppeteer} = require('./PupeteerYoutubeUploader');
+const os = require('os');
+const path = require('path');
+const mkdirp = require('mkdirp');
+const rootDir = path.join(os.tmpdir(), 'youtube-auto-processor', 'upload');
+mkdirp.sync(rootDir);
 const moment = require('moment');
-const winston = require('winston');
 
-async function process(auth, job, done) {
-    try {
-
-        let episode = job.episode;
-        if (!fs.existsSync(episode.path)) {
-            done('File not found : ' + episode.path);
-        }
-        let resumable = new ResumableUpload();
-        let metadata = {
-            snippet: {
-                title: episode.video_name,
-                description: episode.description,
-                tags: episode.keywords,
-                defaultLanguage: episode.serie.default_language || 'fr',
-                defaultAudioLanguage: episode.serie.default_language || 'fr'
-            },
-            status: {
-                privacyStatus: 'private',
-                publishAt: moment(episode.publishAt).format('YYYY-MM-DDTHH:mm:ss.sZ')
-            }
-        };
-
-        // FIXME Ne fonctionne pas pour l'instant
-        if (episode.localizations && episode.localizations.length > 0) {
-            metadata.localizations = episode.localizations;
-            resumable.parts.push('localizations');
-            winston.info('localization added to metadata', metadata);
-        }
-
-        resumable.tokens = auth.token;
-        resumable.filepath = episode.path;
-        resumable.metadata = metadata;
-        resumable.monitor = true;
-        resumable.retry = 3;
-
-        resumable.upload();
-        let total = fs.statSync(episode.path).size;
-        job.state = 'UPLOAD_PROGRESS';
-        job.upload_data = {
-            progress: 0,
-            total: total,
-            startDate: new Date()
-        };
-        job.save();
-
-        resumable.on('progress', function (progress) {
-            job.upload_data.progress = progress;
-            job.markModified('upload_data');
-            job.save();
-        });
-
-        resumable.on('error', function (error) {
-            winston.error('error processing video: ', error);
-            job.err = error;
-            job.state = 'UPLOAD_ERROR';
-            job.save();
-            done(error, null);
-        });
-
-        resumable.on('success', function (success) {
-            success = JSON.parse(success);
-            job.episode.youtube_id = success.id;
-            job.episode.status = success.status;
-            job.state = 'UPLOAD_DONE';
-            job.upload_data.progress = total;
-            job.markModified('upload_data');
-            job.episode.save();
-            job.save(function (err, job) {
-                if (err) {
-                    return done(err, null);
-                }
-                done(null, job);
-            });
-        });
-    } catch (err) {
-        console.error(err);
-        winston.error('error processing video: ', err);
-        job.err = err;
-        job.state = 'UPLOAD_ERROR';
-        await job.save();
-        done(err, null);
-    }
-}
-
-exports.upload = function (job, done) {
+module.exports = {
+  uploadJob: async function (job) {
     if (!job.episode) {
-        winston.error('this job has no episode configured to upload');
-        return done('upload job error, no episode', null);
+      logger.error('this job has no episode configured to upload');
+      throw new Error('upload job error, no episode');
     }
 
-    client(async function (auth) {
-        await process(auth, job, done);
+    let oauth2client = await GoogleToken.resolveOAuth2Client();
+
+    const youtube = google.youtube({
+      version: 'v3',
+      auth: oauth2client
     });
-};
+
+    try {
+      if (!job.populated('episode')) await job.populate({path: 'episode', populate: 'serie'}).execPopulate();
+
+      let episode = job.episode;
+
+      if (!fs.existsSync(episode.path)) {
+        throw new Error('File not found : ' + episode.path);
+      }
+
+      let total = fs.statSync(episode.path).size;
+      job.state = 'UPLOAD_PROCESSING';
+      job.last_state = 'UPLOAD_READY';
+      job.upload_data = {
+        progress: 0,
+        total: total,
+        startDate: new Date()
+      };
+
+      await job.save();
+
+      let stream = fs.createReadStream(episode.path);
+
+      const cookieInfo = await GoogleCookieConfig.resolveConfig({});
+
+      let youtubeChannel = await YoutubeChannel.findOne({});
+      if (!youtubeChannel) {
+        throw new Error('No youtube channel configured. Channel ID is required for this operation');
+      }
+
+      let options = {
+        filePath: episode.path,
+        stream,
+        channelId: youtubeChannel.channelId
+      };
+
+      const onProgress = async ({
+                                  percent,
+                                  videoId,
+                                  contentDetails,
+                                  processingDetails,
+                                  uploadStatus,
+                                  pageCookies
+                                }) => {
+        try {
+          logger.info('upload progress is %j', percent);
+          if (percent) {
+            let progress = (percent / 100) * job.upload_data.total;
+            if (job.upload_data && job.upload_data.progress !== progress) {
+              job.state = 'UPLOAD_PROCESSING';
+              job.upload_data.progress = progress;
+              job.markModified('upload_data');
+            }
+          }
+
+          if (videoId && episode.youtube_id !== videoId) {
+            episode.youtube_id = videoId;
+            await episode.save();
+          }
+
+          if (contentDetails) {
+            job.details = contentDetails;
+            job.markModified('details');
+          }
+
+          if (processingDetails) {
+            job.processing = processingDetails;
+            job.markModified('processing');
+          }
+
+          if (uploadStatus) {
+            job.upload_status = uploadStatus;
+            job.markModified('upload_status');
+          }
+
+          if (pageCookies) {
+            await cookieInfo.updateFromPageCookies(pageCookies);
+          }
+
+          if (job.isModified()) {
+            await job.save();
+          }
+        } catch (err) {
+          logger.error('error updating progress: %s', err.message);
+        }
+      }
+
+      let result = await uploadWithPuppeteer(
+        options,
+        oauth2client,
+        cookieInfo.toPuppeteerCookies(),
+        onProgress
+      );
+
+      let {videoId} = result;
+
+      if (!videoId) {
+        let filePath = path.join(rootDir, 'response.json');
+        fs.writeFileSync(filePath, JSON.stringify(result));
+        throw new Error('No Video ID, upload have failed and response is written here :' + filePath);
+      }
+
+      job.state = 'UPLOAD_DONE';
+
+      await job.save();
+
+      if (!episode.youtube_id) {
+        episode.youtube_id = videoId;
+        await episode.save();
+      }
+
+      return job;
+    } catch (err) {
+      logger.error('error uploading video: ', err);
+      await job.error(err);
+      throw err;
+    }
+  }
+}

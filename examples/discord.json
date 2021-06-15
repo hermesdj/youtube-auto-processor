@@ -1,5 +1,0 @@
-{
-  "webhook_id": "your Discord webhook id",
-  "webhook_token": "your Discord webhook token",
-  "publication_message": "Jay a mis en ligne l'épisode suivant : ${video_name}\r\n\r\nhttps://www.youtube.com/watch?v=${youtube_id}&list=${playlist_id}"
-}

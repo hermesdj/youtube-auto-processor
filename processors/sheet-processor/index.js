@@ -1,260 +1,273 @@
 /**
  * Created by Jérémy on 08/05/2017.
  */
-const client = require('../../config/google-client-v1');
+const {Google} = require('../../model');
+const {GoogleToken} = Google;
 const {google} = require('googleapis');
-const config = require('../../config/youtube.json');
 const moment = require('moment');
 const COLORS = require('../../config/colors');
-const winston = require('winston');
+const {createLogger} = require('../../logger');
+const logger = createLogger({label: 'sheet-processor'});
 
-function process(auth, job, done) {
-    if (!config.agenda_spreadsheet_id) {
-        job.error('no spreadsheet id defined in config/youtube.json, cannot retrieve scheduled date');
-        return done(job.err, null);
+async function process(auth, job, appConfig) {
+  if (!appConfig) {
+    throw new Error('No app config provided to process function !');
+  }
+
+  let spreadsheetId = appConfig.spreadsheetId;
+
+  if (!spreadsheetId) {
+    throw new Error('no spreadsheet id defined in config, cannot retrieve scheduled date');
+  }
+
+  logger.debug('processing on agenda for current month with id %s', spreadsheetId);
+
+  moment.locale('fr');
+
+  let month = moment().format('MMMM');
+  month = month.charAt(0).toUpperCase() + month.slice(1);
+  month = month.replace('û', 'u');
+  month = month.replace('é', 'e');
+
+  let year = moment().format('YYYY');
+  let start = 'A1';
+  let end = 'H40';
+  let sheetName = month.concat(' ').concat(year);
+
+  let range = sheetName.concat('!').concat(start).concat(':').concat(end);
+
+  try {
+    let {haystack, i, j} = await processRange(auth, job, range, spreadsheetId);
+
+    if (i !== null && j !== null) {
+      return {haystack, i, j, sheetName};
+    } else {
+      throw new Error('Cell not found');
     }
-
-    winston.debug('processing on agenda for current month with id %s', config.agenda_spreadsheet_id);
-
-    moment.locale(config.locale ? config.locale : 'fr');
-    let month = moment().format('MMMM');
+  } catch (err) {
+    logger.warn('Not found on current month %s, trying next month', sheetName);
+    month = moment().add(1, 'M').format('MMMM');
     month = month.charAt(0).toUpperCase() + month.slice(1);
     month = month.replace('û', 'u');
     month = month.replace('é', 'e');
-    let year = moment().format('YYYY');
-    let start = 'A1';
-    let end = 'H40';
-    let range = month.concat(' ').concat(year).concat('!').concat(start).concat(':').concat(end);
+    year = moment().add(1, 'M').format('YYYY');
+    sheetName = month.concat(' ').concat(year);
 
+    range = sheetName.concat('!').concat(start).concat(':').concat(end);
 
-    processRange(auth, job, range, function (err, haystack, i, j) {
-        if (err) {
-            winston.error(err);
-            month = moment().add(1, 'M').format('MMMM');
-            month = month.charAt(0).toUpperCase() + month.slice(1);
-            month = month.replace('û', 'u');
-            month = month.replace('é', 'e');
-            year = moment().add(1, 'M').format('YYYY');
-            let range = month.concat(' ').concat(year).concat('!').concat(start).concat(':').concat(end);
-            processRange(auth, job, range, function (err, haystack, i, j) {
-                if (err) {
-                    console.error(err);
-                    winston.error('cannot find episode on the agenda');
-                    return done(err);
-                }
-                return done(err, haystack, i, j, month.concat(' ').concat(year));
-            });
-        }
+    let {haystack, i, j} = await processRange(auth, job, range, spreadsheetId);
 
-        if (i && j) {
-            return done(null, haystack, i, j, month.concat(' ').concat(year));
-        }
-    });
-}
-
-function processRange(auth, job, range, done) {
-    winston.info('processing with range', range);
-    console.log('process range', range);
-    let sheets = google.sheets({
-        version: 'v4',
-        auth: auth.oauth2client
-    });
-
-    sheets.spreadsheets.values.get({
-        spreadsheetId: config.agenda_spreadsheet_id,
-        range: range
-    }, function (err, res) {
-        if (err) {
-            console.error(res);
-            console.error(err);
-            winston.error('error on retrieving google agenda info : ' + err);
-            return done(err, job);
-        }
-
-        if (res && res.data) {
-            let {data: {values}} = res;
-
-            find(values, job.episode.serie.planning_name.replace('${episode_number}', job.episode.episode_number).replace('${episode_name}', job.episode.episode_name), done);
-        }
-    });
-}
-
-function find(haystack, needle, done) {
-    console.log('search needle ' + needle);
-    for (let i = 0; i < haystack.length; i++) {
-        for (let j = 0; j < haystack[i].length; j++) {
-            if (haystack[i][j] === needle) {
-                return done(null, haystack, i, j);
-            }
-        }
-    }
-    done('Episode ' + needle + ' cannot be found on the agenda', null, null, null);
-}
-
-function parseDate(haystack, i, j, done) {
-    winston.info('parsing value at', i, j);
-    let result = null;
-    let hour = haystack[i][0];
-    let day = null;
-
-    for (let k = i - 1; k >= 0; k--) {
-        if (haystack[k][j]) {
-            let m = haystack[k][j].match(/(\d+)(-|\/)(\d+)(?:-|\/)(?:(\d+)\s+(\d+):(\d+)(?::(\d+))?(?:\.(\d+))?)?/);
-            if (m !== null) {
-                day = haystack[k][j];
-                break;
-            }
-        }
-    }
-
-    if (day && hour) {
-        winston.info('day && hour found', day, hour);
-        result = moment(day + hour, 'DD/MM/YYYY HH:mm:ss').format('YYYY-MM-DDTHH:mm:ss.sZ');
-    }
-
-    if (moment(result).isValid()) {
-        done(null, result);
+    if (i !== null && j !== null) {
+      return {haystack, i, j, sheetName};
     } else {
-        done('invalid date parsed: ' + day + ':' + hour, null);
+      throw new Error('Cell not found');
     }
+  }
 }
 
-exports.getScheduledDate = function (job, done) {
-    if (!job.episode) {
-        job.error('no episode for this job, cannot retrieve scheduled date');
-        return done(job.err, null);
+async function processRange(auth, job, range, spreadsheetId) {
+  let planningValue = job.episode.serie.planning_name.replace('${episode_number}', job.episode.episode_number).replace('${episode_name}', job.episode.episode_name)
+  logger.info('searching %s with range %j', planningValue, range);
+
+  let sheets = google.sheets({
+    version: 'v4',
+    auth: auth
+  });
+
+  let res = await sheets.spreadsheets.values.get({
+    spreadsheetId,
+    range: range
+  });
+
+  let {data: {values}} = res;
+  return find(values, planningValue);
+}
+
+function find(haystack, needle) {
+  logger.debug('search needle ' + needle);
+
+  let result = null;
+
+  for (let i = 0; i < haystack.length; i++) {
+    for (let j = 0; j < haystack[i].length; j++) {
+      if (haystack[i][j] === needle) {
+        result = {haystack, i, j};
+        break;
+      }
     }
 
-    if (!job.episode.serie) {
-        job.error('no serie for this job, cannot retrieve scheduled date');
-        return done(job.err, null);
+    if (result) {
+      break;
     }
+  }
 
-    client(function (auth) {
+  if (!result) {
+    throw new Error('Episode ' + needle + ' cannot be found on the agenda');
+  }
 
-        process(auth, job, function (err, haystack, i, j) {
-            if (err) {
-                return done(err, job);
-            }
-            parseDate(haystack, i, j, done);
-        });
-    });
-};
+  return result;
+}
 
-function getSpreadsheetId(auth, sheetName, done) {
-    let sheets = google.sheets({
-        version: 'v4',
-        auth: auth.oauth2client
-    });
+async function parseDate(haystack, i, j) {
+  logger.debug('parsing value at %d, %d', i, j);
 
-    sheets.spreadsheets.get({
-        spreadsheetId: config.agenda_spreadsheet_id
-    }, function (err, res) {
-        if (err) {
-            done(err, job);
-        }
+  let result = null;
+  let hour = haystack[i][0];
+  let day = null;
 
-        let {data} = res;
-        let result = null;
-        for (let i = 0; i < data.sheets.length; i++) {
-            let sheet = data.sheets[i];
-            if (sheet.properties.title === sheetName) {
-                result = sheet.properties.sheetId;
-                break;
-            }
-        }
-        if (result) {
-            done(null, result);
-        } else {
-            done('cannot find sheetId for name ' + sheetName, null);
-        }
+  for (let k = i - 1; k >= 0; k--) {
+    if (haystack[k][j]) {
+      let m = haystack[k][j].match(/(\d+)(-|\/)(\d+)(?:-|\/)(?:(\d+)\s+(\d+):(\d+)(?::(\d+))?(?:\.(\d+))?)?/);
+      if (m !== null) {
+        day = haystack[k][j];
+        break;
+      }
+    }
+  }
+
+  if (day && hour) {
+    logger.debug('day=%s, hour=%s', day, hour);
+    result = moment(day + hour, 'DD/MM/YYYY HH:mm:ss').format('YYYY-MM-DDTHH:mm:ss.sZ');
+  }
+
+  if (moment(result).isValid()) {
+    return result;
+  } else {
+    throw new Error('invalid date parsed: ' + day + ':' + hour);
+  }
+}
+
+async function getSheetId(auth, sheetName, spreadsheetId) {
+  let sheets = google.sheets({
+    version: 'v4',
+    auth: auth
+  });
+
+  let res = await sheets.spreadsheets.get({
+    spreadsheetId
+  });
+
+  let {data} = res;
+  let result = null;
+
+  for (let i = 0; i < data.sheets.length; i++) {
+    let sheet = data.sheets[i];
+    if (sheet.properties.title === sheetName) {
+      result = sheet.properties.sheetId;
+      break;
+    }
+  }
+
+  if (!result) {
+    throw new Error('cannot find sheetId for name ' + sheetName)
+  }
+
+  return result;
+}
+
+async function mark(job, colorConfigName, appConfig) {
+  if (!job.episode) {
+    throw new Error('no episode for this job, cannot mark as processing');
+  }
+
+  if (!job.episode.serie) {
+    throw new Error('no serie for this job, cannot mark as processing');
+  }
+
+  if (!appConfig.spreadsheetId) {
+    throw new Error('no spreadsheet id defined in config, cannot retrieve scheduled date');
+  }
+
+  if (!appConfig) {
+    throw new Error('No app config provided !');
+  }
+
+  let colorConfig = COLORS[colorConfigName];
+
+  if (!colorConfig) {
+    throw new Error('Color configuration does not exists for ' + colorConfigName);
+  }
+
+  let oauth2client = await GoogleToken.resolveOAuth2Client();
+
+  let {i, j, sheetName} = await process(oauth2client, job, appConfig);
+
+  let sheetId = await getSheetId(oauth2client, sheetName, appConfig.spreadsheetId);
+
+  let requests = [];
+  requests.push({
+    updateCells: {
+      start: {sheetId: sheetId, rowIndex: i, columnIndex: j},
+      rows: [{
+        values: [{
+          userEnteredFormat: colorConfig
+        }]
+      }],
+      fields: 'userEnteredFormat(backgroundColor, textFormat)'
+    }
+  });
+
+  return await updateCells(oauth2client, requests, appConfig.spreadsheetId)
+    .then(async result => {
+      job.currentPlanningState = colorConfigName;
+      await job.save();
+      return result;
     });
 }
 
-function mark(job, format, done) {
-    if (!job.episode) {
-        winston.error('no episode for this job, cannot mark as processing');
-        job.error('no episode for this job, cannot mark as processing');
-        return done(job.err, null);
-    }
+async function updateCells(auth, requests, spreadsheetId) {
+  let sheets = google.sheets({
+    version: 'v4',
+    auth: auth
+  });
 
-    if (!job.episode.serie) {
-        winston.error('no serie for this job, cannot mark as processing');
-        job.error('no serie for this job, cannot mark as processing');
-        return done(job.err, null);
-    }
+  let {data} = await sheets.spreadsheets.batchUpdate({
+    spreadsheetId,
+    resource: {requests: requests}
+  });
 
-    winston.debug('authenticating on google agenda');
-    client(function (auth) {
-        winston.debug('done authenticating on google agenda, processing mark on planning');
-        process(auth, job, function (err, haystack, i, j, sheetName) {
-            if (err) {
-                winston.error('error marking on planning !');
-                return done(err, job);
-            }
-            getSpreadsheetId(auth, sheetName, function (err, sheetId) {
-                if (err) {
-                    done(err, job);
-                    return;
-                }
-                let requests = [];
-                requests.push({
-                    updateCells: {
-                        start: {sheetId: sheetId, rowIndex: i, columnIndex: j},
-                        rows: [{
-                            values: [{
-                                userEnteredFormat: format
-                            }]
-                        }],
-                        fields: 'userEnteredFormat(backgroundColor, textFormat)'
-                    }
-                });
-
-                updateCells(auth, requests, done);
-            });
-        });
-    });
+  return data;
 }
 
-function updateCells(auth, requests, done) {
-    let sheets = google.sheets({
-        version: 'v4',
-        auth: auth.oauth2client
-    });
+const getScheduledDate = async function (job, appConfig) {
+  if (!job.episode) {
+    throw new Error('no episode for this job, cannot retrieve scheduled date');
+  }
 
-    sheets.spreadsheets.batchUpdate({
-        spreadsheetId: config.agenda_spreadsheet_id,
-        resource: {requests: requests}
-    }, function (err, res) {
-        winston.info('spreadsheet batch update response ' + JSON.stringify(res));
-        if (err) {
-            winston.error('error updating cells');
-            winston.error(err);
-            return done(err);
-        }
-        done(null, res.data);
-    });
-}
+  if (!job.episode.serie) {
+    throw new Error('no serie for this job, cannot retrieve scheduled date')
+  }
 
-exports.markAsProcessing = function (job, done) {
-    winston.info('mark as processing on agenda');
-    mark(job, COLORS.processing, done);
+  let oauth2client = await GoogleToken.resolveOAuth2Client();
+
+  let {haystack, i, j} = await process(oauth2client, job, appConfig);
+  return await parseDate(haystack, i, j);
 };
 
-exports.markAsReady = function (job, done) {
-    winston.info('marking as ready on agenda');
-    mark(job, COLORS.done, done);
+const markAsProcessing = async function (job, appConfig) {
+  logger.info('mark as processing on agenda');
+  return mark(job, 'processing', appConfig);
 };
 
-exports.markAsPublic = function (job, done) {
-    winston.info('marking as public on agenda');
-    mark(job, COLORS.public, done);
+const markAsReady = function (job, appConfig) {
+  logger.info('marking as ready on agenda');
+  return mark(job, 'done', appConfig);
 };
 
-exports.markAsError = function (job, done) {
-    winston.info('marking as error on agenda');
-    mark(job, COLORS.error, function (err, res) {
-        winston.error(err);
-        done(err, res);
-    });
+const markAsPublic = function (job, appConfig) {
+  logger.info('marking as public on agenda');
+  return mark(job, 'public', appConfig);
+};
+
+const markAsError = function (job, appConfig) {
+  logger.info('marking as error on agenda');
+  return mark(job, 'error', appConfig);
+};
+
+module.exports = {
+  markAsError,
+  markAsPublic,
+  markAsReady,
+  markAsProcessing,
+  getScheduledDate
 };

@@ -2,104 +2,119 @@
  * Created by Jérémy on 08/05/2017.
  */
 const {google} = require('googleapis');
-const client = require('../../config/google-client-v1');
-
-function process(auth, job, done) {
-    let youtube = google.youtube({
-        version: 'v3',
-        auth: auth.oauth2client
-    });
-
-    console.log(job.episode.youtube_id);
-
-    youtube.videos.list({
-        id: job.episode.youtube_id,
-        part: 'processingDetails, contentDetails'
-    }, function (err, {data}) {
-        console.log(data);
-        if (err) {
-            job.error('error retrieving processing details: ' + err);
-            return done(err, null);
-        }
-        if (data) {
-            job.processing = data.items[0].processingDetails;
-            job.details = data.items[0].contentDetails;
-            job.markModified('processing');
-            job.markModified('details');
-            job.save(done);
-        }
-    });
-}
+const {GoogleToken} = require('../../model/google.model');
+const moment = require('moment');
 
 module.exports = {
-    getVideoProcessorStats: function (job, done) {
-        if (!job) {
-            return done('no job to retrieve the video status from !');
-        }
-
-        if (!job.episode) {
-            job.error('no episode in this job');
-            return;
-        }
-
-        if (!job.episode.youtube_id) {
-            job.error('no youtube id for episode ' + job.episode._id);
-            return;
-        }
-
-        client(function (auth) {
-            process(auth, job, done);
-        });
-    },
-    getVideoProcessorStatsMultiple: function (jobs, done) {
-        if (!jobs || jobs.length === 0) {
-            return done('no jobs provided');
-        }
-
-        let videoIds = jobs.filter(job => job.episode && job.episode.youtube_id).map(job => job.episode.youtube_id);
-
-        if (videoIds.length === 0) {
-            return done('no video ids found');
-        }
-
-        client(async function (auth) {
-            let youtube = google.youtube({
-                version: 'v3',
-                auth: auth.oauth2client
-            });
-
-            try {
-                let {data} = await youtube.video.list({
-                    id: videoIds.join(','),
-                    part: 'processingDetails, contentDetails, id'
-                });
-
-                if (data && data.items && Array.isArray(data.items)) {
-                    for (let {id, processingDetails, contentDetails} of data.items) {
-                        let job = jobs.find(job => job.episode.youtube_id === id);
-
-                        if (job) {
-                            job.processing = processingDetails;
-                            job.details = contentDetails;
-                            job.lastProcessFetchDate = new Date();
-                            job.markModified('processing');
-                            job.markModified('details');
-                            job.markModified('lastProcessFetchDate');
-                            await job.save();
-                        } else {
-                            console.warn('job not found for video id', id);
-                        }
-                    }
-
-                    done(null, {items: data.items, jobs});
-
-                } else {
-                    return done('no data found in response');
-                }
-            } catch (err) {
-                job.error('error retrieving processing details: ' + err);
-                return done(err, null);
-            }
-        });
+  getVideoProcessorStats: async function (job) {
+    if (!job) {
+      throw new Error('no job to retrieve the video status from !');
     }
+
+    if (!job.episode) {
+      throw new Error('No episode in job');
+    }
+
+    if (!job.episode.youtube_id) {
+      throw new Error('no youtube id for episode ' + job.episode._id);
+    }
+
+    let oauth2client = await GoogleToken.resolveOAuth2Client();
+
+    let youtube = google.youtube({
+      version: 'v3',
+      auth: oauth2client
+    });
+
+    let {data} = await youtube.videos.list({
+      id: job.episode.youtube_id,
+      part: 'processingDetails, contentDetails'
+    });
+
+    return data;
+  },
+  getVideoProcessorStatsMultiple: async function (jobs) {
+    if (!jobs || jobs.length === 0) {
+      throw new Error('no jobs provided');
+    }
+
+    let videoIds = jobs.filter(job => job.episode && job.episode.youtube_id).map(job => job.episode.youtube_id);
+
+    if (videoIds.length === 0) {
+      throw new Error('no video ids found');
+    }
+
+    let oauth2client = await GoogleToken.resolveOAuth2Client();
+
+    let youtube = google.youtube({
+      version: 'v3',
+      auth: oauth2client
+    });
+
+    let {data} = await youtube.videos.list({
+      id: videoIds.join(','),
+      part: 'processingDetails, contentDetails, id'
+    });
+
+    return data;
+  },
+  getChannelList: async function () {
+    let oauth2client = await GoogleToken.resolveOAuth2Client();
+
+    let youtube = google.youtube({
+      version: 'v3',
+      auth: oauth2client
+    });
+
+    let {data} = await youtube.channels.list({
+      part: 'snippet',
+      mine: true
+    });
+
+    return data;
+  },
+  setVideoData: async function (job) {
+    if (!job) throw new Error('Job not provided');
+
+    if (!job.populated('episode')) await job.populate('episode').execPopulate();
+
+    if (!job.episode) throw new Error('No episode in job');
+
+    if (!job.episode.youtube_id) throw new Error('No youtube id in episode');
+
+    let episode = job.episode;
+    let videoId = episode.youtube_id;
+
+    if (!episode.populated('serie')) await episode.populate('serie').execPopulate();
+
+    if (!episode.serie) throw new Error('No serie in episode');
+
+    let oauth2client = await GoogleToken.resolveOAuth2Client();
+
+    let youtube = google.youtube({
+      version: 'v3',
+      auth: oauth2client
+    });
+
+    let {status} = await youtube.videos.update({
+      part: 'snippet,status',
+      requestBody: {
+        id: videoId,
+        snippet: {
+          title: episode.video_name,
+          categoryId: "20",
+          description: episode.description,
+          tags: episode.keywords,
+          defaultLanguage: episode.serie.default_language || 'fr',
+        },
+        status: {
+          privacyStatus: 'private',
+          publishAt: moment(episode.publishAt).format('YYYY-MM-DDTHH:mm:ss.sZ')
+        }
+      }
+    });
+
+    episode.status = status;
+    episode.markModified('status');
+  }
 };

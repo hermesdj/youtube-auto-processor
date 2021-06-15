@@ -2,59 +2,54 @@
  * Created by Jérémy on 08/05/2017.
  */
 const {google} = require('googleapis');
-const client = require('../../config/google-client-v1');
+const {GoogleToken} = require('../../model/google.model');
 const fs = require('fs');
 const path = require('path');
 
-function process(auth, job, done) {
-    let thumbnail_path = path.join(path.dirname(job.path), 'thumbnails', job.episode.episode_number + '.png');
-    let stream = fs.createReadStream(thumbnail_path);
-    if (!stream) {
-        job.error('no thumbnail file found at' + thumbnail_path);
-        return done(job.err, null);
+exports.setThumbnail = async function (job) {
+  if (!job.episode) {
+    throw new Error('no episode in this job');
+  }
+
+  if (!job.episode.youtube_id) {
+    throw new Error('no youtube id for episode ' + job.episode._id);
+  }
+
+  let oauth2client = await GoogleToken.resolveOAuth2Client();
+
+  let thumbnail_path = path.join(path.dirname(job.path), 'thumbnails', job.episode.episode_number + '.png');
+
+  if (!fs.existsSync(thumbnail_path)) {
+    throw new Error('Thumbnail file is missing at path ' + thumbnail_path);
+  }
+
+  let stream = fs.createReadStream(thumbnail_path);
+
+  if (!stream) {
+    throw new Error('Cannot create a file read stream on path ' + thumbnail_path);
+  }
+
+  let youtube = google.youtube({
+    version: 'v3',
+    auth: oauth2client
+  });
+
+  let res = await youtube.thumbnails.set({
+    videoId: job.episode.youtube_id,
+    media: {
+      body: stream
     }
+  });
 
-    let youtube = google.youtube({
-        version: 'v3',
-        auth: auth.oauth2client
-    });
-    youtube.thumbnails.set({
-        videoId: job.episode.youtube_id,
-        media: {
-            body: stream
-        }
-    }, function (err, res) {
-        if (err) {
-            job.error('error uploading thumbnail: ' + err);
-            return done(err, null);
-        }
+  let {data} = res;
 
-        console.log(res);
-        if (res && res.data) {
-            job.episode.thumbnails = res.data.items;
-            job.episode.save(function (err) {
-                if (err) {
-                    return done(err);
-                }
+  if (!data.items) {
+    throw new Error('No items found in set thumbnail response');
+  }
 
-                job.save(done);
-            });
-        }
-    });
-}
+  job.episode.thumbnails = data.items;
 
-exports.setThumbnail = function (job, done) {
-    if (!job.episode) {
-        job.error('no episode in this job');
-        return;
-    }
+  await job.episode.save();
 
-    if (!job.episode.youtube_id) {
-        job.error('no youtube id for episode ' + job.episode._id);
-        return;
-    }
-
-    client(function (auth) {
-        process(auth, job, done);
-    })
+  return job;
 };

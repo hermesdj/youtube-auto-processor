@@ -41,9 +41,38 @@ lib
 services/**/daemon/*
 .tmp
 
-config/app.json
 config/client_secret.json
-config/youtube.json
-config/discord.json
 config/default_description*.txt
 config/client_secret_v1.json
+
+.DS_Store
+.thumbs.db
+
+# Quasar core related directories
+.quasar
+/dist
+
+# Cordova related directories and files
+/src-cordova/node_modules
+/src-cordova/platforms
+/src-cordova/plugins
+/src-cordova/www
+
+# Capacitor related directories and files
+/src-capacitor/www
+/src-capacitor/node_modules
+
+# BEX related directories and files
+/src-bex/www
+/src-bex/js/core
+
+# Log files
+yarn-debug.log*
+yarn-error.log*
+
+# Editor directories and files
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+

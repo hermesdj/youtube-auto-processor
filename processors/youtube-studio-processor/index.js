@@ -1,138 +1,198 @@
-const Serie = require('../../model/serie.model');
-const Episode = require('../../model/episode.model');
-const ytConfig = require('../../config/youtube.json');
+const fs = require('fs');
+const {google} = require('googleapis');
+const {Serie, Episode, Google: {GoogleCookieConfig, YoutubeChannel}} = require('../../model');
 const {parse, toSeconds} = require('iso8601-duration');
-const {init, setMonetisation, setEndScreen, endScreen, getEndScreen} = require('./youtube-studio-api');
+const moment = require('moment');
+const {init, setMonetisation, setEndScreen, endScreen, getEndScreen, upload} = require('./youtube-studio-api');
+const os = require('os');
+const path = require('path');
+const mkdirp = require('mkdirp');
+const rootDir = path.join(os.tmpdir(), 'youtube-auto-processor', 'upload');
+mkdirp.sync(rootDir);
+const {createLogger} = require('../../logger');
+const logger = createLogger({label: 'youtube-studio-processor'});
 
-const SID = '-AcofBMe2HIV3gv2t5kGxu69sCLGOt6z3T35ghypt3jECPE5l2h-b-ZBEhLwYiqE2i6mUw.';
-const HSID = 'A2p1gOQpijhVfqLzA';
-const SSID = 'ASPv5VzQUh4od1xKr';
-const APISID = '1jUe7UOI8epmsJgq/ApfvJm9tr6PM9HIcQ';
-const SAPISID = 'NUauvEH2cF0MyKuB/AwwK7pkOcITKkHBXa';
-const LOGIN_INFO = 'AFmmF2swRgIhAJ6Mh1Sq_nUPH_YwE4H6clzS_ROPlDJmriwUW4CZh83UAiEAyZxVoTVWxir-g2-z9cObGJ-cEhU2vEjhEmuz_ve1ZhI:QUQ3MjNmeWRhV2ZZWEpYNk5kMFJoS2pGUXFWaXNMUTkwYVhpb0VqVEc1TUMwRVB5Y2FRVEMtaWFvcW5iUWNGYVhqbUIzTGk1cnRUblZGbThHNEZCWW43dFhTV192alAtVTgybWptc2JYZV9KRWNMZEtJTDFUTXRxeFNsM2o5NUFKSHc0NmQ3eWdja1RjTUdsdjBmcGprWkRac0JDcDE4N2Rn';
+class YoutubeStudioError extends Error {
+  constructor(message, data) {
+    super(message);
+    this.data = data;
+  }
+}
 
 module.exports = {
-    setMonetization: async function (job, done) {
-        try {
-            await init({
-                SID,
-                HSID,
-                SSID,
-                APISID,
-                SAPISID,
-                LOGIN_INFO
-            })
+  setMonetization: async function (job) {
+    let cookieInfo = await GoogleCookieConfig.resolveConfig({});
+    await init(cookieInfo)
 
-            const result = await setMonetisation(job.episode.youtube_id, {
-                encryptedVideoId: job.episode.youtube_id, // your video ID
-                monetizationSettings: {
-                    newMonetizeWithAds: true // Monetisation: On
-                },
-                "adSettings": {
-                    "adFormats": {
-                        "newHasOverlayAds": "ENABLED",
-                        "newHasSkippableVideoAds": "ENABLED",
-                        "newHasNonSkippableVideoAds": "ENABLED",
-                        "newHasProductListingAds": "ENABLED"
-                    },
-                    "adBreaks": {
-                        "newHasPrerolls": "ENABLED",
-                        "newHasMidrollAds": "ENABLED",
-                        "newHasPostrolls": "ENABLED",
-                        "newHasManualMidrolls": "DISABLED"
-                    },
-                    "autoAdSettings": "AUTO_AD_SETTINGS_TYPE_OFF"
-                },
-            })
+    const result = await setMonetisation(job.episode.youtube_id, {
+      encryptedVideoId: job.episode.youtube_id, // your video ID
+      monetizationSettings: {
+        newMonetizeWithAds: true // Monetisation: On
+      },
+      "adSettings": {
+        "adFormats": {
+          "newHasOverlayAds": "ENABLED",
+          "newHasSkippableVideoAds": "ENABLED",
+          "newHasNonSkippableVideoAds": "ENABLED",
+          "newHasProductListingAds": "ENABLED"
+        },
+        "adBreaks": {
+          "newHasPrerolls": "ENABLED",
+          "newHasMidrollAds": "ENABLED",
+          "newHasPostrolls": "ENABLED",
+          "newHasManualMidrolls": "DISABLED"
+        },
+        "autoAdSettings": "AUTO_AD_SETTINGS_TYPE_OFF"
+      },
+    })
 
-            if (result) {
-                if (result.error) {
-                    done(result.error);
-                } else {
-                    console.log('monetize result is', result);
-                    done(null, result);
-                }
-            }
-        } catch (err) {
-            done(err);
-        }
-    },
-    setEndScreen: async function (job, done) {
-        try {
-            if (!job.details || !job.details.duration) {
-                throw new Error('details duration missing');
-            }
-
-            console.log('duration is', job.details.duration);
-            let parsedDuration = parse(job.details.duration);
-            console.log('parsed duration is', parsedDuration);
-            let seconds = toSeconds(parsedDuration);
-            console.log('video seconds is', seconds);
-
-            let episode = await Episode.findById(job.episode._id);
-
-            if (!episode) {
-                throw new Error('Episode not found');
-            }
-
-            if (!episode.serie) {
-                throw new Error('No serie in episode');
-            }
-
-            let serie = await Serie.findById(episode.serie);
-
-            if (!serie || !serie.playlist_id) {
-                throw new Error('no playlist id found in serie');
-            }
-
-            await init({
-                SID,
-                HSID,
-                SSID,
-                APISID,
-                SAPISID,
-                LOGIN_INFO
-            });
-
-            const result = await setEndScreen(episode.youtube_id, (seconds * 1000) - 20000, [
-                {...endScreen.POSITION_CENTER, ...endScreen.TYPE_SUBSCRIBE(ytConfig.channelId)},
-                {...endScreen.POSITION_CENTER_LEFT, ...endScreen.TYPE_BEST_FOR_VIEWERS},
-                {...endScreen.POSITION_CENTER_RIGHT, ...endScreen.TYPE_PLAYLIST(serie.playlist_id)}
-            ])
-
-            if (result) {
-                if (result.error) {
-                    done(result.error);
-                } else {
-                    console.log('endscreen result is', result);
-                    done(null, result);
-                }
-            }
-        } catch (err) {
-            console.error(err);
-            done(err);
-        }
-    },
-    getEndScreen: async function (job, done) {
-        try {
-            const VIDEO_ID = job.episode.youtube_id;
-            await init({
-                SID,
-                HSID,
-                SSID,
-                APISID,
-                SAPISID,
-                LOGIN_INFO
-            });
-
-            const result = await getEndScreen(VIDEO_ID);
-            if (result) {
-                console.log(result.endscreens[0]);
-            }
-            done(null, result);
-        } catch (err) {
-            console.error(err);
-            done(err);
-        }
+    if (result && result.error) {
+      throw new YoutubeStudioError('Monetization is in error  ', result.error);
     }
+
+    return result;
+  },
+  setEndScreen: async function (job) {
+    if (!job.details || !job.details.duration) {
+      throw new Error('details duration missing');
+    }
+
+    console.log('duration is', job.details.duration);
+    let parsedDuration = parse(job.details.duration);
+    console.log('parsed duration is', parsedDuration);
+    let seconds = toSeconds(parsedDuration);
+    console.log('video seconds is', seconds);
+
+    let episode = await Episode.findById(job.episode._id);
+
+    if (!episode) {
+      throw new Error('Episode not found');
+    }
+
+    if (!episode.serie) {
+      throw new Error('No serie in episode');
+    }
+
+    let serie = await Serie.findById(episode.serie);
+
+    if (!serie || !serie.playlist_id) {
+      throw new Error('no playlist id found in serie');
+    }
+
+    let cookieInfo = await GoogleCookieConfig.resolveConfig({});
+    await init(cookieInfo);
+
+    let youtubeChannel = await YoutubeChannel.findOne({});
+    if (!youtubeChannel) {
+      throw new Error('No youtube channel configured. Channel ID is required for this operation');
+    }
+
+    const result = await setEndScreen(episode.youtube_id, (seconds * 1000) - 20000, [
+      {...endScreen.POSITION_CENTER, ...endScreen.TYPE_SUBSCRIBE(youtubeChannel.channelId)},
+      {...endScreen.POSITION_CENTER_LEFT, ...endScreen.TYPE_BEST_FOR_VIEWERS},
+      {...endScreen.POSITION_CENTER_RIGHT, ...endScreen.TYPE_PLAYLIST(serie.playlist_id)}
+    ])
+
+    if (result && result.error) {
+      throw new YoutubeStudioError('Set endscreen is in error', result.error);
+    }
+
+    return result;
+  },
+  getEndScreen: async function (job) {
+    const VIDEO_ID = job.episode.youtube_id;
+    let cookieInfo = await GoogleCookieConfig.resolveConfig({});
+    await init(cookieInfo)
+
+    const result = await getEndScreen(VIDEO_ID);
+
+    if (result && result.error) {
+      throw YoutubeStudioError('Get endscreen is in error', result.error);
+    }
+
+    return result;
+  },
+  upload: async function (auth, job) {
+    let cookieInfo = await GoogleCookieConfig.resolveConfig({});
+    await init(cookieInfo);
+
+    let youtubeChannel = await YoutubeChannel.findOne({});
+    if (!youtubeChannel) {
+      throw new Error('No youtube channel configured. Channel ID is required for this operation');
+    }
+
+    let episode = job.episode;
+
+    let stream = fs.createReadStream(episode.path);
+
+    let options = {
+      fileName: path.basename(job.path),
+      filePath: episode.path,
+      channelId: youtubeChannel.channelId,
+      newTitle: episode.video_name,
+      newDescription: episode.description,
+      newPrivacy: 'PRIVATE',
+      stream,
+      isDraft: false,
+      tags: episode.keywords
+    };
+
+    let result = await upload(options, async (progress) => {
+      try {
+        logger.info('upload progress is %j', progress);
+        if (progress && progress.percent) {
+          let value = progress.percent;
+          job.upload_data.progress = (value / 100) * job.upload_data.total;
+          job.markModified('upload_data');
+          await job.save();
+        }
+      } catch (err) {
+        logger.error('error uploading progress: %s', err.message);
+      }
+    });
+
+    let {videoId} = result;
+
+    if (!videoId) {
+      let filePath = path.join(rootDir, 'response.json');
+      fs.writeFileSync(filePath, JSON.stringify(result));
+      throw new Error('No Video ID, upload have failed and response is written here :' + filePath);
+    }
+
+    episode.youtube_id = videoId;
+    job.episode.youtube_id = videoId;
+    job.upload_data.progress = job.upload_data.total;
+    job.markModified('upload_data');
+
+    let youtube = google.youtube({
+      version: 'v3',
+      auth: auth
+    });
+
+    let {status} = await youtube.videos.update({
+      part: 'snippet,status',
+      requestBody: {
+        id: videoId,
+        snippet: {
+          title: episode.video_name,
+          categoryId: "20",
+          description: episode.description,
+          tags: episode.keywords,
+          defaultLanguage: episode.serie.default_language || 'fr',
+        },
+        status: {
+          privacyStatus: 'private',
+          publishAt: moment(episode.publishAt).format('YYYY-MM-DDTHH:mm:ss.sZ')
+        }
+      }
+    });
+    episode.status = status;
+    episode.markModified('status');
+    job.state = 'UPLOAD_DONE';
+
+    await job.save();
+    await episode.save();
+
+    return result;
+  }
 }

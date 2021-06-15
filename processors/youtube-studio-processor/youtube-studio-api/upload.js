@@ -1,136 +1,120 @@
-const fetch = require('node-fetch');
-const FORM_CONTENT_TYPE = 'application/x-www-form-urlencoded;charset=utf-8';
 const YT_STUDIO_URL = 'https://studio.youtube.com/';
+const puppeteer = require("puppeteer");
 
-const generateHash = function () {
-    var Qkb;
-    Qkb = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz".split("");
-    for (var a = Array(36), b = 0, c, e = 0; 36 > e; e++)
-        8 == e || 13 == e || 18 == e || 23 == e ? a[e] = "-" : 14 == e ? a[e] = "4" : (2 >= b && (b = 33554432 + 16777216 * Math.random() | 0),
-            c = b & 15,
-            b >>= 4,
-            a[e] = Qkb[19 == e ? c & 3 | 8 : c]);
-    return a.join("")
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
 }
-
-const generateFrontendUploadId = () => `innertube_studio:${generateHash()}:0`
 
 async function upload(
-    {
-        channelId = '',
-        newTitle = `unnamed-${Date.now()}`,
-        newDescription = '',
-        newPrivacy = 'PRIVATE',
-        stream,
-        isDraft = false
-    },
-    headers,
-    config
+  {
+    fileName = "file-" + Date.now(),
+    filePath = null,
+    channelId = '',
+    newTitle = `unnamed-${Date.now()}`,
+    newDescription = '',
+    newPrivacy = 'PRIVATE',
+    stream,
+    isDraft = false,
+    tags = []
+  },
+  headers,
+  onProgress
 ) {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const browser = await puppeteer.launch();
+      const page = await browser.newPage();
+      await page.setUserAgent('Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36');
 
-    async function uploadFile(uploadUrl) {
-        return fetch(uploadUrl, {
-            method: 'POST',
-            headers: {
-                ...headers,
-                "content-type": FORM_CONTENT_TYPE,
-                "x-goog-upload-command": "upload, finalize",
-                "x-goog-upload-file-name": "file-" + Date.now(),
-                "x-goog-upload-offset": "0",
-                "referrer": YT_STUDIO_URL,
-            },
-            body: stream
-        })
-            .then(resp => resp.json())
-            .then(body => body.scottyResourceId)
-    }
+      let videoId = null;
 
+      const cookie = headers.cookie;
+      const cookies = cookie.split('; ').map(c => ({
+        name: c.split('=')[0].trim(),
+        value: c.split('=')[1].trim(),
+        domain: '.youtube.com'
+      }));
 
-    const frontendUploadId = generateFrontendUploadId()
+      await page.setCookie(...cookies);
 
-    const resp = await fetch("https://upload.youtube.com/upload/studio", {
-        headers: {
-            ...headers,
-            "content-type": FORM_CONTENT_TYPE,
-            "x-goog-upload-command": "start",
-            "x-goog-upload-file-name": "file-" + Date.now(),
-            "x-goog-upload-protocol": "resumable"
-        },
-        referrer: YT_STUDIO_URL,
-        method: "POST",
-        body: JSON.stringify({ frontendUploadId })
-    })
-
-
-    const uploadUrl = resp.headers.get('x-goog-upload-url');
-
-    const scottyResourceId = await uploadFile(uploadUrl);
-
-    const createVideoBody = {
-        "channelId": channelId,
-        "resourceId": {
-            "scottyResourceId": {
-                "id": scottyResourceId
-            }
-        },
-        "frontendUploadId": frontendUploadId,
-        "initialMetadata": {
-            "title": {
-                "newTitle": newTitle
-            },
-            "description": {
-                "newDescription": newDescription,
-                "shouldSegment": true
-            },
-            "privacy": {
-                "newPrivacy": newPrivacy
-            },
-            "draftState": {
-                "isDraft": isDraft
-            }
-        },
-        "context": {
-            "client": {
-                "clientName": 62,
-                "clientVersion": "1.20201130.03.00",
-                "hl": "en-GB",
-                "gl": "PL",
-                "experimentsToken": "",
-                "utcOffsetMinutes": 60
-            },
-            "request": {
-                "returnLogEntry": true,
-                "internalExperimentFlags": [],
-                "sessionInfo": {
-                    "token": ""
-                }
-            },
-            "user": {
-                "onBehalfOfUser": config.DELEGATED_SESSION_ID,
-                "delegationContext": {
-                    "roleType": {
-                        "channelRoleType": "CREATOR_CHANNEL_ROLE_TYPE_OWNER"
-                    },
-                    "externalChannelId": channelId
-                },
-                "serializedDelegationContext": ""
-            },
-            "clientScreenNonce": ""
-        },
-        "delegationContext": {
-            "roleType": {
-                "channelRoleType": "CREATOR_CHANNEL_ROLE_TYPE_OWNER"
-            },
-            "externalChannelId": channelId
+      async function watchResponse(interceptedResponse) {
+        //console.log('A response was received:', interceptedResponse.url());
+        if (interceptedResponse.url().startsWith('https://studio.youtube.com/youtubei/v1/upload/createvideo')) {
+          let data = await interceptedResponse.json();
+          if (!data.videoId) {
+            reject(new Error('No VideoId found'));
+          } else {
+            console.log('intercepted video id', data.videoId);
+            videoId = data.videoId;
+          }
         }
-    }
+      }
 
-    return (fetch(`https://studio.youtube.com/youtubei/v1/upload/createvideo?alt=json&key=${config.INNERTUBE_API_KEY}`, {
-        headers,
-        body: JSON.stringify(
-            createVideoBody
-        ),
-        method: "POST",
-    }).then(response => response.json()));
+      page.on('response', watchResponse);
+
+      page.once('domcontentloaded', async () => {
+        console.log('page opened, process file upload for', newTitle);
+        await sleep(5000);
+
+        await page.click("#create-icon");
+        await sleep(500);
+        await page.click('#text-item-0 > ytcp-ve');
+        await sleep(500);
+
+        const [fileChooser] = await Promise.all([
+          page.waitForFileChooser(),
+          page.click('#select-files-button > div')
+        ]);
+        
+        await fileChooser.accept([filePath]);
+        console.log('file is uploading, waiting for processing selector...');
+
+        let progressWatcher = setInterval(async () => {
+          let progressBarValues = await page.$$eval('tp-yt-paper-progress', el => el.map(x => x.getAttribute("value")));
+
+          if (progressBarValues.length > 0) {
+            progressBarValues = progressBarValues.map(p => parseInt(p));
+
+            let value = progressBarValues.find(p => p > 0);
+
+            if (value) {
+              let percent = parseInt(value);
+              console.log('upload progress is', value, '%');
+              onProgress({percent});
+
+              if (percent === 100 && videoId) {
+                console.log('uploaded video id is', videoId);
+                clearInterval(progressWatcher);
+
+                await sleep(5000);
+                console.log('wait for processing selector');
+                await page.waitForSelector("ytcp-video-upload-progress[processing]", {timeout: 120000});
+
+                console.log('closing upload dialog and puppeteer browser');
+                await page.close();
+                await browser.close();
+
+                resolve({videoId});
+              }
+            }
+          } else {
+            console.log('no element tp-yt-paper-progress found')
+          }
+        }, 5000);
+
+        if (!videoId) {
+          let httpResponse = await page.waitForResponse((response) => response.url().startsWith('https://studio.youtube.com/youtubei/v1/upload/createvideo'), {timeout: 120000});
+          let data = await httpResponse.json();
+          videoId = data.videoId;
+        }
+      })
+
+      await page.goto(YT_STUDIO_URL);
+    } catch (err) {
+      console.error('puppeteer error:', err);
+      reject(err);
+    }
+  })
 }
+
 module.exports = upload

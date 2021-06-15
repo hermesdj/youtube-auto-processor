@@ -7,14 +7,22 @@ using FFMPEG and add an intro and an outro to it, then it will read the publish 
 then it will upload and schedule the video on youtube and then it will configure the video uploaded by setting its
 thumbnail, playlist, monetization policy and endscreen.
 
-The project is in an early state: it works for my channel, and it works with configuration files. It is not yet suited
-to work for another channel without a few modifications. I am working on improving this.
+##June 2021 Update :
 
-You can contribute to the project. It is written in nodejs, it uses mongodb to store data, and it uses nw.js for the web
+I have rewritten huge parts of the code to update it using async/await. Since the end of 2019, the processor was no longer working
+due to youtube changing some policies on their API. In order to have the monetisation, endscreen and upload working again, I had to
+rework the code to use a headless browser with puppeteer.
+
+I have completly rewritten the Desktop GUI project, removed the nw.js dependency and now it is done in VueJS with the Quasar Framework and Electron.
+
+
+You can contribute to the project. It is written in nodejs, it uses mongodb to store data, and it uses electron for the desktop
 client used to display job status.
 
-## Video Presentation
+## Video Presentation (deprecated)
 You can watch my presentation videos (in french) here: https://www.youtube.com/playlist?list=PLqYokZhSL5_7fgXVuog30xWtHsAdYseca
+
+The video are no longer up to date and are focused on version 1.0.0 of the app. I might do a video on the 1.5.0 in the future.
 
 ## Installation and Configuration
 In order to install the application, a few dependencies must be installed:
@@ -24,186 +32,133 @@ In order to install the application, a few dependencies must be installed:
 4) Clone the project on your computer. You can use Github Desktop for example: https://desktop.github.com/
 5) Open a CMD prompt and navigate to the root folder of the project
 6) install the dependencies by running `npm install`
-7) install the nw.js client dependencies by running `npm install -g jspm` and `jspm install`
-8) Start a mongodb instance (you can configure mongodb to run as a windows service: https://docs.mongodb.com/manual/tutorial/install-mongodb-on-windows/)
+7) Start a mongodb instance (you can configure mongodb to run as a windows service: https://docs.mongodb.com/manual/tutorial/install-mongodb-on-windows/)
 
-After these 8 steps are done, you are ready to configure the project. The configuration files are located in the config folder.
+After these 7 steps are done, you can launch the electron client in dev mode by running the script :
 
+`quasar dev -m electron`
+
+### What's changed in 1.5.0 ?
+
+The 1.5.0 has a lot of different things from the old 1.0.0 :
+1) It uses async/await in the code, making it clearer to read
+2) It no longer depends on configuration files stored in the project folder and can be configured directly in the Desktop GUI
+3) It no longer depends on windows services. The job runner, video processor, upload processor and file watcher are all parts of the main electron thread now.
+4) the upload processor and the video processor launch a child process when they execute
+5) The video processor can be configured to run the nvenc codec to use your NVIDIA graphics card encoding capablitiies
+6) The serie page on the desktop GUI allows you to create a new serie with a form instead of filling a json file on the file system
+
+### Configuring the app for the first time
+
+Once the desktop client is running, go to Settings > Google Auth to configure :
+- Google Client Config : this needs the json file for your Google API Authentication. See below for more information.
+- Google Auth Token : Once you have imported the google client config, you have to authenticate on google using this button.
+- Google Auth Cookies : the upload processor, monetization and endscreen processor needs to retrieve cookies information from your youtube studio session. It opens a browser to youtube studio and
+close when it has found the cookies it needs.
+
+Once the Google Auth is configured, go to Settings > App Settings to configure :
+- Managed youtube channel : will let you select a youtube channel from your google account. You have to have completed the previous steps for this.
+- Google spreadsheet ID : id of the google spreadsheet where the publish date of your videos can be found
+- Default description template : the template used to generate descriptions (see below)
+- Default Description : the content of the ${default_description} used in the main template
+- Main App Directory : the directory where the processor will watch/store processed videos.
+
+#### Google API Authentication
 You will need a Google API credential files in order to connect to the Google API using your own google Account. Navigate to:
 
 https://console.developers.google.com
 
-You will need to activate:
+Navigate to API and services and activate:
 - Youtube Data API
 - Google Sheets API
 
-You will then need to generate a ID clients OAuth 2.0, download the JSON file, rename it to `client_secret.json` and move it to the config folder.
+Then you need to create an OAuth2.0 client ID and download the json file. Use it on the Settings > Google Auth page of the desktop GUI.
 
-You'll need a `config/app.json` file. You can copy the one in `examples/` to the `config` folder and add your own settings.
-
-`config/app.json`
-```json
-{
-  "watch_directory": "Z:/Content Creation/Processor/Watch",
-  "working_directory": "Z:/Content Creation/Processor/Work",
-  "output_directory": "Z:/Content Creation/Processor/Output",
-  "ffmpeg_path": "Z:/Dev/workspace/youtube-auto-processor/lib/ffmpeg-3.3.1-win64-static/bin/ffmpeg.exe",
-  "ffprobe_path": "Z:/Dev/workspace/youtube-auto-processor/lib/ffmpeg-3.3.1-win64-static/bin/ffprobe.exe",
-  "pause_before_processing": true
-}
-```
-
-- `watch_directory`: Folder where the app will look for new .mp4 videos
-- `working_directory`:  Folder where FFMPEG will store the data during processing
-- `output_directory`: Folder where FFMPEG will output the videos
-- `ffmpeg_path`: Path to ffmpeg.exe
-- `ffprobe_path`: Path to ffprobe.exe (usually in the same folder as ffmpeg.exe)
-- `pause_before_processing`: If the application should pause a job before starting the video processing. Useful if you want to keep recording videos and process them later
-
-You'll also need a `config/youtube.json` file. You can copy the one in `examples/` to the `config` folder and add your own settings.
-
-`config/youtube.json`
-```json
-{
-  "agenda_spreadsheet_id": "SPREADSHEET_ID",
-  "default_description_template": "${game_title} Gameplay FR 1080p HD\r\n\r\n${description}\r\n\r\nVous pouvez retrouver le jeu en suivant le lien suivant : \r\n${store_url}\r\n\r\nVous pouvez suivre la série grâce à la playlist suivante :\r\n${playlist_url}\r\n\r\n${default_description}", // default video description template
-  "default_description_template_localized": {
-    "en": "${game_title} Gameplay FR 1080p HD\r\n\r\n${description}\r\n\r\nYou can buy the game here : \r\n${store_url}\r\n\r\nYou can follow the whole serie thanks to the following playlist :\r\n${playlist_url}\r\n\r\n${default_description}" // Not working yet
-  },
-  "default_intro": "Z:/Content Creation/Processor/Assets/Intro/Intro.mp4",
-  "default_outro": "Z:/Content Creation/Processor/Assets/Outro/Outro.mp4",
-  "prepend_intro": true,
-  "append_outro": true,
-  "intro_outro_air_date": "2017/06/01 00:00:00",
-  "endscreen_source_video_id": "VIDEO_ID",
-  "locale": "fr"
-}
-```
-- `agenda_spreadsheet_id`: Spreadsheet where the videos are scheduled. You can find mine at http://agenda.jaysgaming.fr
-- `default_description_template`: A template to be used as the default description of the videos
-- `default_description_template_localized`: An object of localized templates to be used as the default description of the videos for different locales
-- `default_intro`: Path to the intro to be prepended to all processed videos
-- `default_outro`: Path to the outro to be appended to all processed videos
-- `prepend_intro`: A flag to prepend the intro specified above to all processed videos
-- `append_outro`:A flag to append the outro specified above to all processed videos
-- `intro_outro_air_date`: Date from when the intro and outro should be added to all processed videos
-- `endscreen_source_video_id`: The Youtube video id from where to copy the endscreen from
-- `locale`: The locale to be used in the planning spreadsheet. Defaults to `fr`.
+#### Description templates
 
 For the description_templates, the following values are for now available:
-- `${game_title}`: The game title as defined in the `serie.json` descriptor (see below)
+- `${game_title}`: The game title as defined in the serie
 - `${description}`: The description of the video
 - `${store_url}`: The Steam url (or any other store url)
 - `${playlist_url}`: the URL of the playlist
-- `${default_description}`: The default description defined in `config/default_description.txt`
+- `${default_description}`: The default description defined in Settings > App Settings
 
-When the File Watcher service starts, it will look into the folder configured as `watch_directory` for .mp4 files.
+#### Managing thumbnails
+When you create a new Serie using the desktop GUI, it will create a new folder on your file system located in:
 
-For each serie you need to create a folder, and in the folder, a serie.json file must be present in order to define the serie.
+`${project_root_directory/Watch/${game_title}/${serie_title}`
 
-`examples/serie.json`
-```json
-{
-  "planning_name": "Test ${episode_number}",
-  "playlist_id": "YOUTUBE_PLAYLIST_ID",
-  "video_keywords": "Test, Programming, API, Processor",
-  "last_episode": 0,
-  "video_title_template": "Test Processing - Episode ${episode_number}",
-  "description": "Ceci est une vidéo de test pour le processeur Youtube !",
-  "description_template": null,
-  "named_episode": false,
-  "game_title": "Test",
-  "localizations": [
-    {
-      "key": "en",
-      "title": "Test Processing - Episode ${episode_number}",
-      "description": "This is a test video for Youtube auto processor",
-      "description_template": null
-    }
-  ]
-}
-```
+In this folder, you will have a serie.json file describing the serie.
 
-- `planning_name`: Name to look in the google spreadsheet for scheduling the video date
-- `playlist_id`: Playlist ID. If not provided, add a playlist_title key in this file and the program will create it
-- `video_keywords`: The keywords of each videos
-- `last_episode`: The last episode uploaded but not managed by the program. This is useful to start the program on an existing serie
-- `video_title_template`: The video title template
-- `description`: The video description that will be included in the default_description_template
-- `description_template`: A description template specific for this serie
-- `named_episode`: If the video title will need a custom name. If set to true, the process will stop in INITIALIZED state until an episode_name is provided
-- `game_title`: The name of the game
-- `localizations`: Localization management for title and description. Not working for now
-
-In the serie's folder, you will need to create a `thumbnails` folder containing all the episodes thumbnails named by the episode number and in png format 1280x720p.
+In this folder, you will need to create a `thumbnails` folder containing all the episodes thumbnails named by the episode number and in png format 1280x720p.
+The desktop GUI will display for the serie the thumbnail 1.png. If it does not find it, you will have an empty unloaded image displayed instead.
 
 An example of file structure would be:
 
 ```
 --Watch/
-  |--Stellaris Utopia/
-    |--serie.json
-    |--<drop your videos here>  
-    |--thumbnails/
-      |--1.png  
-      |--2.png  
-  |--Endless Space 2/
-    |--serie.json
-    |--<drop your videos here>  
-    |--thumbnails/
-      |--1.png  
-      |--2.png
+  |--Stellaris/
+    |-- My Awesome Serie/
+      |--serie.json
+      |--<drop your videos here>
+      |--thumbnails/
+        |--1.png
+        |--2.png
 ```
 
-Once everything is configured, run the application `npm start`
+### Adding new episodes to a serie
+You have two ways to add episodes to a serie once it has been created using the GUI :
 
-If you want to have debug available in the NW.js client, run `npm install nw --nwjs_build_type=sdk` before launching the app
+1) You can open the page of the serie and you have a "pick episode" button. It opens a file selector, you select the .mp4 file and it will create a job for it. One by One, not multiple files.
+2) You can drop the .mp4 file directly in the serie folder next to the serie.json file.
+
+The first case will move your video to the serie folder like the second step. Once the video has been added to the Watch folder of the serie, a new job is created and the episode is automatically generated.
+
+### Configuring NVENC
+In the Desktop GUI, in Settings > Video Processing > Encoding Config, input the followind options :
+- Video Codec : `h264_nvenc`
+- Input Options : `-hwaccel cuvid -hwaccel_device 0 -c:v h264_nvenc`
+- Video Bitrate : input an integer number. I use 5000.
+
+### Configuring the video processor
+You can configure the video processor options in Settings > Video Processing > Processing Config.
+The fields are self explanatory.
+
+### The upload processor
+Youtube has added a Quota usage for youtube upload to 1600 points out of 10 000 by default. It means you can only reasonably upload 5 videos a day using the Youtube Data API.
+This was too limiting for me as I process more like 15 videos one day and none the next days. I implemented a puppeteer headless browser to open the youtube studio page and simulate
+the upload like I was doing it manually.
+
+The upload processor will first try to do it headless, in the background. If it fails, it will retry but opening the browser. So when the UPLOAD_PROCESSING step is reached
+and a browser appears, you have to open youtube studio page and authenticate on it if needed. Once the upload processor manages to upload a video, it will store the last cookies that worked
+in order to be able to do it headless next time.
 
 ## State machine
+Job states can be modified in the config/states.js file
 job move from state :
-- READY : le service watch-folder a détecté une vidéo et initialisé un nouveau job, la vidéo est passée en orange sur l'agenda
-- INITIALIZED : le job-runner a initialisé l'épisode et la série si elle n'existait pas
-- SCHEDULE : le job-runner va récupérer la date de publication de la vidéo sur l'agenda
-- VIDEO_READY : la vidéo est prête à être traitée par ffmpeg
-- VIDEO_PROCESS : la vidéo est en cours de traitement par ffmpeg
-- VIDEO_DONE : la vidéo a été traitée par ffmpeg
-- UPLOAD_READY : la vidéo est prête à être uploadée
-- UPLOAD_PROCESS : la vidéo est en cours d'upload
-- UPLOAD_DONE : la vidéo a finie d'être uploadée sur Youtube
-- THUMBNAIL : le job-runner va upload la miniature de la vidéo
-- PLAYLIST : le job-runner va insérer la vidéo dans la playlist, après l'avoir créée si elle n'existe pas
-- WAIT_YOUTUBE_PROCESSING
-- MONETIZE
-- MONETIZING
-- ENDSCREEN
-- SETTING_ENDSCREEN
-- ALL_DONE : la vidéo est prête à être diffusée, elle est passée en vert sur l'agenda
-- PUBLIC : la vidéo est publique (la date du jour est > à la date de publication) et elle est marquée comme public sur l'agenda
-- FINISHED
+- READY : File watcher triggered on a new file, job is created and ready to be processed.
+- INITIALIZED : The job runner will initialize the episode with its video name, description, etc.
+- SCHEDULE : Retrieve the publish at date on the Google Spreadsheet
+- VIDEO_READY : Video is ready to be processed by the Video Processor.
+- VIDEO_PROCESSING : FFMPEG is encoding the video
+- VIDEO_DONE : FFMPEG has finished processing the video. It will be put in ``${project_root_directory/Output/${job_id}``
+- UPLOAD_READY : Video is ready to be uploaded
+- UPLOAD_PROCESSING : Video is being uploaded (one at a time)
+- UPLOAD_DONE : Video has been uploaded
+- SET_VIDEO_DATA : Set on the youtube video the title, description, keywords, privacy and publish date
+- THUMBNAIL : Set thumbnail on the youtube video
+- PLAYLIST : Add the youtube video to the youtube playlist
+- WAIT_YOUTUBE_PROCESSING : wait for youtube to have finished processing the video
+- MONETIZE : Monetize the video
+- MONETIZING : Video is being monetized
+- ENDSCREEN : Set the endscreen on the video
+- SETTING_ENDSCREEN : the endscreen is being configured
+- ALL_DONE : Video is ready to be published, waiting for publication date to be reached
+- PUBLIC : Video is public on youtube. Will be marked as "finished" in one day in case there is a problem
+- FINISHED : The JOB is finished ! The local video is deleted and the job is deleted
 
-- ERROR : Le job runner a rencontré une erreur et a passé le job en arrêt
-- PAUSED
-
-## TODO
-- [x] Suppression de la vidéo locale une fois que tout le traitement a été terminé et la vidéo publique. Idem pour le thumbnail
-- [x] Ajout d'un state MONETIZE pour gérer la monétisation automatique de la vidéo
-- [x] En state INITIALIZED, si la vidéo a besoin d'un titre custom, il faut mettre le traitement en pause et ne pas passer à l'étape suivante
-- [x] Ajout d'un state PAUSE pour mettre en pause le traitement en cours si possible
-- [ ] Associer une icône à chaque state
-- [x] Traitement de la vidéo avec intro et outro
-- [x] Ajout d'un écran de fin automatique
-- [ ] Terminer le client nw.js pour consulter le status des jobs et manager le système
-- [ ] Setter le nom du jeu sur la vidéo automatiquement
-- [ ] Charger automatiquement la base de données au lancement de l'application si mongo n'est pas lancé (service windows)
-- [ ] Compilation de l'application avec nw-builder
-- [x] Gérer le cas où on a une ou des cases vides dans l'agenda
-- [x] vérifier que cela check bien dans le mois suivant
-- [ ] Gérer la localization des vidéos (ça ne fonctionne pas actuellement et bug sur le serieProcessor à l'initialization)
-- [ ] Cleanup des vidéos uploadées + configuration
-- [ ] Compléter le readme avec des screenshots par exemple...
-- [ ] Paramétrer les playlist pour mettre plusieurs liens de store comme gamesplanet, Gog, Steam, etc.
-- [ ] changer la gestion des URL de store pour supporter les nouveaux partenariats
-- [ ] Intégrer l'appli aux API Steam (http://steamcommunity.com/dev), GOG (https://gogapidocs.readthedocs.io/en/latest/) ou encore GamesPlanet
+- ERROR : The job encountered an error
+- PAUSED : The job has been, paused
 
 ## Troubleshooting
 If you encounter an issue, please use the Issue tracker of this repository: https://github.com/hermesdj/youtube-auto-processor/issues

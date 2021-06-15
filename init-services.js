@@ -1,22 +1,16 @@
 /**
- * Created by Jérémy on 15/05/2017.
+ * Created by Jérémy on 06/05/2017.
+ * Index file used to boot up system
  */
-const Services = require('./services');
-const mongoose = require('mongoose');
-mongoose.Promise = require('bluebird');
-const db_config = require('./config/database-config');
-mongoose.connect(db_config.mongo.uri, db_config.mongo.options);
-mongoose.Promise = require('q').Promise;
-const winston = require('winston');
-const wMongoDb = require('winston-mongodb').MongoDB;
+const {connect} = require('./db');
+const ServiceManager = require('./services');
 
-winston.add(winston.transports.MongoDB, {
-    db: db_config.mongo.uri,
-    options: db_config.mongo.options,
-    label: 'main'
-});
+const manager = new ServiceManager();
 
-let services = new Services();
-services.init(function (services) {
-    winston.info('done initiating services');
-});
+(async () => {
+    let db = await connect();
+    await manager.init();
+
+    await db.connection.close();
+    process.exit(1);
+})();
