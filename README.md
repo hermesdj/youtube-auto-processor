@@ -160,5 +160,10 @@ job move from state :
 - ERROR : The job encountered an error
 - PAUSED : The job has been, paused
 
+## Build Electron App
+You can build the electron app to have an exe file to run the processor. It has not been fully tested yet, but here is the command :
+
+`quasar build -m electron`
+
 ## Troubleshooting
 If you encounter an issue, please use the Issue tracker of this repository: https://github.com/hermesdj/youtube-auto-processor/issues
