@@ -57,13 +57,19 @@ const processReadyJob = async function (job) {
 };
 
 const processInitializedJob = async function (job) {
+  if (!job.episode || !job.episode.serie) await job.populate({path: 'episode', populate: 'serie'}).execPopulate();
   if ((job.episode.serie && job.episode.serie.named_episode) || job.episode.video_name.indexOf('${episode_name}') > 0) {
     logger.info('this episode needs a name, waiting for user input...');
 
-    if (job.episode.episode_name) {
+    if (job.episode.episode_name && job.episode.video_name.indexOf('${episode_name}') > 0) {
       job.episode.video_name = job.episode.video_name.replace('${episode_name}', job.episode.episode_name);
       await job.episode.save();
     }
+
+    if (job.episode.video_name.indexOf('${episode_name}') === -1) {
+      await job.next();
+    }
+
   } else {
     await job.next();
   }
@@ -109,9 +115,26 @@ const processUploadDoneJob = async function (job) {
 }
 
 const processSetVideoDataJob = async function (job) {
+  if (!job) throw new Error('Job not provided');
   logger.info('set video data on job %s', job.id);
-  await youtubeProcessor.setVideoData(job);
-  await job.next();
+
+  if (!job.populated('episode')) await job.populate({path: 'episode', populate: 'serie'}).execPopulate();
+
+  if (job.episode && job.episode.youtube_id && job.episode.serie) {
+    let {video_name, keywords, description, youtube_id, serie, publishAt} = job.episode;
+    let {default_language} = serie;
+    let {
+      snippet,
+      status
+    } = await youtubeProcessor.setVideoData(youtube_id, video_name, description, keywords, default_language, "private", publishAt);
+
+    job.episode.status = status;
+    job.episode.snippet = snippet;
+    job.episode.markModified('status');
+    job.episode.markModified('snippet');
+    await job.episode.save();
+    await job.next();
+  }
 }
 
 const processThumbnailJob = async function (job) {

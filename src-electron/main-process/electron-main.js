@@ -67,7 +67,7 @@ async function createWindow() {
 
 
 app.on('ready', async () => {
-  tray = new Tray(nativeImage.createFromPath(path.resolve(path.join(__dirname, '../icons/icon.ico'))));
+  tray = new Tray(path.resolve(path.join(__dirname, '../icons/icon.ico')));
 
   const contextMenu = Menu.buildFromTemplate([
     {

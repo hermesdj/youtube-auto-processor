@@ -1,10 +1,10 @@
 ﻿<template>
-  <q-page>
+  <q-page class="bg-grey-3">
     <q-toolbar>
       <q-btn flat icon="arrow_back" round @click="$router.back()"/>
     </q-toolbar>
     <div class="row q-my-lg">
-      <div class="col-8 q-mx-auto">
+      <div class="col-md-6 q-mx-auto">
         <EpisodeCard
           v-if="localEpisode"
           :episode="localEpisode"

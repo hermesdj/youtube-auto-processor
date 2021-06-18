@@ -73,22 +73,7 @@ module.exports = {
 
     return data;
   },
-  setVideoData: async function (job) {
-    if (!job) throw new Error('Job not provided');
-
-    if (!job.populated('episode')) await job.populate('episode').execPopulate();
-
-    if (!job.episode) throw new Error('No episode in job');
-
-    if (!job.episode.youtube_id) throw new Error('No youtube id in episode');
-
-    let episode = job.episode;
-    let videoId = episode.youtube_id;
-
-    if (!episode.populated('serie')) await episode.populate('serie').execPopulate();
-
-    if (!episode.serie) throw new Error('No serie in episode');
-
+  setVideoData: async function (videoId, videoName, description, keywords, defaultLanguage, privacy, publishAt) {
     let oauth2client = await GoogleToken.resolveOAuth2Client();
 
     let youtube = google.youtube({
@@ -96,25 +81,24 @@ module.exports = {
       auth: oauth2client
     });
 
-    let {status} = await youtube.videos.update({
+    let {data: {status, snippet}} = await youtube.videos.update({
       part: 'snippet,status',
       requestBody: {
         id: videoId,
         snippet: {
-          title: episode.video_name,
+          title: videoName,
           categoryId: "20",
-          description: episode.description,
-          tags: episode.keywords,
-          defaultLanguage: episode.serie.default_language || 'fr',
+          description: description,
+          tags: keywords,
+          defaultLanguage: defaultLanguage || 'fr',
         },
         status: {
-          privacyStatus: 'private',
-          publishAt: moment(episode.publishAt).format('YYYY-MM-DDTHH:mm:ss.sZ')
+          privacyStatus: privacy,
+          publishAt: moment(publishAt).format('YYYY-MM-DDTHH:mm:ss.sZ')
         }
       }
     });
 
-    episode.status = status;
-    episode.markModified('status');
+    return {snippet, status}
   }
 };

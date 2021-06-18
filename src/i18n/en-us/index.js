@@ -127,6 +127,21 @@ export default {
     messages: {
       publishAt: 'Episode publication: {publishAt}',
       openOnYoutube: 'Open Video Edit Page on Youtube'
+    },
+    fields: {
+      path: 'Path',
+      video_name: 'Video Title',
+      youtube_id: 'ID Youtube',
+      playlist_item_id: 'ID Playlist Item',
+      status: 'Status',
+      episode_number: 'Episode Number',
+      description: 'Description',
+      keywords: 'Keywords',
+      episode_name: 'Episode Name'
+    },
+    edit: {
+      title: 'Modifier Episode',
+      btn: 'Save'
     }
   },
   jobs: {

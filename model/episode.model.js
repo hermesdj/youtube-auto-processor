@@ -7,6 +7,8 @@ const path = require('path');
 const stores = require('../config/stores.json');
 const {createLogger} = require('../logger');
 const logger = createLogger({label: 'episode-model'});
+const youtubeProcessor = require('../processors/youtube-processor');
+const moment = require('moment');
 
 let EpisodeSchema = new Schema(
   {
@@ -25,6 +27,7 @@ let EpisodeSchema = new Schema(
       type: String
     },
     status: Schema.Types.Mixed,
+    snipped: Schema.Types.Mixed,
     episode_number: {
       type: Number,
       required: true
@@ -157,5 +160,33 @@ EpisodeSchema.methods.initialize = async function (job, serie, episode_number) {
 
   logger.info('description initialized');
 };
+
+EpisodeSchema.statics.updateEpisodeData = async function (episodeId, episodeData) {
+  let episode = await this.findById(episodeId).populate('serie');
+
+  if (!episode) {
+    throw new Error('Episode not found');
+  }
+
+  episode.set(episodeData);
+
+  if (episode.youtube_id) {
+    let privacy = "private";
+    if (moment(episode.publishAt).isBefore(moment())) {
+      privacy = "public";
+    }
+    let {
+      snippet,
+      status
+    } = await youtubeProcessor.setVideoData(episode.youtube_id, episode.video_name, episode.description, episode.keywords, episode.serie.default_language, privacy, episode.publishAt);
+
+    episode.snippet = snippet;
+    episode.status = status;
+    episode.markModified('status');
+    episode.markModified('snippet');
+  }
+
+  return episode.save();
+}
 
 module.exports = mongoose.model('Episode', EpisodeSchema);

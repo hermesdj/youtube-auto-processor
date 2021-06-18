@@ -45,7 +45,7 @@
         </q-select>
         <q-select
           v-model="$v.serie.video_keywords.$model"
-          :error="$v.serie.default_language.$error"
+          :error="$v.serie.keywords.$error"
           :error-message="$t('validations.required')"
           :label="$t('series.fields.tags')"
           filled
@@ -249,6 +249,7 @@ export default {
         if (serie) {
           this.$emit('created', serie);
           this.$refs.form.reset();
+          this.$v.$reset();
         }
 
       } catch (err) {
