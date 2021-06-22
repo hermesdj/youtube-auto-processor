@@ -166,6 +166,10 @@ async function getSheetId(auth, sheetName, spreadsheetId) {
 }
 
 async function mark(job, colorConfigName, appConfig) {
+  if (job.currentPlanningState === colorConfigName) {
+    return Promise.resolve(job);
+  }
+
   if (!job.episode) {
     throw new Error('no episode for this job, cannot mark as processing');
   }
@@ -208,10 +212,10 @@ async function mark(job, colorConfigName, appConfig) {
   });
 
   return await updateCells(oauth2client, requests, appConfig.spreadsheetId)
-    .then(async result => {
+    .then(async () => {
       job.currentPlanningState = colorConfigName;
       await job.save();
-      return result;
+      return job;
     });
 }
 

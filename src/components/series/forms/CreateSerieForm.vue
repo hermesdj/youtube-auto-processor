@@ -45,7 +45,7 @@
         </q-select>
         <q-select
           v-model="$v.serie.video_keywords.$model"
-          :error="$v.serie.keywords.$error"
+          :error="$v.serie.video_keywords.$error"
           :error-message="$t('validations.required')"
           :label="$t('series.fields.tags')"
           filled

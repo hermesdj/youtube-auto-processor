@@ -75,7 +75,7 @@ export default {
       .subscribe(event => {
         let serie = new Serie(event.data);
 
-        if (!serie.episodes) {
+        if (!serie.episodes && this.serie && this.serie.episodes) {
           serie.episodes = this.serie.episodes;
         }
 

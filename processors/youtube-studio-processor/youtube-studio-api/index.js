@@ -54,10 +54,10 @@ function getDebugInfo() {
 }
 
 async function readData(uri) {
-  return new Promise(async (resolve, reject) => {
-    const browser = await puppeteer.launch();
-    const page = await browser.newPage();
+  const browser = await puppeteer.launch();
+  const page = await browser.newPage();
 
+  return new Promise(async (resolve, reject) => {
     try {
       const result = {
         CHANNEL_ID: null,
@@ -107,16 +107,15 @@ async function readData(uri) {
     } catch (err) {
       console.error(err);
       reject(err);
-    } finally {
-      logger.info('closing page and browser');
-      await page.close();
-      await browser.close();
-
-      if (browser && browser.process() !== null) {
-        browser.process().kill('SIGINT');
-      }
     }
-  })
+  }).finally(async () => {
+    await page.close();
+    await browser.close();
+
+    if (browser && browser.process() !== null) {
+      browser.process().kill('SIGINT');
+    }
+  });
 }
 
 async function getConfig() {

@@ -11,6 +11,12 @@ export function runVideoService(jobId) {
   if (jobMap.has(jobId)) {
     return jobMap.get(jobId);
   }
+
+  if (countRunningProcesses > 1) {
+    logger.info('Video processing already in progress, wait for one of them to end');
+    return;
+  }
+
   logger.info('Forking a new video service process');
   const process = fork(
     path.resolve(
