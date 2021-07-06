@@ -9,7 +9,7 @@ const COLORS = require('../../config/colors');
 const {createLogger} = require('../../logger');
 const logger = createLogger({label: 'sheet-processor'});
 
-async function process(auth, job, appConfig) {
+async function process(auth, job, appConfig, startDate = new Date()) {
   if (!appConfig) {
     throw new Error('No app config provided to process function !');
   }
@@ -24,12 +24,12 @@ async function process(auth, job, appConfig) {
 
   moment.locale('fr');
 
-  let month = moment().format('MMMM');
+  let month = moment(startDate).format('MMMM');
   month = month.charAt(0).toUpperCase() + month.slice(1);
   month = month.replace('û', 'u');
   month = month.replace('é', 'e');
 
-  let year = moment().format('YYYY');
+  let year = moment(startDate).format('YYYY');
   let start = 'A1';
   let end = 'H40';
   let sheetName = month.concat(' ').concat(year);
@@ -46,11 +46,11 @@ async function process(auth, job, appConfig) {
     }
   } catch (err) {
     logger.warn('Not found on current month %s, trying next month', sheetName);
-    month = moment().add(1, 'M').format('MMMM');
+    month = moment(startDate).add(1, 'M').format('MMMM');
     month = month.charAt(0).toUpperCase() + month.slice(1);
     month = month.replace('û', 'u');
     month = month.replace('é', 'e');
-    year = moment().add(1, 'M').format('YYYY');
+    year = moment(startDate).add(1, 'M').format('YYYY');
     sheetName = month.concat(' ').concat(year);
 
     range = sheetName.concat('!').concat(start).concat(':').concat(end);
@@ -194,7 +194,7 @@ async function mark(job, colorConfigName, appConfig) {
 
   let oauth2client = await GoogleToken.resolveOAuth2Client();
 
-  let {i, j, sheetName} = await process(oauth2client, job, appConfig);
+  let {i, j, sheetName} = await process(oauth2client, job, appConfig, job.episode.publishAt);
 
   let sheetId = await getSheetId(oauth2client, sheetName, appConfig.spreadsheetId);
 
