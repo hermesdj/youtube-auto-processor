@@ -22,7 +22,15 @@ class YoutubeStudioError extends Error {
 module.exports = {
   setMonetization: async function (job) {
     let cookieInfo = await GoogleCookieConfig.resolveConfig({});
-    await init(cookieInfo)
+    await init(cookieInfo);
+
+    let midVideoMilliseconds = 1200000;
+
+    if(job.details && job.details.duration){
+      let parsedDuration = parse(job.details.duration);
+      let seconds = toSeconds(parsedDuration);
+      midVideoMilliseconds = (seconds / 2) * 1000;
+    }
 
     const result = await setMonetisation(job.episode.youtube_id, {
       encryptedVideoId: job.episode.youtube_id, // your video ID
@@ -40,7 +48,8 @@ module.exports = {
           "newHasPrerolls": "ENABLED",
           "newHasMidrollAds": "ENABLED",
           "newHasPostrolls": "ENABLED",
-          "newHasManualMidrolls": "DISABLED"
+          "newHasManualMidrolls": "ENABLED",
+          "newManualMidrollTimesMillis": [midVideoMilliseconds]
         },
         "autoAdSettings": "AUTO_AD_SETTINGS_TYPE_OFF"
       },
