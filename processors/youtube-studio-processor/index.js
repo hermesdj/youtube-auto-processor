@@ -24,12 +24,18 @@ module.exports = {
     let cookieInfo = await GoogleCookieConfig.resolveConfig({});
     await init(cookieInfo);
 
+    let allowMidRolls = true;
     let midVideoMilliseconds = 1200000;
 
     if(job.details && job.details.duration){
       let parsedDuration = parse(job.details.duration);
       let seconds = toSeconds(parsedDuration);
-      midVideoMilliseconds = (seconds / 2) * 1000;
+
+      if(seconds > 1200000){
+        midVideoMilliseconds = (seconds / 2) * 1000;
+      } else {
+        allowMidRolls = false;
+      }
     }
 
     const result = await setMonetisation(job.episode.youtube_id, {
@@ -46,10 +52,10 @@ module.exports = {
         },
         "adBreaks": {
           "newHasPrerolls": "ENABLED",
-          "newHasMidrollAds": "ENABLED",
+          "newHasMidrollAds": allowMidRolls ? "ENABLED" : "DISABLED",
           "newHasPostrolls": "ENABLED",
           "newHasManualMidrolls": "ENABLED",
-          "newManualMidrollTimesMillis": [midVideoMilliseconds]
+          "newManualMidrollTimesMillis": allowMidRolls ? [midVideoMilliseconds] : []
         },
         "autoAdSettings": "AUTO_AD_SETTINGS_TYPE_OFF"
       },
