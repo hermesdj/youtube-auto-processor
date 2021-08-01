@@ -76,6 +76,11 @@ export default {
       createOnYoutube: 'Create Playlist on Youtube',
       isNew: 'New Serie'
     },
+    edit: {
+      btn: 'Save',
+      title: 'Edit Serie {name}',
+      tooltip: 'Edit Serie {name}'
+    },
     privacy: {
       public: 'Public',
       private: 'Private',

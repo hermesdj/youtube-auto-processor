@@ -357,4 +357,16 @@ SerieSchema.methods.addRawVideoFromPath = async function (originalPath) {
   return job;
 }
 
+SerieSchema.statics.updateSerieData = async function(serieId, serieData){
+  let serie = await this.findById(serieId);
+
+  if(!serie){
+    throw new Error('Serie not found');
+  }
+
+  serie.set(serieData);
+
+  return serie.save();
+}
+
 module.exports = mongoose.model('Serie', SerieSchema);

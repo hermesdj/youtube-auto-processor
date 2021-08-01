@@ -18,6 +18,7 @@
             {{ $t('series.privacy.' + serie.privacy_status) }} - {{ $t('series.status.' + serie.status) }}
           </div>
           <div>
+            <EditSerieBtn :serie="serie" />
             <DeleteSerieBtn :serie="serie" @deleted="$router.replace({name: 'series'})"/>
             <SyncFromYoutubeBtn :serie.sync="serie"/>
             <SyncWithYoutubeBtn :serie.sync="serie"/>
@@ -48,10 +49,12 @@ import PickEpisodeFileBtn from "components/series/actions/PickEpisodeFileBtn";
 import {dbEvents} from "src/models/common/ipc";
 import {filter} from "rxjs/operators";
 import SerieEpisodeList from "components/episodes/SerieEpisodeList";
+import EditSerieBtn from "components/series/actions/EditSerieBtn";
 
 export default {
   name: "SeriePage",
   components: {
+    EditSerieBtn,
     SerieEpisodeList,
     PickEpisodeFileBtn,
     SerieActionsMenu,

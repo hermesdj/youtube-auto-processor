@@ -54,6 +54,12 @@ const routes = [
                 path: 'create',
                 name: 'createSerie',
                 component: () => import('pages/series/CreateSeriePage.vue')
+              },
+              {
+                path: ':id',
+                name: 'editSerie',
+                component: () => import('pages/series/EditSeriePage.vue'),
+                props: true
               }
             ]
           }
