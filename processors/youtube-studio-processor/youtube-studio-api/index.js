@@ -4,6 +4,8 @@ const _ = require('lodash');
 const puppeteer = require("puppeteer-extra");
 const StealthPlugin = require("puppeteer-extra-plugin-stealth");
 puppeteer.use(StealthPlugin());
+const {createLogger} = require('../../../logger');
+const logger = createLogger({label: 'youtube-studio-api'});
 
 const uploadFile = require('./upload');
 
@@ -54,7 +56,9 @@ function getDebugInfo() {
 }
 
 async function readData(uri) {
-  const browser = await puppeteer.launch();
+  const browser = await puppeteer.launch({
+    executablePath: puppeteer.executablePath().replace('app.asar', 'app.asar.unpacked')
+  });
   const page = await browser.newPage();
 
   return new Promise(async (resolve, reject) => {
@@ -81,7 +85,7 @@ async function readData(uri) {
       await page.setCookie(...cookies);
 
       function logResponse(interceptedResponse) {
-        //console.log('A response was received:', interceptedResponse.url());
+        logger.debug('A response was received:', interceptedResponse.url());
       }
 
       page.on('response', logResponse);

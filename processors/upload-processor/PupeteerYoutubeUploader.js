@@ -3,10 +3,18 @@ const YT_STUDIO_URL = 'https://studio.youtube.com/';
 const puppeteer = require("puppeteer-extra");
 const StealthPlugin = require("puppeteer-extra-plugin-stealth");
 puppeteer.use(StealthPlugin());
-
 const {createLogger} = require("../../logger");
 const logger = createLogger({label: "puppeteer-youtube-uploader"});
-const {max} = require("lodash");
+const fs = require('fs');
+const os = require('os');
+const mkdirp = require('mkdirp');
+const path = require('path');
+const rimraf = require('rimraf');
+
+const pupeteerDataDir = path.join(os.tmpdir(), 'youtube-auto-processor', 'puppeteer_tmp');
+if (!fs.existsSync(pupeteerDataDir)) {
+  mkdirp(pupeteerDataDir);
+}
 
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -29,6 +37,8 @@ async function handleFileUploadAndWaitForUploadToEnd(
   });
 
   let videoId = null;
+  let processingWatcherInterval = null;
+  let progressWatcherInterval = null;
 
   return await new Promise(async (resolve, reject) => {
     try {
@@ -51,7 +61,7 @@ async function handleFileUploadAndWaitForUploadToEnd(
           await page.click("#create-icon");
 
           let pageCookies = await page.cookies();
-          console.log('page cookies are', pageCookies);
+          logger.debug('page cookies are %j', pageCookies);
 
           await page.waitForSelector('#text-item-0 > ytcp-ve', {timeout: 60000});
           await page.click('#text-item-0 > ytcp-ve');
@@ -71,7 +81,7 @@ async function handleFileUploadAndWaitForUploadToEnd(
           let videoContentDetails = null;
           let uploadStatus = null;
 
-          let processingWatcherInterval = setInterval(async () => {
+          processingWatcherInterval = setInterval(async () => {
             if (videoId) {
               logger.info('Check youtube processing for video id %s', videoId);
 
@@ -117,6 +127,7 @@ async function handleFileUploadAndWaitForUploadToEnd(
 
               if (uploadDone) {
                 clearInterval(processingWatcherInterval);
+                processingWatcherInterval = null;
                 await sleep(5000);
 
                 resolve({
@@ -131,12 +142,12 @@ async function handleFileUploadAndWaitForUploadToEnd(
             }
           }, 30000);
 
-          let progressWatcherInterval = setInterval(async () => {
+          progressWatcherInterval = setInterval(async () => {
             let progressBarValues = await page.$$eval('tp-yt-paper-progress', el => el.map(x => x.getAttribute("value")));
 
             if (progressBarValues && Array.isArray(progressBarValues) && progressBarValues.length > 0) {
               progressBarValues = progressBarValues.map(p => parseInt(p));
-              console.log('progressBarValues is', progressBarValues);
+              logger.info('progressBarValues is %j', progressBarValues);
               let value = progressBarValues.pop();
 
               if (value !== undefined && !isNaN(value)) {
@@ -150,8 +161,11 @@ async function handleFileUploadAndWaitForUploadToEnd(
               let spanProgressElem = spanProgress.pop();
               let progressInnerText = await spanProgressElem.getProperty('innerText');
               let progressValue = await progressInnerText.jsonValue();
-              uploadDone = progressValue.startsWith('Mise en ligne terminée')
-              console.log('progress is done ?', uploadDone);
+              uploadDone = progressValue.startsWith('Mise en ligne terminée');
+              logger.info('progress is done ? %j', uploadDone);
+              if (uploadDone) {
+                progress = 100;
+              }
             }
 
             await onProgress({
@@ -163,11 +177,13 @@ async function handleFileUploadAndWaitForUploadToEnd(
               pageCookies
             });
 
-            if (progress === 100) {
+            if (progress === 100 || uploadDone) {
               logger.info('clearing progress watcher interval');
               clearInterval(progressWatcherInterval);
+              progressWatcherInterval = null;
               if (!videoId) {
                 clearInterval(processingWatcherInterval);
+                processingWatcherInterval = null;
                 reject(new Error('No video id found after 100 percent upload reached !'));
               }
             }
@@ -185,11 +201,25 @@ async function handleFileUploadAndWaitForUploadToEnd(
       logger.error('YT Upload error %s', err.message);
       reject(err);
     }
-  });
+  })
+    .finally(() => {
+      if (processingWatcherInterval) {
+        clearInterval(processingWatcherInterval);
+        processingWatcherInterval = null;
+      }
+      if (progressWatcherInterval) {
+        clearInterval(progressWatcherInterval);
+        progressWatcherInterval = null;
+      }
+    });
 }
 
 async function initBrowserAndPage(browserOptions, cookies) {
-  const browser = await puppeteer.launch(browserOptions);
+  const browser = await puppeteer.launch({
+    userDataDir: pupeteerDataDir,
+    executablePath: puppeteer.executablePath().replace('app.asar', 'app.asar.unpacked'),
+    ...browserOptions
+  });
   const page = await browser.newPage();
 
   await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.101 Safari/537.36');
@@ -203,9 +233,17 @@ async function initBrowserAndPage(browserOptions, cookies) {
 async function endSession(browser, page) {
   logger.info('closing page and browser');
   await page.close();
+
   await browser.close();
 
   if (browser && browser.process() !== null) {
+    logger.info('Cleaning tmp dir %s', pupeteerDataDir);
+    await new Promise((resolve) => rimraf(pupeteerDataDir + '/*', err => {
+      if (err) {
+        logger.warn('Error cleaning puppeteer data directory: %s', err.message);
+      }
+      resolve();
+    }));
     browser.process().kill('SIGINT');
   }
 }

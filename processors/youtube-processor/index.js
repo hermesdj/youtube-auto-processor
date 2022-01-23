@@ -4,6 +4,9 @@
 const {google} = require('googleapis');
 const {GoogleToken} = require('../../model/google.model');
 const moment = require('moment');
+const {createLogger} = require("../../logger");
+
+const logger = createLogger({label: 'youtube-processor'});
 
 module.exports = {
   getVideoProcessorStats: async function (job) {
@@ -43,6 +46,8 @@ module.exports = {
     if (videoIds.length === 0) {
       throw new Error('no video ids found');
     }
+
+    logger.info("check processor stats for video ids %j", videoIds);
 
     let oauth2client = await GoogleToken.resolveOAuth2Client();
 

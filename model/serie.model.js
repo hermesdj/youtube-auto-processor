@@ -162,8 +162,13 @@ SerieSchema.methods.addEpisode = async function (job) {
 
   let last_episode_number = this.last_episode || 0;
   if (lastEpisode) {
-    logger.info('last episode is', lastEpisode._id);
-    last_episode_number = lastEpisode.episode_number;
+    let {episode_number} = lastEpisode;
+    logger.info('last episode is %s with number %d', lastEpisode._id, episode_number);
+    if (episode_number >= this.last_episode) {
+      last_episode_number = lastEpisode.episode_number;
+    } else {
+      logger.info('Last episode number %d was < to current last episode %d, so current is kept', episode_number, this.last_episode);
+    }
   }
 
   let episode_number = last_episode_number + 1;
@@ -257,7 +262,7 @@ SerieSchema.statics.createSerie = async function (data, isNew, createOnYoutube) 
 
   let config = await this.model('Config').loadAsObject();
 
-  if(!config.mainAppDirectory){
+  if (!config.mainAppDirectory) {
     throw new Error('No main app directory configured');
   }
 
@@ -357,10 +362,10 @@ SerieSchema.methods.addRawVideoFromPath = async function (originalPath) {
   return job;
 }
 
-SerieSchema.statics.updateSerieData = async function(serieId, serieData){
+SerieSchema.statics.updateSerieData = async function (serieId, serieData) {
   let serie = await this.findById(serieId);
 
-  if(!serie){
+  if (!serie) {
     throw new Error('Serie not found');
   }
 

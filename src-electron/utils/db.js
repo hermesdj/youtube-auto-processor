@@ -1,6 +1,9 @@
 import {connect, mongoose} from '../../db';
 import '../../model';
 import {ipcMain} from "electron";
+import {createLogger} from 'app/logger';
+
+const logger = createLogger({label: 'electron-db-utils'});
 
 export async function setup() {
   return connect();
@@ -17,6 +20,7 @@ ipcMain.handle('model.paginate', async (event, {modelName, filter, offset, limit
 });
 
 ipcMain.handle('model.find', async (event, {modelName, filter, sort, projection = {}, options = {}}) => {
+  logger.debug('model.find with', modelName, filter, sort, projection, options);
   return mongoose.model(modelName).find(filter, projection, options).sort(sort).exec()
     .then(rows => rows.map(row => row.toJSON({virtuals: true, getters: true})));
 });
@@ -41,7 +45,7 @@ ipcMain.handle('model.findOne', async (event, {modelName, filter, projection, op
 });
 
 ipcMain.handle('model.callMethod', async (event, {modelName, id, methodName, args}) => {
-  console.log('calling method', methodName, 'on model', modelName, 'for id', id, 'with args', args);
+  logger.debug('calling method', methodName, 'on model', modelName, 'for id', id, 'with args', args);
   return mongoose.model(modelName)
     .findById(id)
     .then(res => {
@@ -53,7 +57,7 @@ ipcMain.handle('model.callMethod', async (event, {modelName, id, methodName, arg
 });
 
 ipcMain.handle('model.callStatic', async (event, {modelName, methodName, args}) => {
-  console.log(modelName, methodName, args);
+  logger.debug(modelName, methodName, args);
   return mongoose.model(modelName)[methodName](...args).then(res => res && res.toJSON ? res.toJSON({
     virtuals: true,
     getters: true

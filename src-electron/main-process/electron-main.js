@@ -1,6 +1,5 @@
-import {app, BrowserWindow, Menu, nativeTheme, nativeImage, Tray} from 'electron'
+import {app, BrowserWindow, nativeTheme, protocol} from 'electron'
 import {setup} from '../utils/db'
-import '../utils/images'
 import '../utils/google-auth'
 import '../utils/processing'
 import fs from "fs";
@@ -9,6 +8,9 @@ import mkdirp from "mkdirp";
 import {startIpcServer, stopIpcServer} from "app/src-electron/ipc-service";
 import {startFileWatcher, stopFileWatcher} from "app/src-electron/file-watcher-service";
 import {startJobRunnerInterval, stopJobRunnerInterval} from "app/src-electron/job-runner-service";
+import {createLogger} from "app/logger";
+
+const logger = createLogger({label: 'main-process'});
 
 try {
   if (process.platform === 'win32' && nativeTheme.shouldUseDarkColors === true) {
@@ -26,9 +28,6 @@ if (process.env.PROD) {
 }
 
 export async function quitApp() {
-  stopJobRunnerInterval();
-  await stopFileWatcher();
-  stopIpcServer();
   if (mainWindow) {
     mainWindow.close();
   }
@@ -38,7 +37,6 @@ export async function quitApp() {
 }
 
 let mainWindow = null;
-let tray;
 let ipcServer;
 
 async function createWindow() {
@@ -49,46 +47,36 @@ async function createWindow() {
     width: 800,
     height: 600,
     useContentSize: true,
-    frame: false,
+    show: true,
+    title: "Jays Youtube Auto Processor",
     webPreferences: {
       nodeIntegration: process.env.QUASAR_NODE_INTEGRATION,
-      nodeIntegrationInWorker: process.env.QUASAR_NODE_INTEGRATION,
+      nodeIntegrationInWorker: process.env.QUASAR_NODE_INTEGRATION
     }
   });
 
-  mainWindow.maximize();
-
-  mainWindow.loadURL(process.env.APP_URL)
-
   mainWindow.on('closed', () => {
     mainWindow = null
-  });
+  })
+
+  await mainWindow.loadURL(process.env.APP_URL);
+  mainWindow.maximize();
 }
 
 
 app.on('ready', async () => {
-  tray = new Tray(path.resolve(path.join(__dirname, '../icons/icon.ico')));
+  ipcServer = startIpcServer();
 
-  const contextMenu = Menu.buildFromTemplate([
-    {
-      label: 'Close',
-      click: async () => {
-        console.log('close app');
-        await quitApp();
-      }
-    }
-  ]);
-
-  tray.setToolTip("Jay's Channel Manager");
-  tray.setContextMenu(contextMenu);
-  tray.on('double-click', () => {
-    console.log('double click !');
-    if (mainWindow === null) {
-      createWindow();
+  protocol.registerFileProtocol('thumbnail', (request, callback) => {
+    const url = decodeURIComponent(request.url.replace('thumbnail://', ''));
+    logger.info("Requesting file with url %O", url);
+    try {
+      return callback(url);
+    } catch (err) {
+      logger.error('Error loading image %s: %s', url, err.message);
+      return callback(404);
     }
   });
-
-  ipcServer = startIpcServer();
 
   ipcServer.on('db.event', (data, socket) => {
     if (mainWindow) {
@@ -132,14 +120,22 @@ app.on('ready', async () => {
   }
 });
 
-app.on('before-quit', function () {
-  if (tray) {
-    tray.destroy();
-  }
-});
-
 app.on('activate', () => {
   if (mainWindow === null) {
     createWindow();
   }
 })
+
+app.on('will-quit', async () => {
+  stopJobRunnerInterval();
+  stopIpcServer();
+  stopFileWatcher();
+})
+
+app.on('window-all-closed', () => {
+  logger.debug('all windows closed', process.platform);
+  if (process.platform !== 'darwin') {
+    quitApp();
+  }
+})
+

@@ -12,7 +12,6 @@ const path = require('path');
 const mkdirp = require('mkdirp');
 const rootDir = path.join(os.tmpdir(), 'youtube-auto-processor', 'upload');
 mkdirp.sync(rootDir);
-const moment = require('moment');
 
 module.exports = {
   uploadJob: async function (job) {
@@ -22,11 +21,6 @@ module.exports = {
     }
 
     let oauth2client = await GoogleToken.resolveOAuth2Client();
-
-    const youtube = google.youtube({
-      version: 'v3',
-      auth: oauth2client
-    });
 
     try {
       if (!job.populated('episode')) await job.populate({path: 'episode', populate: 'serie'}).execPopulate();

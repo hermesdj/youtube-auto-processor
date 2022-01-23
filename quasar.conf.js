@@ -184,15 +184,16 @@ module.exports = function (/* ctx */) {
 
         // Windows only
         // win32metadata: { ... }
+        extraResource: 'public',
+        asar: {
+          unpackDir: "node_modules/puppeteer"
+        }
       },
 
       builder: {
         // https://www.electron.build/configuration/configuration
 
-        appId: 'app-quasar',
-        win: {
-          icon: 'src-electron/icons/icon.ico'
-        }
+        appId: 'jays-auto-processor'
       },
 
       // More info: https://v1.quasar.dev/quasar-cli/developing-electron-apps/node-integration

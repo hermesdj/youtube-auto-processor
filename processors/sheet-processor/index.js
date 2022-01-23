@@ -31,7 +31,7 @@ async function process(auth, job, appConfig, startDate = new Date()) {
 
   let year = moment(startDate).format('YYYY');
   let start = 'A1';
-  let end = 'H40';
+  let end = 'H50';
   let sheetName = month.concat(' ').concat(year);
 
   let range = sheetName.concat('!').concat(start).concat(':').concat(end);

@@ -1,76 +1,44 @@
-﻿import {fork} from "child_process";
-import path from "path";
-import {createLogger} from "app/logger";
-import {ipcMain} from "electron";
+﻿import {createLogger} from "app/logger";
+import processUpload from './process';
 
 const logger = createLogger({label: 'upload-service'});
 
-let countRunningProcesses = 0;
-let jobMap = new Map();
+const maxRunningProcesses = 1;
+const jobMap = new Map();
 
 export function runUploadService(jobId) {
   if (jobMap.has(jobId)) {
+    logger.info("Job %s already has an upload process", jobId);
     return jobMap.get(jobId);
   }
 
-  if (countRunningProcesses > 0) {
+  if (jobMap.size >= maxRunningProcesses) {
     logger.info('Upload already in progress, wait for upload to end');
     return;
   }
-  logger.info('Forking a new upload process');
 
-  const process = fork(
-    path.resolve(
-      path.join(__dirname, 'process.js')
-    ),
-    ['args'], {
-      stdio: ['pipe', 'pipe', 'pipe', 'ipc']
-    }
+  jobMap.set(jobId,
+    processUpload(jobId)
+      .then(() => {
+        logger.info("Upload Processor for job %s is done", jobId);
+      })
+      .catch((err) => {
+        logger.error("Upload Processor error for job %s is in error: %s", jobId, err.message);
+      })
+      .finally(() => {
+        if (jobMap.has(jobId)) {
+          jobMap.delete(jobId);
+        }
+      })
   );
 
-  jobMap.set(jobId, process);
-
-  process.on('message', (m) => {
-    console.log('upload service process message', m);
-  });
-
-  process.stdout.on('data', (data) => console.log(data.toString()));
-  process.stderr.on('data', (err) => console.log(err.toString()));
-
-  process.on('close', code => {
-    logger.info('Upload process closed with code %d', code);
-    countRunningProcesses--;
-
-    if (countRunningProcesses < 0) {
-      countRunningProcesses = 0;
-    }
-
-    jobMap.delete(jobId);
-  });
-
-  countRunningProcesses++;
-
-  return process;
+  return jobMap.get(jobId);
 }
 
 export function hasRunningProcesses() {
-  return countRunningProcesses > 0;
+  return jobMap.size > 0;
 }
 
 export function getRunningProcessCount() {
-  return countRunningProcesses;
+  return jobMap.size;
 }
-
-export function killUploadProcess(jobId) {
-  if (jobMap.has(jobId)) {
-    let process = jobMap.get(jobId);
-    process.kill('SIGINT');
-    return true;
-  } else {
-    return null;
-  }
-}
-
-ipcMain.handle('upload-service.killUpload', async (event, {jobId}) => {
-  return killUploadProcess(jobId);
-});

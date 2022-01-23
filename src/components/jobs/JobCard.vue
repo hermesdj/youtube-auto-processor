@@ -2,7 +2,7 @@
   <q-card v-if="localJob" square>
     <q-img
       v-if="localJob.episode && localJob.episode.thumbnail"
-      :src="`http://localhost:8889/file/${encodeURIComponent(localJob.episode.thumbnail)}`"
+      :src="`thumbnail://${encodeURIComponent(localJob.episode.thumbnail)}`"
     >
       <q-btn
         v-if="localJob.episode.youtube_id"

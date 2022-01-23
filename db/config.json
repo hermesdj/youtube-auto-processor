@@ -1,11 +1,10 @@
 ﻿{
   "mongo": {
-    "uri": "mongodb://localhost:27017/youtube-auto-processor",
+    "uri": "mongodb://root:mongo@mongodb-primary:27017/youtube-auto-processor?replicaSet=rs&authSource=admin",
     "options": {
       "useUnifiedTopology": true,
       "useNewUrlParser": true,
-      "poolSize": 2,
-      "createIndexes": true
+      "poolSize": 2
     }
   }
 }

@@ -1,61 +1,47 @@
-﻿import {fork} from "child_process";
-import path from "path";
-import {createLogger} from "app/logger";
+﻿import {createLogger} from "app/logger";
+import processVideo from "./process";
 
 const logger = createLogger({label: 'video-service'});
 
-let countRunningProcesses = 0;
-let jobMap = new Map();
+const maxRunningProcesses = 2;
+const jobMap = new Map();
 
 export function runVideoService(jobId) {
   if (jobMap.has(jobId)) {
+    logger.info("Job %s already has a running video service process", jobId);
     return jobMap.get(jobId);
   }
 
-  if (countRunningProcesses > 1) {
+  if (jobMap.size >= maxRunningProcesses) {
     logger.info('Video processing already in progress, wait for one of them to end');
     return;
   }
 
   logger.info('Forking a new video service process');
-  const process = fork(
-    path.resolve(
-      path.join(__dirname, 'process.js')
-    ),
-    ['args'], {
-      stdio: ['pipe', 'pipe', 'pipe', 'ipc']
-    }
+
+  jobMap.set(
+    jobId,
+    processVideo(jobId)
+      .then(() => {
+        logger.info("Video Processor for job %s is done", jobId);
+      })
+      .catch((err) => {
+        logger.error("Video Processor error for job %s is in error: %s", jobId, err.message);
+      })
+      .finally(() => {
+        if (jobMap.has(jobId)) {
+          jobMap.delete(jobId);
+        }
+      })
   );
 
-  jobMap.set(jobId, process);
-
-  process.on('message', (m) => {
-    console.log('video service process message', m);
-  });
-
-  process.stdout.on('data', (data) => console.log(data.toString()));
-  process.stderr.on('data', (err) => console.log(err.toString()));
-
-  process.on('close', code => {
-    logger.info('Video service process closed with code %d', code);
-    countRunningProcesses--;
-
-    if (countRunningProcesses < 0) {
-      countRunningProcesses = 0;
-    }
-
-    jobMap.delete(jobId);
-  });
-
-  countRunningProcesses++;
-
-  return process;
+  return jobMap.get(jobId);
 }
 
 export function hasRunningProcesses() {
-  return countRunningProcesses > 0;
+  return jobMap.size > 0;
 }
 
 export function getRunningProcessCount() {
-  return countRunningProcesses;
+  return jobMap.size;
 }

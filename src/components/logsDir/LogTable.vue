@@ -58,7 +58,6 @@
 
 <script>
 import moment from 'moment';
-import {Log} from "src/models/Log";
 
 export default {
   name: "LogList",
@@ -170,12 +169,15 @@ export default {
           filter.level = {$in: this.filter.levels};
         }
 
-        let {total, rows} = await Log.api().paginate({
+        /*let {total, rows} = await Log.api().paginate({
           filter,
           offset: (page - 1) * rowsPerPage,
           limit: rowsPerPage,
           sort: {[sortBy]: descending ? -1 : 1}
-        });
+        });*/
+
+        let total = 0;
+        let rows = [];
 
         this.logs = rows;
         this.pagination.rowsNumber = total;
@@ -185,14 +187,14 @@ export default {
         this.pagination.descending = descending;
 
         if (this.labelList.length === 0) {
-          this.labelList = await Log.api().callStatic("listLabels", []);
+          this.labelList = [];
         }
       } finally {
         this.loading = false;
       }
     },
     async clearLogs() {
-      await Log.api().callStatic('deleteMany', [{}]);
+
     }
   }
 }
@@ -217,14 +219,6 @@ export default {
     top: 0
 
   /* this is when the loading indicator appears */
-
-
-
-
-
-
-
-
 
   &.q-table--loading thead tr:last-child th
     /* height of all previous header rows */

@@ -3,6 +3,8 @@ const {Schema} = mongoose;
 const fs = require('fs');
 const {google} = require('googleapis');
 const {OAuth2} = google.auth;
+const {createLogger} = require('../logger');
+const logger = createLogger({label: 'model-google'});
 
 const GoogleClientConfigSchema = new Schema(
   {
@@ -235,7 +237,7 @@ GoogleCookieConfigSchema.methods.toPuppeteerCookies = function () {
 GoogleCookieConfigSchema.methods.updateFromPageCookies = async function (pageCookies) {
   for (let {name, value} of pageCookies) {
     if (cookieNames.includes(name)) {
-      console.log('set cookie', name, 'with value', value);
+      logger.debug('set cookie %s with value %s', name, value);
       this.set(name, value);
     }
   }

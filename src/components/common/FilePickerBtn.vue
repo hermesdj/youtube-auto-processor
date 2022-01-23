@@ -26,7 +26,6 @@ export default {
     file(val) {
       if (val && val.length > 0) {
         let file = val[0];
-        console.log(file);
         this.$emit('onFile', file);
         this.$emit('onFilePath', file.path);
       }

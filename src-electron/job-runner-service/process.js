@@ -251,7 +251,9 @@ const updateMultipleJobsProcessing = async function (jobs) {
 
       await job.save();
 
-      if (processingDetails.processingStatus === 'succeeded') {
+      logger.info("processing details for %s is %s and definition is %s", job.episode.youtube_id, processingDetails.processingStatus, contentDetails.definition);
+
+      if (processingDetails.processingStatus === 'succeeded' || (processingDetails.processingProgress && (parseInt(processingDetails.processingProgress.partsProcessed) === parseInt(processingDetails.processingProgress.partsTotal)))) {
         // Move to next step as processing is done
         logger.info('video %s definition is %s', job.episode.youtube_id, contentDetails.definition);
 
@@ -284,7 +286,6 @@ const processMap = {
 
 export async function runJobRunner(db, appConfig) {
   Job = db.model('Job');
-  Log = db.model('Log');
 
   try {
     let currentState = states.READY;
@@ -336,20 +337,12 @@ export async function runJobRunner(db, appConfig) {
     }).populate('episode');
 
     if (videosAlreadyUpdated.length > 0) {
+      logger.info("%d videos have to be checked", videosAlreadyUpdated.length);
       let minLastUpdateDate = minBy(videosAlreadyUpdated, 'lastProcessFetchDate');
+      logger.info("Last update date was %s and update need to be done is %s", minLastUpdateDate.lastProcessFetchDate, moment(minLastUpdateDate.lastProcessFetchDate).isBefore(moment().subtract(1, 'minutes')));
       if (moment(minLastUpdateDate.lastProcessFetchDate).isBefore(moment().subtract(1, 'minutes'))) {
         await updateMultipleJobsProcessing(videosAlreadyUpdated);
       }
-    }
-
-    logger.debug('Deleting logs older than a week');
-
-    let result = await Log.deleteMany({
-      timestamp: {$lte: moment().subtract(2, 'days').toDate()}
-    });
-
-    if (result && result.deletedCount > 0) {
-      logger.debug('deleted %d logs from database', result.deletedCount);
     }
 
   } catch (err) {

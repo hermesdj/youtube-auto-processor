@@ -1,5 +1,7 @@
 const YT_STUDIO_URL = 'https://studio.youtube.com/';
 const puppeteer = require("puppeteer");
+const {createLogger} = require('../../../logger');
+const logger = createLogger({label: 'youtube-studio-upload'});
 
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -22,7 +24,9 @@ async function upload(
 ) {
   return new Promise(async (resolve, reject) => {
     try {
-      const browser = await puppeteer.launch();
+      const browser = await puppeteer.launch({
+        executablePath: puppeteer.executablePath().replace('app.asar', 'app.asar.unpacked')
+      });
       const page = await browser.newPage();
       await page.setUserAgent('Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36');
 
@@ -38,13 +42,13 @@ async function upload(
       await page.setCookie(...cookies);
 
       async function watchResponse(interceptedResponse) {
-        //console.log('A response was received:', interceptedResponse.url());
+        //logger.debug('A response was received:', interceptedResponse.url());
         if (interceptedResponse.url().startsWith('https://studio.youtube.com/youtubei/v1/upload/createvideo')) {
           let data = await interceptedResponse.json();
           if (!data.videoId) {
             reject(new Error('No VideoId found'));
           } else {
-            console.log('intercepted video id', data.videoId);
+            logger.debug('intercepted video id', data.videoId);
             videoId = data.videoId;
           }
         }
@@ -53,7 +57,7 @@ async function upload(
       page.on('response', watchResponse);
 
       page.once('domcontentloaded', async () => {
-        console.log('page opened, process file upload for', newTitle);
+        logger.debug('page opened, process file upload for', newTitle);
         await sleep(5000);
 
         await page.click("#create-icon");
@@ -65,9 +69,9 @@ async function upload(
           page.waitForFileChooser(),
           page.click('#select-files-button > div')
         ]);
-        
+
         await fileChooser.accept([filePath]);
-        console.log('file is uploading, waiting for processing selector...');
+        logger.debug('file is uploading, waiting for processing selector...');
 
         let progressWatcher = setInterval(async () => {
           let progressBarValues = await page.$$eval('tp-yt-paper-progress', el => el.map(x => x.getAttribute("value")));
@@ -79,18 +83,18 @@ async function upload(
 
             if (value) {
               let percent = parseInt(value);
-              console.log('upload progress is', value, '%');
+              logger.debug('upload progress is', value, '%');
               onProgress({percent});
 
               if (percent === 100 && videoId) {
-                console.log('uploaded video id is', videoId);
+                logger.debug('uploaded video id is', videoId);
                 clearInterval(progressWatcher);
 
                 await sleep(5000);
-                console.log('wait for processing selector');
+                logger.debug('wait for processing selector');
                 await page.waitForSelector("ytcp-video-upload-progress[processing]", {timeout: 120000});
 
-                console.log('closing upload dialog and puppeteer browser');
+                logger.debug('closing upload dialog and puppeteer browser');
                 await page.close();
                 await browser.close();
 
@@ -98,7 +102,7 @@ async function upload(
               }
             }
           } else {
-            console.log('no element tp-yt-paper-progress found')
+            logger.debug('no element tp-yt-paper-progress found')
           }
         }, 5000);
 

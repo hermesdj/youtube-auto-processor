@@ -1,7 +1,4 @@
-﻿process.env.IPC_ID = "video-processor-service-" + process.pid;
-
-const {connect} = require('../../db');
-const {createLogger} = require('../../logger');
+﻿const {createLogger} = require('../../logger');
 const logger = createLogger({label: 'process-video-service'});
 const videoProcessor = require('../../processors/video-processor');
 const states = require('../../config/states');
@@ -10,11 +7,9 @@ const path = require('path');
 const mkdirp = require('mkdirp');
 const {Job, Config} = require('../../model');
 
-async function runService(config) {
+async function runService(config, jobId) {
   let job = await Job
-    .findOne({
-      state: states.VIDEO_READY.label
-    })
+    .findById(jobId)
     .sort('date_created')
     .populate({
       path: 'episode',
@@ -23,6 +18,11 @@ async function runService(config) {
 
   if (!job) {
     logger.info('No episode in %s state to process', states.VIDEO_READY.label);
+    return;
+  }
+
+  if (job.state !== states.VIDEO_READY.label) {
+    logger.error("Job with id %s is in state %s", jobId, job.state);
     return;
   }
 
@@ -60,12 +60,16 @@ async function runService(config) {
     logger.error('video processor error: %s', err.message);
     job.state = 'VIDEO_READY';
     await job.error(err);
+    throw err;
   }
 }
 
-(async () => {
-  logger.info('starting video processor service');
-  const db = await connect();
+module.exports = async (jobId) => {
+  if (!jobId) {
+    throw new Error('No Job ID provided to process video service');
+  }
+
+  logger.info('starting video processor service for job %s', jobId);
 
   const config = await Config.loadAsObject();
 
@@ -83,10 +87,5 @@ async function runService(config) {
     await mkdirp(config.outputDirectory);
   }
 
-  try {
-    await runService(config);
-  } finally {
-    await db.connection.close();
-    process.exit(0);
-  }
-})();
+  return await runService(config, jobId);
+}

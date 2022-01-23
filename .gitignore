@@ -75,4 +75,5 @@ yarn-error.log*
 *.ntvs*
 *.njsproj
 *.sln
+/db_backup
 

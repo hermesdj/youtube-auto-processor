@@ -7,9 +7,6 @@
           {{ $t('app.title') }}
         </div>
         <q-space></q-space>
-        <q-btn dense flat icon="minimize" @click="minimize"/>
-        <q-btn :icon="isMaximized ? 'crop_free' : 'crop_square'" dense flat @click="maximize"/>
-        <q-btn dense flat icon="close" @click="close"/>
       </q-bar>
     </q-header>
 
@@ -115,7 +112,7 @@ export default {
 
     close() {
       if (process.env.MODE === 'electron') {
-        this.$q.electron.remote.BrowserWindow.getFocusedWindow().close();
+        this.$q.electron.remote.BrowserWindow.getFocusedWindow().close()
       }
     }
   }

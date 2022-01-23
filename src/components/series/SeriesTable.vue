@@ -55,7 +55,7 @@
             thumbnail
           >
             <img
-              :src="`http://localhost:8889/file/${encodeURIComponent(props.row.thumbnail)}`"
+              :src="`thumbnail://${encodeURIComponent(props.row.thumbnail)}`"
             />
           </q-item-section>
           <q-item-section>
@@ -86,7 +86,7 @@ export default {
       sortBy: 'createdAt',
       descending: true,
       page: 1,
-      rowsPerPage: 50,
+      rowsPerPage: 10,
       rowsNumber: -1
     },
     searchInput: '',
@@ -187,6 +187,8 @@ export default {
 
         let {total, rows} = await Serie.api().paginate({
           filter,
+          offset: (page - 1) * rowsPerPage,
+          limit: rowsPerPage,
           sort: {[sortBy]: descending ? -1 : 1},
           projection: {},
           options: {

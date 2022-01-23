@@ -72,7 +72,7 @@
               thumbnail
           >
             <img
-                :src="`http://localhost:8889/file/${encodeURIComponent(props.row.episode.thumbnail)}`"
+                :src="`thumbnail://${encodeURIComponent(props.row.episode.thumbnail)}`"
             />
           </q-item-section>
           <q-item-section>

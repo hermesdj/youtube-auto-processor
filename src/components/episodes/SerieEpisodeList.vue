@@ -1,27 +1,32 @@
 ﻿<template>
-  <q-list separator>
-    <q-item
-      v-for="episode in episodes" :key="episode.id"
-      :to="{name: 'episodePage', params: {id: episode.id}}"
-    >
-      <q-item-section side thumbnail top>
-        <img
-          :src="`http://localhost:8889/file/${encodeURIComponent(serie.path + '/thumbnails/' + episode.episode_number + '.png')}`"/>
-      </q-item-section>
-      <q-item-section top>
-        <q-item-label class="text-bold">{{ episode.video_name }}</q-item-label>
-        <q-item-label class="text-grey text-caption">
-          {{ $t('episodes.messages.publishAt', {publishAt: formatDate(episode.publishAt, 'DD/MM/YYYY HH:mm')}) }}
-        </q-item-label>
-      </q-item-section>
-      <q-item-section side top>
-        <div v-if="episode.job">{{ episode.job.state }}</div>
-      </q-item-section>
-    </q-item>
-    <q-item v-if="!episodes || episodes.length === 0">
-      <q-item-label class="text-center full-width">{{ $t('series.episodes.empty') }}</q-item-label>
-    </q-item>
-  </q-list>
+    <q-list separator>
+      <div class="q-px-lg q-py-md flex flex-center">
+        <q-pagination color="primary" v-model="options.page" :max="Math.ceil(countEpisodes / options.limit)" boundary-links :max-pages="5" direction-links></q-pagination>
+      </div>
+      <q-separator />
+      <q-item
+        v-for="episode in episodes" :key="episode.id"
+        :to="{name: 'episodePage', params: {id: episode.id}}"
+        class="bg-grey-2"
+      >
+        <q-item-section side thumbnail top>
+          <img
+            :src="`thumbnail://${encodeURIComponent(serie.path + '/thumbnails/' + episode.episode_number + '.png')}`"/>
+        </q-item-section>
+        <q-item-section top>
+          <q-item-label class="text-bold">{{ episode.video_name }}</q-item-label>
+          <q-item-label class="text-grey text-caption">
+            {{ $t('episodes.messages.publishAt', {publishAt: formatDate(episode.publishAt, 'DD/MM/YYYY HH:mm')}) }}
+          </q-item-label>
+        </q-item-section>
+        <q-item-section side top>
+          <div v-if="episode.job">{{ episode.job.state }}</div>
+        </q-item-section>
+      </q-item>
+      <q-item v-if="(!episodes || episodes.length === 0) && !loading">
+        <q-item-label class="text-center full-width">{{ $t('series.episodes.empty') }}</q-item-label>
+      </q-item>
+    </q-list>
 </template>
 
 <script>
@@ -39,10 +44,19 @@ export default {
     serie: {
       type: Serie,
       required: true
+    },
+    countEpisodes: {
+      type: Number,
+      default: 0
     }
   },
   data: () => ({
     episodes: [],
+    options: {
+      page: 1,
+      limit: 10
+    },
+    loading: false
   }),
   created() {
     this.subscription = dbEvents.asObservable()
@@ -116,17 +130,34 @@ export default {
       immediate: true,
       deep: true,
       handler(val) {
-        if (val && val.episodes) {
-          this.episodes = val.episodes;
-        } else {
-          this.episodes = [];
-        }
+        this.loadEpisodes(val.id);
+      }
+    },
+    options: {
+      immediate: true,
+      deep: true,
+      handler(val){
+        this.episodes.splice(0, this.episodes.length);
+        this.loadEpisodes(this.serie.id);
       }
     }
   },
   methods: {
     formatDate(date, format) {
       return moment(date).format(format);
+    },
+    async loadEpisodes(serieId) {
+      this.loading = true;
+      return this.$nextTick(() => {
+        return Episode.api().find({
+          filter: {serie: serieId}, sort: '-episode_number', options: {
+            populate: 'job',
+            skip: (this.options.page - 1) * this.options.limit,
+            limit: this.options.limit
+          }
+        }).then(res => this.episodes = res)
+          .finally(() => this.loading = false);
+      });
     }
   }
 }

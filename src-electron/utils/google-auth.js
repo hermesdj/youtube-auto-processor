@@ -1,9 +1,13 @@
 ﻿import {BrowserWindow, ipcMain} from 'electron';
 import {google} from 'googleapis';
 import URL from 'url';
-import {GoogleCookieConfig, GoogleToken} from "../../model/google.model";
+import {GoogleCookieConfig, GoogleToken} from "app/model/google.model";
 import youtubeProcessor from "../../processors/youtube-processor";
 import {set} from 'lodash';
+
+import {createLogger} from 'app/logger';
+
+const logger = createLogger({label: 'electron-google-auth-utils'});
 
 const OAuth2 = google.auth.OAuth2;
 
@@ -32,7 +36,7 @@ ipcMain.handle('google.auth', async (event, config) => {
           scope: SCOPES
         });
 
-        console.log('opening auth uri', authUri);
+        logger.debug('opening auth uri', authUri);
         await win.loadURL(
           authUri,
           {userAgent: 'Chrome'}
@@ -78,7 +82,7 @@ ipcMain.handle('youtube.authOnYoutubeStudio', async (event, channel) => {
     throw new Error('No channel provided');
   }
 
-  console.log('deleting existing cookie config');
+  logger.debug('deleting existing cookie config');
   await GoogleCookieConfig.deleteMany({});
 
   return new Promise(async (resolve, reject) => {
@@ -96,7 +100,7 @@ ipcMain.handle('youtube.authOnYoutubeStudio', async (event, channel) => {
 
       let studioUri = `https://studio.youtube.com/channel/${channel.channelId}`;
 
-      console.log('load studio uri', studioUri);
+      logger.debug('load studio uri', studioUri);
 
       await win.loadURL(
         studioUri,
@@ -120,7 +124,7 @@ ipcMain.handle('youtube.authOnYoutubeStudio', async (event, channel) => {
         if (win) {
           let session = win.webContents.session;
           let cookies = await session.cookies.get({});
-          console.log(cookies);
+          logger.debug(cookies);
 
           let config = cookies.reduce((acc, c) => {
             if (!searchedCookieNames.includes(c.name)) return acc;
@@ -128,7 +132,7 @@ ipcMain.handle('youtube.authOnYoutubeStudio', async (event, channel) => {
           }, {});
 
           if (Object.keys(config).length >= searchedCookieNames.length - 1) {
-            console.log('cookie config is', config);
+            logger.debug('cookie config is', config);
             win.close();
             win = null;
 
@@ -150,5 +154,5 @@ ipcMain.handle('youtube.paginateChannels', async (event, {pageToken}) => {
 });
 
 ipcMain.handle('youtube.saveChannel', async (event, {channel}) => {
-  console.log(channel);
+  logger.debug(channel);
 });

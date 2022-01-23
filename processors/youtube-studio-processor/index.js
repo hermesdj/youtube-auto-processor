@@ -27,11 +27,11 @@ module.exports = {
     let allowMidRolls = true;
     let midVideoMilliseconds = 1200000;
 
-    if(job.details && job.details.duration){
+    if (job.details && job.details.duration) {
       let parsedDuration = parse(job.details.duration);
       let seconds = toSeconds(parsedDuration);
 
-      if(seconds > 1200000){
+      if (seconds > 1200000) {
         midVideoMilliseconds = (seconds / 2) * 1000;
       } else {
         allowMidRolls = false;
@@ -72,11 +72,15 @@ module.exports = {
       throw new Error('details duration missing');
     }
 
-    console.log('duration is', job.details.duration);
+    logger.debug('duration is %s', job.details.duration);
     let parsedDuration = parse(job.details.duration);
-    console.log('parsed duration is', parsedDuration);
+    logger.debug('parsed duration is %j', parsedDuration);
     let seconds = toSeconds(parsedDuration);
-    console.log('video seconds is', seconds);
+    logger.info('video seconds is %d', seconds);
+
+    if (seconds === 0) {
+      throw new Error('Video Seconds is 0');
+    }
 
     let episode = await Episode.findById(job.episode._id);
 

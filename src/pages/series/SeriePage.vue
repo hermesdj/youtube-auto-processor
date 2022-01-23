@@ -7,7 +7,7 @@
       <div class="col col-shrink full-height">
         <div class="q-pa-md q-gutter-md">
           <q-img
-            :src="`http://localhost:8889/file/${encodeURIComponent(serie.thumbnail)}`"
+            :src="`thumbnail://${encodeURIComponent(serie.thumbnail)}`"
             style="max-width: 312px;"
           >
 
@@ -30,9 +30,9 @@
           </div>
         </div>
       </div>
-      <div class="col col-grow bg-grey-2">
-        <div class="q-pa-md full-height">
-          <SerieEpisodeList :serie="serie"/>
+      <div class="col col-grow">
+        <div class="full-height">
+          <SerieEpisodeList :serie="serie" :countEpisodes="serie.episodes.length"/>
         </div>
       </div>
     </div>
@@ -76,13 +76,7 @@ export default {
     this.subscription = dbEvents.asObservable()
       .pipe(filter(event => event.collection === 'series' && event.data.id === this.id))
       .subscribe(event => {
-        let serie = new Serie(event.data);
-
-        if (!serie.episodes && this.serie && this.serie.episodes) {
-          serie.episodes = this.serie.episodes;
-        }
-
-        this.serie = serie;
+        this.serie = new Serie(event.data);
       });
   },
   beforeDestroy() {
@@ -97,7 +91,7 @@ export default {
       try{
         this.serie = await Serie
           .api()
-          .findById(this.id, {}, {populate: {path: 'episodes', populate: 'job'}});
+          .findById(this.id, {}, {populate: 'episodes'});
       }finally{
         this.loading = false;
       }

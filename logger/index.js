@@ -1,8 +1,5 @@
 const {createLogger, format, transports} = require('winston');
 const {json, combine, timestamp, splat, printf} = format;
-require('winston-mongodb').MongoDB;
-
-const dbConfig = require('../db/config.json');
 
 const myFormat = printf(({level, message, label, timestamp, metadata: {pid}}) => {
   return `${timestamp} [${label}/${pid}] ${level}: ${message}`;
@@ -10,7 +7,6 @@ const myFormat = printf(({level, message, label, timestamp, metadata: {pid}}) =>
 
 module.exports = {
   createLogger: function ({label, level = 'info'}) {
-
     const jsonFormat = combine(
       splat(),
       format.label({label}),
@@ -24,18 +20,7 @@ module.exports = {
       myFormat
     )
 
-    let loggerTransports = [
-      new transports.MongoDB({
-        level,
-        db: dbConfig.mongo.uri,
-        collection: 'log',
-        options: dbConfig.mongo.options,
-        label,
-        decolorize: true,
-        expireAfterSeconds: 60 * 60 * 24,
-        storeHost: true
-      })
-    ];
+    let loggerTransports = [];
 
     if (process.env.NODE_ENV === 'development') {
       loggerTransports.push(
@@ -48,20 +33,26 @@ module.exports = {
           format: consoleFormat
         })
       );
-    }
-
-    if (process.env.NODE_ENV === 'production') {
+    } else if (process.env.NODE_ENV === 'production') {
       loggerTransports.push(
         new transports.File({
-          filename: 'log',
+          filename: 'logs/combined/youtube-auto-processor-log.log',
           maxsize: 1024 * 1000 * 5,
-          maxFiles: 10
+          maxFiles: 10,
+          format: consoleFormat
         }),
         new transports.File({
           level: 'error',
-          filename: 'log-error',
+          filename: 'logs/error/youtube-auto-processor-errors.log',
           maxsize: 1024 * 1000 * 5,
-          maxFiles: 10
+          maxFiles: 10,
+          format: consoleFormat
+        }),
+        new transports.File({
+          filename: 'logs/json/youtube-auto-processor.json',
+          maxsize: 1024 * 1000 * 5,
+          maxFiles: 10,
+          format: jsonFormat
         }),
       )
     }

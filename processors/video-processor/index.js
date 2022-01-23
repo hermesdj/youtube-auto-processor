@@ -8,7 +8,8 @@ const mkdirp = require('mkdirp');
 const moment = require('moment');
 const {createLogger} = require('../../logger');
 const logger = createLogger({label: 'video-processor'});
-const {Config} = require('../../model');
+const {Config, Job, Episode} = require('../../model');
+const {emitMessage} = require('../../db/plugins/mongoose-ipc/io');
 
 async function initFfmpeg(config) {
   if (!config) {
@@ -37,6 +38,14 @@ async function resolveMetadata(path) {
       resolve(metadata);
     })
   });
+}
+
+async function saveJob(job, state, process_data) {
+  await Job.updateOne({_id: job._id}, {$set: {state, process_data}});
+  job.state = state;
+  job.process_data = process_data;
+  job.markModified('process_data');
+  await emitMessage(job.constructor.collection.name, job.constructor.modelName, job, 'UPDATE');
 }
 
 async function processJob(job, config) {
@@ -156,16 +165,16 @@ async function processJob(job, config) {
         duration,
         startDate: moment().toDate()
       };
-      job.markModified('process_data');
 
-      await job.save();
+      await saveJob(job, job.state, job.process_data);
     });
 
     command.on('progress', async function (progress) {
       logger.debug('process is %j', progress);
       job.process_data.progress = progress;
       job.markModified('process_data');
-      await job.save();
+
+      await saveJob(job, 'VIDEO_PROCESSING', job.process_data);
     });
 
     command.on('error', async function (err) {
@@ -176,15 +185,15 @@ async function processJob(job, config) {
     command.on('end', async function () {
       logger.info('FFMPEG Command end');
       job.episode.path = out;
-
-      await job.episode.save();
+      await Episode.updateOne({_id: job.episode._id}, {$set: {path: out}});
 
       job.state = 'VIDEO_DONE';
       job.last_state = 'VIDEO_PROCESSING';
 
       job.process_data.endDate = moment().toDate();
       job.markModified('process_data');
-      await job.save();
+      await saveJob(job, 'VIDEO_DONE', job.process_data);
+      await Job.updateOne({_id: job._id}, {$set: {last_state: 'VIDEO_PROCESSING'}});
 
       resolve(job.process_data);
     });

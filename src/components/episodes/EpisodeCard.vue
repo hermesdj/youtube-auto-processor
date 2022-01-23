@@ -4,7 +4,7 @@
       <div class="col-4">
         <q-img
           v-if="localEpisode && localEpisode.thumbnail"
-          :src="`http://localhost:8889/file/${encodeURIComponent(localEpisode.thumbnail)}`"
+          :src="`thumbnail://${encodeURIComponent(localEpisode.thumbnail)}`"
           style="max-width: 100%;"
         >
           <q-btn
