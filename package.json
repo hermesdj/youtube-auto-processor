@@ -37,7 +37,7 @@
     "lodash": "^4.17.21",
     "mime": "^1.6.0",
     "mkdirp": "^1.0.4",
-    "moment": "^2.29.1",
+    "moment": "^2.29.4",
     "mongoose": "^5.13.14",
     "move-file": "^2.1.0",
     "node-fetch": "^2.6.7",
