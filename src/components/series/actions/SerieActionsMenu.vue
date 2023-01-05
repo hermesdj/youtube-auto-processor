@@ -74,7 +74,13 @@
         <q-separator/>
         <q-card-actions>
           <q-space></q-space>
-          <q-btn :label="$t('app.btn.save')" :loading="saving" flat icon="save" @click="save"/>
+          <q-btn
+            :label="$t('app.btn.save')"
+            :loading="saving"
+            flat
+            icon="save"
+            @click="save"
+          />
         </q-card-actions>
       </q-card>
     </q-menu>
@@ -110,10 +116,12 @@ export default {
       this.saving = true;
 
       try {
-        // TODO
+        const serie = new Serie(this.localSerie);
+        await serie.updateStatus(this.localSerie.status);
         this.$emit('update:serie', new Serie(this.localSerie));
         this.menu = false;
       } catch (err) {
+        console.error('Error saving serie', err);
         this.$q.notify({
           color: 'red-4',
           textColor: 'white',

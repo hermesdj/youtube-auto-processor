@@ -374,4 +374,11 @@ SerieSchema.statics.updateSerieData = async function (serieId, serieData) {
   return serie.save();
 }
 
+SerieSchema.methods.updateStatus = async function (status) {
+  logger.info('Moving serie %s to status %s', this._id, status);
+  this.status = status;
+
+  return this.save();
+}
+
 module.exports = mongoose.model('Serie', SerieSchema);

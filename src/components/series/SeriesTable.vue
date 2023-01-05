@@ -76,25 +76,37 @@
 <script>
 import moment from "moment";
 import {Serie} from "src/models/Serie";
-import {truncate} from 'lodash';
+import {truncate, isEqual} from 'lodash';
+
+function formatPagination(val) {
+  return {
+    descending: val.descending === 'true',
+    page: parseInt(val.page),
+    rowsNumber: parseInt(val.rowsNumber),
+    sortBy: val.sortBy,
+    rowsPerPage: parseInt(val.rowsPerPage)
+  }
+}
 
 export default {
   name: "SeriesTable",
-  data: () => ({
-    series: [],
-    pagination: {
-      sortBy: 'createdAt',
-      descending: true,
-      page: 1,
-      rowsPerPage: 10,
-      rowsNumber: -1
-    },
-    searchInput: '',
-    loading: false,
-    filter: {
-      status: 'active'
+  data() {
+    return {
+      series: [],
+      pagination: this.$route.query.page ? formatPagination(this.$route.query) : {
+        sortBy: 'createdAt',
+        descending: true,
+        page: 1,
+        rowsPerPage: 10,
+        rowsNumber: -1
+      },
+      searchInput: '',
+      loading: false,
+      filter: {
+        status: 'active'
+      }
     }
-  }),
+  },
   watch: {
     filter: {
       deep: true,
@@ -102,7 +114,7 @@ export default {
       handler() {
         this.loadData({pagination: this.pagination});
       }
-    }
+    },
   },
   filters: {
     truncate(value, length) {
@@ -202,6 +214,11 @@ export default {
         this.pagination.rowsPerPage = rowsPerPage;
         this.pagination.sortBy = sortBy;
         this.pagination.descending = descending;
+
+        if (!isEqual(this.pagination, formatPagination(this.$route.query))) {
+          this.$router.replace({path: this.$route.path, query: this.pagination});
+        }
+
       } finally {
         this.loading = false;
       }

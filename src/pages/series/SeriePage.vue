@@ -14,11 +14,13 @@
           </q-img>
           <div class="text-h5">{{ serie.name }}</div>
           <div class="text-caption">
-            {{ $t('series.labels.countEpisodes', {count: serie.episodes.length}) }} -
+            <span v-if="serie.episodes">{{
+                $t('series.labels.countEpisodes', {count: serie.episodes.length})
+              }} - </span>
             {{ $t('series.privacy.' + serie.privacy_status) }} - {{ $t('series.status.' + serie.status) }}
           </div>
           <div>
-            <EditSerieBtn :serie="serie" />
+            <EditSerieBtn :serie="serie"/>
             <DeleteSerieBtn :serie="serie" @deleted="$router.replace({name: 'series'})"/>
             <SyncFromYoutubeBtn :serie.sync="serie"/>
             <SyncWithYoutubeBtn :serie.sync="serie"/>
@@ -76,7 +78,10 @@ export default {
     this.subscription = dbEvents.asObservable()
       .pipe(filter(event => event.collection === 'series' && event.data.id === this.id))
       .subscribe(event => {
-        this.serie = new Serie(event.data);
+        this.serie = new Serie({
+          ...this.serie,
+          ...event.data
+        });
       });
   },
   beforeDestroy() {
@@ -88,11 +93,11 @@ export default {
   methods: {
     async loadSerie() {
       this.loading = true;
-      try{
+      try {
         this.serie = await Serie
           .api()
           .findById(this.id, {}, {populate: 'episodes'});
-      }finally{
+      } finally {
         this.loading = false;
       }
     }

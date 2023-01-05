@@ -121,6 +121,9 @@ export default {
       },
       pickFile: {
         tooltip: 'Select a new file to add to this serie'
+      },
+      save: {
+        error: 'Erreur : {error}'
       }
     },
     episodes: {

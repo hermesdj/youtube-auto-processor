@@ -10,4 +10,8 @@ export class Serie extends Model {
   addFile(path) {
     return this.constructor.api().callMethod(this.id, 'addRawVideoFromPath', [path]);
   }
+
+  updateStatus(status){
+    return this.constructor.api().callMethod(this.id, 'updateStatus', [status]);
+  }
 }
