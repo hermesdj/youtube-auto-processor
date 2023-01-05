@@ -21,102 +21,114 @@ class YoutubeStudioError extends Error {
 
 module.exports = {
   setMonetization: async function (job) {
-    let cookieInfo = await GoogleCookieConfig.resolveConfig({});
-    await init(cookieInfo);
+    try {
+      let cookieInfo = await GoogleCookieConfig.resolveConfig({});
+      await init(cookieInfo);
 
-    let allowMidRolls = true;
-    let midVideoMilliseconds = 1200000;
+      let allowMidRolls = true;
+      let midVideoMilliseconds = 1200000;
 
-    if (job.details && job.details.duration) {
-      let parsedDuration = parse(job.details.duration);
-      let seconds = toSeconds(parsedDuration);
+      if (job.details && job.details.duration) {
+        let parsedDuration = parse(job.details.duration);
+        let seconds = toSeconds(parsedDuration);
 
-      if (seconds > 1200000) {
-        midVideoMilliseconds = (seconds / 2) * 1000;
-      } else {
-        allowMidRolls = false;
+        logger.info('Video seconds is %d', seconds);
+
+        if ((seconds * 1000) > 1200000) {
+          midVideoMilliseconds = (seconds / 2) * 1000;
+        } else {
+          allowMidRolls = false;
+        }
       }
-    }
 
-    const result = await setMonetisation(job.episode.youtube_id, {
-      encryptedVideoId: job.episode.youtube_id, // your video ID
-      monetizationSettings: {
-        newMonetizeWithAds: true // Monetisation: On
-      },
-      "adSettings": {
-        "adFormats": {
-          "newHasOverlayAds": "ENABLED",
-          "newHasSkippableVideoAds": "ENABLED",
-          "newHasNonSkippableVideoAds": "ENABLED",
-          "newHasProductListingAds": "ENABLED"
+      const result = await setMonetisation(job.episode.youtube_id, {
+        encryptedVideoId: job.episode.youtube_id, // your video ID
+        monetizationSettings: {
+          newMonetizeWithAds: true // Monetisation: On
         },
-        "adBreaks": {
-          "newHasPrerolls": "ENABLED",
-          "newHasMidrollAds": allowMidRolls ? "ENABLED" : "DISABLED",
-          "newHasPostrolls": "ENABLED",
-          "newHasManualMidrolls": "ENABLED",
-          "newManualMidrollTimesMillis": allowMidRolls ? [midVideoMilliseconds] : []
+        "adSettings": {
+          "adFormats": {
+            "newHasOverlayAds": "ENABLED",
+            "newHasSkippableVideoAds": "ENABLED",
+            "newHasNonSkippableVideoAds": "ENABLED",
+            "newHasProductListingAds": "ENABLED"
+          },
+          "adBreaks": {
+            "newHasPrerolls": "ENABLED",
+            "newHasMidrollAds": allowMidRolls ? "ENABLED" : "DISABLED",
+            "newHasPostrolls": "ENABLED",
+            "newHasManualMidrolls": allowMidRolls ? "ENABLED" : "DISABLED",
+            "newManualMidrollTimesMillis": allowMidRolls ? [midVideoMilliseconds] : []
+          },
+          "autoAdSettings": "AUTO_AD_SETTINGS_TYPE_OFF"
         },
-        "autoAdSettings": "AUTO_AD_SETTINGS_TYPE_OFF"
-      },
-    })
+      })
 
-    if (result && result.error) {
-      throw new YoutubeStudioError('Monetization is in error  ', result.error);
+      if (result && result.error) {
+        throw new YoutubeStudioError('Monetization is in error  ', result.error);
+      }
+
+      return result;
+    } catch (e) {
+      logger.error('Error setting monetization : %O', e);
+      throw e;
     }
-
-    return result;
   },
   setEndScreen: async function (job) {
     if (!job.details || !job.details.duration) {
       throw new Error('details duration missing');
     }
 
-    logger.debug('duration is %s', job.details.duration);
-    let parsedDuration = parse(job.details.duration);
-    logger.debug('parsed duration is %j', parsedDuration);
-    let seconds = toSeconds(parsedDuration);
-    logger.info('video seconds is %d', seconds);
+    try {
+      logger.debug('duration is %s', job.details.duration);
+      let parsedDuration = parse(job.details.duration);
+      logger.debug('parsed duration is %j', parsedDuration);
+      let seconds = toSeconds(parsedDuration);
+      logger.info('video seconds is %d', seconds);
 
-    if (seconds === 0) {
-      throw new Error('Video Seconds is 0');
+      if (seconds === 0) {
+        throw new Error('Video Seconds is 0');
+      }
+
+      let episode = await Episode.findById(job.episode._id);
+
+      if (!episode) {
+        throw new Error('Episode not found');
+      }
+
+      if (!episode.serie) {
+        throw new Error('No serie in episode');
+      }
+
+      let serie = await Serie.findById(episode.serie);
+
+      if (!serie || !serie.playlist_id) {
+        throw new Error('no playlist id found in serie');
+      }
+
+      let cookieInfo = await GoogleCookieConfig.resolveConfig({});
+      await init(cookieInfo);
+
+      let youtubeChannel = await YoutubeChannel.findOne({});
+      if (!youtubeChannel) {
+        throw new Error('No youtube channel configured. Channel ID is required for this operation');
+      }
+
+      const result = await setEndScreen(episode.youtube_id, (seconds * 1000) - 20000, [
+        {...endScreen.POSITION_CENTER, ...endScreen.TYPE_SUBSCRIBE(youtubeChannel.channelId)},
+        {...endScreen.POSITION_CENTER_LEFT, ...endScreen.TYPE_BEST_FOR_VIEWERS},
+        {...endScreen.POSITION_CENTER_RIGHT, ...endScreen.TYPE_PLAYLIST(serie.playlist_id)}
+      ])
+
+      if (result && result.error) {
+        throw new YoutubeStudioError('Set endscreen is in error', result.error);
+      }
+
+      return result;
+    } catch (e) {
+      logger.error('Error set endscreen : %O', e);
+      throw e;
     }
-
-    let episode = await Episode.findById(job.episode._id);
-
-    if (!episode) {
-      throw new Error('Episode not found');
-    }
-
-    if (!episode.serie) {
-      throw new Error('No serie in episode');
-    }
-
-    let serie = await Serie.findById(episode.serie);
-
-    if (!serie || !serie.playlist_id) {
-      throw new Error('no playlist id found in serie');
-    }
-
-    let cookieInfo = await GoogleCookieConfig.resolveConfig({});
-    await init(cookieInfo);
-
-    let youtubeChannel = await YoutubeChannel.findOne({});
-    if (!youtubeChannel) {
-      throw new Error('No youtube channel configured. Channel ID is required for this operation');
-    }
-
-    const result = await setEndScreen(episode.youtube_id, (seconds * 1000) - 20000, [
-      {...endScreen.POSITION_CENTER, ...endScreen.TYPE_SUBSCRIBE(youtubeChannel.channelId)},
-      {...endScreen.POSITION_CENTER_LEFT, ...endScreen.TYPE_BEST_FOR_VIEWERS},
-      {...endScreen.POSITION_CENTER_RIGHT, ...endScreen.TYPE_PLAYLIST(serie.playlist_id)}
-    ])
-
-    if (result && result.error) {
-      throw new YoutubeStudioError('Set endscreen is in error', result.error);
-    }
-
-    return result;
   },
   getEndScreen: async function (job) {
     const VIDEO_ID = job.episode.youtube_id;

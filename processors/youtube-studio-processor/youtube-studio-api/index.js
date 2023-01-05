@@ -91,25 +91,39 @@ async function readData(uri) {
       page.on('response', logResponse);
 
       page.once('domcontentloaded', async () => {
+        let response = await page.waitForResponse(
+          (response) => response.url().startsWith('https://studio.youtube.com/youtubei/v1/ars/grst'),
+          {timeout: 60000}
+        );
+        let {sessionToken} = await response.json();
+        logger.info('Found session token %s', sessionToken);
+        result.sessionToken = sessionToken;
+
         let ytConfig = await page.evaluate(() => window.yt.config_);
 
-        result.CHANNEL_ID = ytConfig.CHANNEL_ID;
-        result.clientScreenNonce = ytConfig['client-screen-nonce'];
-        result.DELEGATED_SESSION_ID = ytConfig.DELEGATED_SESSION_ID;
-        result.DELEGATION_CONTEXT = ytConfig.DELEGATION_CONTEXT;
-        result.INNERTUBE_API_KEY = ytConfig.INNERTUBE_API_KEY;
-        result.INNERTUBE_CONTEXT_SERIALIZED_DELEGATION_CONTEXT = ytConfig.INNERTUBE_CONTEXT_SERIALIZED_DELEGATION_CONTEXT;
+        _.set(result, 'CHANNEL_ID', _.get(ytConfig, 'CHANNEL_ID'));
+        _.set(result, 'clientScreenNonce', _.get(ytConfig, 'client-screen-nonce'));
+        _.set(result, 'DELEGATED_SESSION_ID', _.get(ytConfig, 'DELEGATED_SESSION_ID'));
+        _.set(result, 'INNERTUBE_API_KEY', _.get(ytConfig, 'INNERTUBE_API_KEY'));
+        _.set(result, 'DELEGATION_CONTEXT', _.get(ytConfig, 'DELEGATION_CONTEXT'));
+        _.set(result, 'INNERTUBE_CONTEXT_SERIALIZED_DELEGATION_CONTEXT', _.get(ytConfig, 'INNERTUBE_CONTEXT_SERIALIZED_DELEGATION_CONTEXT'));
+        _.set(result, 'VISITOR_DATA', _.get(ytConfig, 'VISITOR_DATA'));
+        _.set(result, 'INNERTUBE_CLIENT_NAME', _.get(ytConfig, 'INNERTUBE_CLIENT_NAME'));
+        _.set(result, 'INNERTUBE_CLIENT_VERSION', _.get(ytConfig, 'INNERTUBE_CLIENT_VERSION'));
+        _.set(result, 'INNERTUBE_CONTEXT_CLIENT_NAME', _.get(ytConfig, 'INNERTUBE_CONTEXT_CLIENT_NAME'));
+        _.set(result, 'INNERTUBE_CONTEXT_CLIENT_VERSION', _.get(ytConfig, 'INNERTUBE_CONTEXT_CLIENT_VERSION'));
+        _.set(result, 'INNERTUBE_CONTEXT_GL', _.get(ytConfig, 'INNERTUBE_CONTEXT_GL'));
+        _.set(result, 'INNERTUBE_CONTEXT_HL', _.get(ytConfig, 'INNERTUBE_CONTEXT_HL'));
+        _.set(result, 'SERIALIZED_CLIENT_CONFIG_DATA', _.get(ytConfig, 'SERIALIZED_CLIENT_CONFIG_DATA'));
 
-        let httpResponse = await page.waitForResponse((response) => response.url().startsWith('https://studio.youtube.com/youtubei/v1/att/esr'), {timeout: 60000});
-        let data = await httpResponse.json();
-        result.sessionToken = data.sessionToken;
+        logger.info('result is %O', result);
 
         resolve(result);
       })
 
       await page.goto(uri);
     } catch (err) {
-      console.error(err);
+      logger.error('Error fetching youtube data : %O', err);
       reject(err);
     }
   }).finally(async () => {
@@ -159,6 +173,8 @@ async function setMonetisation(videoId, monetizationSettings) {
     ...requestBody,
     ...monetizationSettings
   }
+
+  logger.info('Set monetisation request body is %j', requestBody);
 
   return fetch(`${YT_STUDIO_URL}/youtubei/v1/video_manager/metadata_update?alt=json&key=${config.INNERTUBE_API_KEY}`, {
     method: 'POST',
