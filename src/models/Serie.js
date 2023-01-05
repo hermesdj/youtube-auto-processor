@@ -12,6 +12,10 @@ export class Serie extends Model {
   }
 
   updateStatus(status){
-    return this.constructor.api().callMethod(this.id, 'updateStatus', [status]);
+    return this.constructor.updateStatus(this.id, status);
+  }
+
+  static updateStatus(id, status){
+    return this.api().callMethod(id, 'updateStatus', [status]);
   }
 }

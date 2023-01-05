@@ -70,6 +70,42 @@
         </q-item>
       </q-td>
     </template>
+    <template v-slot:body-cell-status="props">
+      <q-td :props="props">
+        <q-btn-dropdown
+          :label="props.value"
+          flat
+          size="sm"
+          no-caps
+        >
+          <q-list
+            dense
+            bordered
+          >
+            <q-item v-if="props.row.status !== 'active'" clickable v-close-popup @click="changeSerieStatus(props, props.row.id, 'active')">
+              <q-item-section>
+                <q-item-label>{{ $t('series.status.active') }}</q-item-label>
+              </q-item-section>
+            </q-item>
+            <q-item v-if="props.row.status !== 'paused'" clickable v-close-popup @click="changeSerieStatus(props, props.row.id, 'paused')">
+              <q-item-section>
+                <q-item-label>{{ $t('series.status.paused') }}</q-item-label>
+              </q-item-section>
+            </q-item>
+            <q-item v-if="props.row.status !== 'cancelled'" clickable v-close-popup @click="changeSerieStatus(props, props.row.id, 'cancelled')">
+              <q-item-section>
+                <q-item-label>{{ $t('series.status.cancelled') }}</q-item-label>
+              </q-item-section>
+            </q-item>
+            <q-item v-if="props.row.status !== 'finished'" clickable v-close-popup @click="changeSerieStatus(props, props.row.id, 'finished')">
+              <q-item-section>
+                <q-item-label>{{ $t('series.status.finished') }}</q-item-label>
+              </q-item-section>
+            </q-item>
+          </q-list>
+        </q-btn-dropdown>
+      </q-td>
+    </template>
   </q-table>
 </template>
 
@@ -222,6 +258,10 @@ export default {
       } finally {
         this.loading = false;
       }
+    },
+    async changeSerieStatus(props, id, status) {
+      await Serie.updateStatus(id, status);
+      await this.loadData({pagination: this.pagination});
     }
   }
 }
