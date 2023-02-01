@@ -38,7 +38,7 @@
     "mime": "^1.6.0",
     "mkdirp": "^1.0.4",
     "moment": "^2.29.1",
-    "mongoose": "^5.13.14",
+    "mongoose": "^5.13.15",
     "move-file": "^2.1.0",
     "node-fetch": "^2.6.7",
     "node-ipc": "^9.2.1",
