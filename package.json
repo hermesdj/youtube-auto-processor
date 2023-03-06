@@ -57,7 +57,7 @@
     "yargs": "^17.3.1"
   },
   "devDependencies": {
-    "@quasar/app": "^2.2.11",
+    "@quasar/app": "^2.4.3",
     "babel-eslint": "^10.0.1",
     "devtron": "^1.4.0",
     "electron": "^11.5.0",
